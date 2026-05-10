@@ -33,8 +33,12 @@ struct StarRatingView: View {
         case short
     }
 
+    /// Ratings come from the Pocket Casts cache server, which has been
+    /// removed. The view body renders nothing so the rating row disappears
+    /// from podcast pages and discover surfaces. The supporting types are
+    /// kept around so call sites compile.
     var body: some View {
-        starsAndRate
+        EmptyView()
     }
 
     @ScaledMetric(relativeTo: .callout) private var starSize = 16

@@ -85,10 +85,10 @@ public class ApiServerHandler {
         return retrievedEpisodes
     }
 
-    public func syncSettings() {
-        let syncSettingsTask = SyncSettingsTask()
-        apiQueue.addOperation(syncSettingsTask)
-    }
+    /// Settings sync used to mirror local SettingsStore state to
+    /// `api.pocketcasts.com`. With the sync subsystem gone settings are
+    /// strictly local; this is a no-op.
+    public func syncSettings() {}
 
     public func reloadFoldersFromServer() {
         ServerSettings.setHomeGridNeedsRefresh(true)
