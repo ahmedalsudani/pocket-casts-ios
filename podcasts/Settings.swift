@@ -1189,6 +1189,23 @@ class Settings: NSObject {
         }
     }
 
+    /// The default sleep timer duration applied automatically when playback
+    /// starts. `nil` means the feature is off; otherwise the value is the
+    /// timer duration in seconds.
+    static var defaultSleepTimerDuration: TimeInterval? {
+        set {
+            if let newValue, newValue > 0 {
+                UserDefaults.standard.set(newValue, forKey: Constants.UserDefaults.defaultSleepTimerDuration)
+            } else {
+                UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.defaultSleepTimerDuration)
+            }
+        }
+        get {
+            let stored = UserDefaults.standard.double(forKey: Constants.UserDefaults.defaultSleepTimerDuration)
+            return stored > 0 ? stored : nil
+        }
+    }
+
     // MARK: - Headphone Controls
 
     static var headphonesPreviousAction: HeadphoneControlAction {

@@ -690,6 +690,12 @@ internal enum L10n {
   internal static var deselectAllAbove: String { return L10n.tr("Localizable", "deselect_all_above", fallback: "Deselect all above") }
   /// A common string used throughout the app. Prompt to deselect all items below the currently selected item.
   internal static var deselectAllBelow: String { return L10n.tr("Localizable", "deselect_all_below", fallback: "Deselect all below") }
+  /// Name of the option to set a default sleep timer that starts automatically with playback
+  internal static var defaultSleepTimer: String { return L10n.tr("Localizable", "default_sleep_timer", fallback: "Default Sleep Timer") }
+  /// Description for the Default Sleep Timer setting
+  internal static var defaultSleepTimerDescription: String { return L10n.tr("Localizable", "default_sleep_timer_description", fallback: "Automatically start a sleep timer of this length whenever playback begins.") }
+  /// Off / disabled value for the Default Sleep Timer setting
+  internal static var defaultSleepTimerOff: String { return L10n.tr("Localizable", "default_sleep_timer_off", fallback: "Off") }
   /// Message explaining why the sleep timer was restarted after the user shook the device
   internal static var deviceShakeSleepTimer: String { return L10n.tr("Localizable", "device_shake_sleep_timer", fallback: "Sleep timer restarted due to device shake") }
   /// A common string used throughout the app. Refers to the Discover tab.

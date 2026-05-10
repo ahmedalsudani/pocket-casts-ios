@@ -12,9 +12,9 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
 
     let debounce = Debounce(delay: Constants.defaultDebounceTime)
 
-    enum TableRow { case skipForward, skipBack, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN }
+    enum TableRow { case skipForward, skipBack, keepScreenAwake, openPlayer, intelligentPlaybackResumption, defaultRowAction, extraMediaActions, defaultAddToUpNextSwipe, defaultGrouping, defaultArchive, playUpNextOnTap, legacyBluetooth, multiSelectGesture, openLinksInBrowser, publishChapterTitles, autoplay, defaultSleepTimer, autoRestartSleepTimer, shakeToRestartSleepTimer, isLockScreenScrubberDisabled, voiceBoostN }
     private var tableData: [[TableRow]] {
-        var data: [[TableRow]] = [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay]]
+        var data: [[TableRow]] = [[.defaultRowAction, .defaultGrouping, .defaultArchive, .defaultAddToUpNextSwipe, .openLinksInBrowser], [.skipForward, .skipBack, .keepScreenAwake, .openPlayer, .isLockScreenScrubberDisabled, .intelligentPlaybackResumption], [.defaultSleepTimer, .autoRestartSleepTimer], [.shakeToRestartSleepTimer], [.playUpNextOnTap], [.extraMediaActions], [.legacyBluetooth], [.multiSelectGesture], [.publishChapterTitles], [.autoplay]]
         if FeatureFlag.voiceBoostN.enabled {
             data.append([.voiceBoostN])
         }
@@ -284,6 +284,16 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
             cell.cellSwitch.addTarget(self, action: #selector(autoplayToggled(_:)), for: .valueChanged)
 
             return cell
+        case .defaultSleepTimer:
+            let cell = tableView.dequeueReusableCell(withIdentifier: disclosureCellId, for: indexPath) as! DisclosureCell
+            cell.cellLabel.text = L10n.defaultSleepTimer
+            if let duration = Settings.defaultSleepTimerDuration {
+                cell.cellSecondaryLabel.text = TimeFormatter.shared.minutesHoursFormatted(time: duration)
+            } else {
+                cell.cellSecondaryLabel.text = L10n.defaultSleepTimerOff
+            }
+
+            return cell
         case .autoRestartSleepTimer:
             let cell = tableView.dequeueReusableCell(withIdentifier: switchCellId, for: indexPath) as! SwitchCell
 
@@ -331,7 +341,9 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
         tableView.deselectRow(at: indexPath, animated: true)
 
         let row = tableData[indexPath.section][indexPath.row]
-        if row == .defaultRowAction {
+        if row == .defaultSleepTimer {
+            presentDefaultSleepTimerPicker(tableView: tableView)
+        } else if row == .defaultRowAction {
             let currentAction = Settings.primaryRowAction()
 
             let options = OptionsPicker(title: L10n.settingsGeneralRowAction)
@@ -581,6 +593,29 @@ class GeneralSettingsViewController: PCViewController, UITableViewDelegate, UITa
         Settings.autoRestartSleepTimer = sender.isOn
 
         Settings.trackValueToggled(.settingsGeneralAutoSleepTimerRestartToggled, enabled: sender.isOn)
+    }
+
+    private func presentDefaultSleepTimerPicker(tableView: UITableView) {
+        let current = Settings.defaultSleepTimerDuration
+        let options = OptionsPicker(title: L10n.defaultSleepTimer)
+
+        let offAction = OptionAction(label: L10n.defaultSleepTimerOff, selected: current == nil) {
+            Settings.defaultSleepTimerDuration = nil
+            tableView.reloadData()
+        }
+        options.addAction(action: offAction)
+
+        let durations: [TimeInterval] = [5.minutes, 15.minutes, 30.minutes, 45.minutes, 1.hours]
+        for duration in durations {
+            let label = TimeFormatter.shared.minutesHoursFormatted(time: duration)
+            let action = OptionAction(label: label, selected: current == duration) {
+                Settings.defaultSleepTimerDuration = duration
+                tableView.reloadData()
+            }
+            options.addAction(action: action)
+        }
+
+        options.show(statusBarStyle: preferredStatusBarStyle)
     }
 
     @objc private func shakeToRestartSleepTimerToggled(_ sender: UISwitch) {

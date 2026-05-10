@@ -53,21 +53,34 @@ class SleepTimerManager {
     }
 
     func restartSleepTimerIfNeeded() {
-        guard !PlaybackManager.shared.sleepTimerActive(), Settings.autoRestartSleepTimer else {
+        guard !PlaybackManager.shared.sleepTimerActive() else {
             return
         }
 
         let now = Date.now
-        if let sleepTimerFinishedDate = Settings.sleepTimerFinishedDate,
+
+        // 1. Auto-restart of a recently-finished timer wins over the default.
+        //    The 5-minute window means "I just had a sleep timer, restart it"
+        //    behavior takes precedence over the configured default.
+        if Settings.autoRestartSleepTimer,
+           let sleepTimerFinishedDate = Settings.sleepTimerFinishedDate,
            now.timeIntervalSince(sleepTimerFinishedDate) <= restartSleepTimerIfPlayingAgainWithin,
            let setting = Settings.sleepTimerLastSetting {
             if let duration = setting.duration {
                 PlaybackManager.shared.setSleepTimerInterval(duration)
                 Analytics.shared.track(.playerSleepTimerRestarted, properties: ["time": duration])
                 FileLog.shared.addMessage("Sleep Timer: restarting it automatically (\(now.description) - \(sleepTimerFinishedDate.description) <= 5 minutes")
+                return
             } else if setting.sleepOnEpisodeEnd == true {
                 observePlaybackEndAndReactivateTime()
+                return
             }
+        }
+
+        // 2. Apply the user's configured default, if any.
+        if let defaultDuration = Settings.defaultSleepTimerDuration, defaultDuration > 0 {
+            PlaybackManager.shared.setSleepTimerInterval(defaultDuration)
+            FileLog.shared.addMessage("Sleep Timer: starting with the configured default duration (\(defaultDuration)s)")
         }
     }
 

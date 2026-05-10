@@ -4537,6 +4537,15 @@
 /* Description of the option to shake to restart sleep timer */
 "shake_to_restart_sleep_timer_description" = "If on, the sleep timer will restart when you shake your phone.";
 
+/* Name of the option to set a default sleep timer that starts automatically with playback */
+"default_sleep_timer" = "Default Sleep Timer";
+
+/* Description for the Default Sleep Timer setting */
+"default_sleep_timer_description" = "Automatically start a sleep timer of this length whenever playback begins.";
+
+/* Off / disabled value for the Default Sleep Timer setting */
+"default_sleep_timer_off" = "Off";
+
 /* Title of a screen that display Folders history */
 "folders_history" = "Folders History";
 

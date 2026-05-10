@@ -169,6 +169,7 @@ struct Constants {
 
         static let autoRestartSleepTimer = "autoRestartSleepTimer"
         static let shakeToRestartSleepTimer = "shakeToRestartSleepTimer"
+        static let defaultSleepTimerDuration = "defaultSleepTimerDuration"
 
         static let searchHistoryEntries = "SearchHistoryEntries"
 
