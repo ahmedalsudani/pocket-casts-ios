@@ -1,5 +1,6 @@
 import Foundation
 import PocketCastsDataModel
+import PocketCastsUtils
 
 public class ServerPodcastManager: NSObject {
     private static let maxAutoDownloadSeperationTime = 12.hours
@@ -71,16 +72,65 @@ public class ServerPodcastManager: NSObject {
     }
 
     public func addFromiTunesId(_ itunesId: Int, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool, String?) -> Void)?) {
-        MainServerHandler.shared.findPodcastByiTunesId(itunesId) { [weak self] podcastUuid in
-            guard let uuid = podcastUuid else {
-                completion?(false, nil)
-                return
-            }
+        Task { [weak self] in
+            guard let self else { return }
 
-            self?.addFromUuid(podcastUuid: uuid, subscribe: subscribe, autoDownloads: autoDownloads, completion: { added in
-                completion?(added, uuid)
-            })
+            do {
+                guard let feedURL = try await LocalFeedService.shared.iTunesLookup(iTunesId: itunesId) else {
+                    completion?(false, nil)
+                    return
+                }
+                await self.addFromFeedURLAsync(feedURL, subscribe: subscribe, autoDownloads: autoDownloads) { added, uuid in
+                    completion?(added, uuid)
+                }
+            } catch {
+                FileLog.shared.addMessage("ServerPodcastManager: iTunes lookup failed for \(itunesId): \(error.localizedDescription)")
+                completion?(false, nil)
+            }
         }
+    }
+
+    /// Subscribes to a podcast using its RSS feed URL. The local UUID is
+    /// derived deterministically from the feed URL (UUIDv5) so re-imports of
+    /// the same feed always resolve to the same podcast row.
+    public func addFromFeedURL(_ feedURL: URL, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool, String?) -> Void)?) {
+        Task { [weak self] in
+            guard let self else { return }
+            await self.addFromFeedURLAsync(feedURL, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
+        }
+    }
+
+    private func addFromFeedURLAsync(_ feedURL: URL, subscribe: Bool, autoDownloads: Int, completion: ((Bool, String?) -> Void)?) async {
+        let podcastUuid = UUID.v5(namespace: .pocketCastsPodcastNamespace, name: feedURL.absoluteString).uuidString.lowercased()
+
+        do {
+            let result = try await LocalFeedService.shared.fetch(feedURL: feedURL)
+            switch result {
+            case .notModified:
+                completion?(false, nil)
+            case .success(let feed, let lastModified, _):
+                let info = feed.toPodcastInfoJson(uuid: podcastUuid, feedURLString: feedURL.absoluteString)
+                addFromJson(podcastUuid: podcastUuid, lastModified: lastModified, podcastInfo: info, subscribe: subscribe, autoDownloads: autoDownloads) { [weak self] added in
+                    if added {
+                        self?.applyImageURL(feed.imageURL, to: podcastUuid)
+                    }
+                    completion?(added, added ? podcastUuid : nil)
+                }
+            }
+        } catch {
+            FileLog.shared.addMessage("ServerPodcastManager: feed fetch failed for \(feedURL.absoluteString): \(error.localizedDescription)")
+            completion?(false, nil)
+        }
+    }
+
+    private func applyImageURL(_ imageURL: String?, to podcastUuid: String) {
+        guard let imageURL,
+              let podcast = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true),
+              podcast.imageURL != imageURL else {
+            return
+        }
+        podcast.imageURL = imageURL
+        DataManager.sharedManager.save(podcast: podcast)
     }
 
     public func addFromJson(podcastUuid: String, lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {

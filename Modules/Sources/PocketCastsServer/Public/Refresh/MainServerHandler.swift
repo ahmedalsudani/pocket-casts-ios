@@ -201,27 +201,13 @@ public class MainServerHandler {
     }
 
     public func refresh(podcasts: [Podcast], completion: @escaping (PodcastRefreshResponse?) -> Void) {
-        FileLog.shared.addMessage("Refresh - Started)")
-        guard let request = createRefreshRequest(podcasts: podcasts) else {
-            completion(PodcastRefreshResponse.failedResponse())
-            return
+        FileLog.shared.addMessage("Refresh - Started (local feed service)")
+        for podcast in podcasts { // ensure podcasts have up to date latest episode uuids
+            ServerPodcastManager.shared.updateLatestEpisodeInfo(podcast: podcast, setDefaults: false)
         }
-
-        tokenHelper.callSecureUrl(request: request) { response, data, error in
-            let statusCode = response?.statusCode ?? 0
-
-            guard statusCode == ServerConstants.HttpConstants.ok, let data else {
-                if let error {
-                    FileLog.shared.addMessage("Refresh failed: with error \(error.localizedDescription), status code \(statusCode)")
-                } else {
-                    FileLog.shared.addMessage("Refresh failed: response returned no data, status code \(statusCode)")
-                }
-                completion(PodcastRefreshResponse.failedResponse())
-                return
-            }
-            FileLog.shared.addMessage("Decoding Refresh Response)")
-            let refreshResponse = ServerHelper.decodeRefreshResponse(from: data)
-            completion(refreshResponse)
+        Task {
+            let response = await LocalFeedService.shared.refresh(podcasts: podcasts)
+            completion(response)
         }
     }
 
@@ -287,36 +273,10 @@ public class MainServerHandler {
     }
 
     public func refreshPodcastFeed(podcast: Podcast, completion: @escaping (Bool) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(false)
-
-            return
+        FileLog.shared.addMessage("Attempting to refresh feed locally for \(podcast.uuid)")
+        refresh(podcasts: [podcast]) { response in
+            completion(response?.success() == true)
         }
-
-        var jsonRequest = jsonWithStandardParams(uniqueId: uniqueId)
-        jsonRequest["podcast_uuid"] = podcast.uuid
-        guard let data = try? JSONSerialization.data(withJSONObject: jsonRequest) else {
-            FileLog.shared.addMessage("Failed to create refreshPodcastFeed request")
-            completion(false)
-
-            return
-        }
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "podcasts/refresh")
-        let request = ServerHelper.createJsonRequest(url: url, data: data, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData)
-        FileLog.shared.addMessage("Attempting to refresh podcast feed for \(podcast.uuid)")
-        URLSession.shared.dataTask(with: request) { _, response, error in
-            guard let response = response as? HTTPURLResponse, response.statusCode == ServerConstants.HttpConstants.ok else {
-                FileLog.shared.addMessage("Feed refresh failed: \(error?.localizedDescription ?? "No error")")
-                completion(false)
-
-                return
-            }
-
-            FileLog.shared.addMessage("Server indicated podcast refresh was successful")
-            completion(true)
-
-        }.resume()
     }
 
     public func findPodcastByiTunesId(_ iTunesId: Int, completion: @escaping (String?) -> Void) {

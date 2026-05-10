@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsDataModel
 import PocketCastsUtils
 
 public struct ParsedFeed {
@@ -91,6 +92,162 @@ public class LocalFeedService {
             etag: http?.value(forHTTPHeaderField: ServerConstants.HttpHeaders.etag)
         )
     }
+
+    /// Fans out a refresh across all subscribed podcasts that have a stored
+    /// feed URL (in `Podcast.podcastUrl`). Failures on individual feeds are
+    /// logged and skipped — they don't fail the overall response.
+    public func refresh(podcasts: [Podcast]) async -> PodcastRefreshResponse {
+        var podcastUpdates: [String: [RefreshEpisode]] = [:]
+
+        await withTaskGroup(of: (String, [RefreshEpisode]).self) { group in
+            for podcast in podcasts {
+                guard let urlString = podcast.podcastUrl, let url = URL(string: urlString) else {
+                    FileLog.shared.addMessage("LocalFeedService: skipping podcast \(podcast.uuid) — no feed URL stored")
+                    continue
+                }
+                let podcastUuid = podcast.uuid
+                group.addTask { [weak self] in
+                    guard let self else { return (podcastUuid, []) }
+                    do {
+                        let result = try await self.fetch(feedURL: url, lastModified: podcast.lastUpdatedAt)
+                        switch result {
+                        case .notModified:
+                            return (podcastUuid, [])
+                        case .success(let feed, _, _):
+                            return (podcastUuid, feed.refreshEpisodes())
+                        }
+                    } catch {
+                        FileLog.shared.addMessage("LocalFeedService: refresh failed for \(podcastUuid): \(error.localizedDescription)")
+                        return (podcastUuid, [])
+                    }
+                }
+            }
+
+            for await (uuid, episodes) in group where !episodes.isEmpty {
+                podcastUpdates[uuid] = episodes
+            }
+        }
+
+        var response = PodcastRefreshResponse()
+        response.status = "ok"
+        var refreshResult = RefreshResult()
+        refreshResult.podcastUpdates = podcastUpdates
+        response.result = refreshResult
+        return response
+    }
+
+    /// Look up an iTunes podcast by its iTunes Id and return its RSS feed URL,
+    /// using Apple's iTunes Search API. The Pocket Casts server is not involved.
+    public func iTunesLookup(iTunesId: Int) async throws -> URL? {
+        guard let url = URL(string: "https://itunes.apple.com/lookup?id=\(iTunesId)&entity=podcast") else {
+            return nil
+        }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
+
+        let (data, _) = try await connection.send(request: request)
+        guard let data,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let results = json["results"] as? [[String: Any]],
+              let feedUrl = results.first?["feedUrl"] as? String else {
+            return nil
+        }
+        return URL(string: feedUrl)
+    }
+}
+
+extension ParsedFeed {
+    /// Builds the JSON-shaped dictionary that `Podcast.from(podcastJson:)` and
+    /// the existing `ServerPodcastManager.addPodcast(podcastInfo:...)` flow
+    /// already understand, so on-device feed parsing stays a drop-in for the
+    /// old cache-server response.
+    public func toPodcastInfoJson(uuid: String, feedURLString: String) -> [String: Any] {
+        var podcastJson: [String: Any] = [
+            "uuid": uuid,
+            "url": feedURLString
+        ]
+        if let title { podcastJson["title"] = title }
+        if let author { podcastJson["author"] = author }
+        if let description { podcastJson["description"] = description }
+        if let descriptionHTML { podcastJson["description_html"] = descriptionHTML }
+        if let category { podcastJson["category"] = category }
+        if let funding { podcastJson["fundings"] = [["url": funding]] }
+
+        podcastJson["episodes"] = episodes.map { $0.toEpisodeJson() }
+
+        return [
+            "podcast": podcastJson,
+            "refresh_allowed": true
+        ]
+    }
+
+    /// Maps every parsed episode to the `RefreshEpisode` shape that
+    /// `RefreshOperation` already consumes. `RefreshOperation` dedups by UUID
+    /// so we can return the full feed every time without producing duplicates.
+    public func refreshEpisodes() -> [RefreshEpisode] {
+        episodes.map { $0.toRefreshEpisode() }
+    }
+
+    public var imageURLForPodcast: String? { imageURL }
+}
+
+extension ParsedEpisode {
+    public func toEpisodeJson() -> [String: Any] {
+        var json: [String: Any] = [
+            "uuid": uuid
+        ]
+        if let title { json["title"] = title }
+        if let downloadURL { json["url"] = downloadURL }
+        if let fileType { json["file_type"] = fileType }
+        if let sizeInBytes { json["file_size"] = sizeInBytes }
+        if let durationSeconds { json["duration"] = durationSeconds }
+        if let publishedDate { json["published"] = LocalFeedDateFormatter.iso8601String(from: publishedDate) }
+        if let episodeNumber { json["number"] = episodeNumber }
+        if let seasonNumber { json["season"] = seasonNumber }
+        if let episodeType { json["type"] = episodeType }
+        return json
+    }
+
+    public func toRefreshEpisode() -> RefreshEpisode {
+        var episode = RefreshEpisode()
+        episode.uuid = uuid
+        episode.title = title
+        episode.url = downloadURL
+        episode.episodeDescription = description
+        episode.detailedDescription = descriptionHTML
+        episode.fileType = fileType
+        episode.sizeInBytes = sizeInBytes
+        episode.duration = durationSeconds
+        episode.episodeType = episodeType
+        episode.seasonNumber = seasonNumber
+        episode.episodeNumber = episodeNumber
+        if let publishedDate {
+            episode.publishedDate = LocalFeedDateFormatter.refreshDateString(from: publishedDate)
+        }
+        return episode
+    }
+}
+
+enum LocalFeedDateFormatter {
+    private static let iso8601: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
+    /// "yyyy-MM-dd HH:mm:ss" — matches the cache server's published_at format
+    /// that `Episode.populate(fromEpisode:)` already parses.
+    private static let refreshDate: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return f
+    }()
+
+    static func iso8601String(from date: Date) -> String { iso8601.string(from: date) }
+    static func refreshDateString(from date: Date) -> String { refreshDate.string(from: date) }
 }
 
 final class FeedXMLParser: NSObject, XMLParserDelegate {
