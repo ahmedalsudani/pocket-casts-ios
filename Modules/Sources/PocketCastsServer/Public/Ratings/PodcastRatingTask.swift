@@ -13,11 +13,9 @@ public struct PodcastRatingTask {
         self.session = session
     }
 
-    /// Retrieves the star rating and total for a single podcast
+    /// Star ratings used to come from `cache.pocketcasts.com/podcast/rating/{uuid}`.
+    /// With the cache server gone, ratings always return nil.
     public func retrieve(for podcastUuid: String, ignoringCache: Bool) async throws -> PodcastRating? {
-        let urlString = "\(ServerConstants.Urls.cache())podcast/rating/\(podcastUuid)"
-        let task = JSONDecodableURLTask<PodcastRating>(session: session)
-        let cachePolicy: URLRequest.CachePolicy = ignoringCache ? .reloadIgnoringLocalAndRemoteCacheData : .useProtocolCachePolicy
-        return try await task.get(urlString: urlString, cachePolicy: cachePolicy)
+        nil
     }
 }

@@ -180,7 +180,15 @@ public struct PodcastInfo: Codable {
     public init(from searchResult: PodcastFolderSearchResult) {
         author = searchResult.author
         title = searchResult.title
-        uuid = searchResult.uuid
+        // iTunes-sourced search results carry an iTunesId; routing them
+        // through the iTunesId path lets PodcastViewController kick off
+        // an iTunes lookup → addFromFeedURL flow that actually subscribes
+        // without a Pocket Casts cache server.
+        if let iTunes = searchResult.iTunesId {
+            iTunesId = iTunes
+        } else {
+            uuid = searchResult.uuid
+        }
     }
 
     public enum CodingKeys: String, CodingKey {

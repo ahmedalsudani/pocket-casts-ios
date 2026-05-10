@@ -46,30 +46,10 @@ public class EpisodeSearchTask {
         self.session = session
     }
 
+    /// Cross-catalog episode search lived on `cache.pocketcasts.com`. It has
+    /// no on-device equivalent — there's no global episode index without a
+    /// server. Returns an empty list; the search UI degrades gracefully.
     public func search(term: String) async throws -> [EpisodeSearchResult] {
-        let searchURL = URL(string: "\(ServerConstants.Urls.cache())episode/search")!
-        var request = URLRequest(url: searchURL)
-        request.httpMethod = "POST"
-        request.addLocalizationHeaders()
-
-        let json: [String: Any] = ["term": term]
-
-        let jsonData = try JSONSerialization.data(withJSONObject: json)
-
-        request.httpBody = jsonData
-
-        let (data, _) = try await session.data(for: request)
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-        decoder.dateDecodingStrategy = .formatted(dateFormatter)
-
-        let envelope = try decoder.decode(EpisodeSearchEnvelope.self, from: data)
-        return envelope.episodes
+        []
     }
 }

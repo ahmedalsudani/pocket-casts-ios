@@ -2,23 +2,14 @@ import Foundation
 import PocketCastsDataModel
 
 public extension ApiServerHandler {
+    /// Ratings used to round-trip through `api.pocketcasts.com`. Returning
+    /// false / nil makes the rating UI fall through to a hidden / read-only
+    /// state.
     func addRating(uuid: String, rating: Int) async -> Bool {
-        return await withCheckedContinuation { continuation in
-            let operation = UserPodcastRatingAddTask(uuid: uuid, rating: UInt32(rating))
-            operation.completion = { success in
-                continuation.resume(returning: success)
-            }
-            apiQueue.addOperation(operation)
-        }
+        false
     }
 
     func getRating(uuid: String) async -> UserPodcastRating? {
-        return await withCheckedContinuation { continuation in
-            let operation = UserPodcastRatingGetTask(uuid: uuid)
-            operation.completion = { _, userRating in
-                continuation.resume(returning: userRating)
-            }
-            apiQueue.addOperation(operation)
-        }
+        nil
     }
 }

@@ -42,27 +42,11 @@ public class CombinedSearchTask {
         self.session = session
     }
 
+    /// The combined podcast+episode endpoint lived on `cache.pocketcasts.com`.
+    /// We surface only podcast results now (via iTunes Search). Cross-catalog
+    /// episode search has no on-device equivalent.
     public func search(term: String) async throws -> [CombinedSearchResultType] {
-        let components = URLComponents(string: ServerConstants.Urls.cache() + "search/combined")
-        guard let searchURL = components?.url,
-              let request = ServerHelper.createJsonRequest(url: searchURL, params: ["term": term], timeout: 10, cachePolicy: .reloadIgnoringCacheData)
-        else {
-            throw URL.URLCreationError.invalidURLString
-        }
-
-        let (data, _) = try await session.data(for: request)
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-        decoder.dateDecodingStrategy = .formatted(dateFormatter)
-
-        let envelope = try decoder.decode(CombinedSearchEnvelope.self, from: data)
-        return envelope.results.compactMap { result in
-            return result.resolvedResultType
-        }
+        let podcasts = try await iTunesSearchService.shared.search(term: term)
+        return podcasts.map { CombinedSearchResultType.podcast($0) }
     }
 }

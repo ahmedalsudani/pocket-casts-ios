@@ -72,54 +72,10 @@ public class SharingServerHandler {
     }
 
     public func sharePodcastList(listInfo: PodcastShareInfo, completion: @escaping (_ shareUrl: String?) -> Void) {
-        let url = ServerHelper.asUrl(ServerConstants.Urls.sharing() + "share/list")
-
-        let convertedPodcasts = listInfo.podcasts.compactMap { uuid -> [String: String] in
-            ["uuid": uuid]
-        }
-        var shareRequest = PodcastShareRequest(title: listInfo.title, description: listInfo.description, podcasts: convertedPodcasts)
-
-        // add security params
-        let dateStr = securityDateFormatter.string(from: Date())
-        shareRequest.datetime = dateStr
-        shareRequest.h = "\(dateStr)\(ServerCredentials.sharing)".insecureSHA1Hash()
-
-        guard let request = ServerHelper.createJsonRequest(url: url, params: shareRequest, timeout: SharingServerHandler.timeout, cachePolicy: .useProtocolCachePolicy) else {
-            completion(nil)
-
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok, let data, error == nil else {
-                completion(nil)
-
-                return
-            }
-
-            do {
-                let shareUrl = try JSONDecoder().decode(PodcastShareResponse.self, from: data).result?.shareUrl
-                completion(shareUrl)
-            } catch {
-                completion(nil)
-            }
-        }.resume()
+        completion(nil)
     }
 
     public func loadList(listUrl: URL, completion: @escaping (_ podcastList: PodcastList?) -> Void) {
-        URLSession.shared.dataTask(with: listUrl) { data, response, error in
-            guard (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.ok, let data, error == nil else {
-                completion(nil)
-
-                return
-            }
-
-            do {
-                let podcastList = try JSONDecoder().decode(PodcastList.self, from: data)
-                completion(podcastList)
-            } catch {
-                completion(nil)
-            }
-        }.resume()
+        completion(nil)
     }
 }

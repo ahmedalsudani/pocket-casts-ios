@@ -48,21 +48,11 @@ public class PredictiveSearchTask {
         self.session = session
     }
 
+    /// Predictive search ran against `search.pocketcasts.com/autocomplete`.
+    /// Returns an empty list now — the search UI just won't show
+    /// autocomplete suggestions. The main `PodcastSearchTask` (iTunes) still
+    /// works on submit.
     public func search(term: String) async throws -> [PredictiveSearchResult] {
-        var components = URLComponents(string: ServerConstants.Urls.search + "autocomplete/search")
-        components?.queryItems = [URLQueryItem(name: "q", value: term)]
-        guard let searchURL = components?.url else {
-            throw URL.URLCreationError.invalidURLString
-        }
-        var request = URLRequest(url: searchURL)
-        request.httpMethod = "GET"
-        request.addLocalizationHeaders()
-
-        let (data, _) = try await session.data(for: request)
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-        let envelope = try decoder.decode(PredictiveSearchEnvelope.self, from: data)
-        return envelope.results
+        []
     }
 }

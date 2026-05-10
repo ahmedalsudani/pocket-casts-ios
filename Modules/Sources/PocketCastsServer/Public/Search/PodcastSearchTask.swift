@@ -24,6 +24,16 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
     public let author: String?
     public let kind: Kind
     public var isLocal: Bool?
+    public let iTunesId: Int?
+
+    public init(uuid: String, title: String?, author: String?, kind: Kind, isLocal: Bool? = false, iTunesId: Int? = nil) {
+        self.uuid = uuid
+        self.title = title
+        self.author = author
+        self.kind = kind
+        self.isLocal = isLocal
+        self.iTunesId = iTunesId
+    }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -32,6 +42,7 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
         self.author = try? container.decode(String.self, forKey: .author)
         self.kind = (try? container.decodeIfPresent(Kind.self, forKey: .kind)) ?? .podcast
         self.isLocal = (try? container.decode(Bool.self, forKey: .isLocal)) ?? false
+        self.iTunesId = try? container.decodeIfPresent(Int.self, forKey: .iTunesId)
     }
 
     public init?(from podcast: Podcast) {
@@ -40,6 +51,7 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
         self.author = podcast.author
         self.isLocal = true
         self.kind = .podcast
+        self.iTunesId = nil
     }
 
     public init?(from folder: Folder) {
@@ -48,6 +60,7 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
         self.author = ""
         self.isLocal = true
         self.kind = .folder
+        self.iTunesId = nil
     }
 
     public init?(from predictiveResult: PredictiveSearchResult) {
@@ -58,6 +71,7 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
                 self.title = podcast.title
                 self.kind = .podcast
                 self.isLocal = false
+                self.iTunesId = nil
             default:
                 return nil
         }
@@ -73,6 +87,7 @@ public struct PodcastFolderSearchResult: Codable, Hashable {
         self.title = combinedResult.title
         self.kind = .podcast
         self.isLocal = false
+        self.iTunesId = nil
     }
 
     public enum Kind: Codable {
@@ -97,45 +112,12 @@ public class PodcastSearchTask {
         self.session = session
     }
 
+    /// Routes podcast search through Apple's iTunes Search API instead of
+    /// the (now-gone) Pocket Casts server. Each result carries an iTunesId
+    /// so the subscribe flow can resolve the publisher's RSS feed URL via
+    /// `iTunesLookup` and then call `addFromFeedURL`.
     public func search(term: String) async throws -> [PodcastFolderSearchResult] {
-        var envelope: PodcastsSearchEnvelope?
-        var retry = true
-        var pollCount = 0
-        while retry {
-            envelope = try await search(term: term)
-            // Check if status of search is poll, if it's polled we will repeat the call after x amount of secs.
-            pollCount += 1
-            let backOffTime = pollBackoffTime(pollCount: pollCount)
-            guard envelope?.status == "poll", backOffTime > 0 else {
-                retry = false
-                continue
-            }
-
-            try await Task.sleep(nanoseconds: backOffTime)
-        }
-
-        if let podcast = envelope?.result.podcast {
-            return [podcast]
-        } else {
-            return envelope?.result.searchResults ?? []
-        }
-    }
-
-    private func search(term: String) async throws -> PodcastsSearchEnvelope {
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "podcasts/search")
-        let request = ServerHelper.createJsonRequest(url: url, params: MainServerHandler.shared.podcastSearchQuery(searchTerm: term)!, timeout: 10, cachePolicy: .reloadIgnoringCacheData)
-
-        let (data, _) = try await session.data(for: request!)
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let envelope = try decoder.decode(PodcastsSearchEnvelope.self, from: data)
-        return envelope
-    }
-
-    private func pollBackoffTime(pollCount: Int) -> UInt64 {
-        let multiply = pow(10, 9)
-
-        return UInt64(NSDecimalNumber(decimal: Decimal(pollCount.pollWaitingTime) * multiply).uint64Value)
+        try await iTunesSearchService.shared.search(term: term)
     }
 }
 

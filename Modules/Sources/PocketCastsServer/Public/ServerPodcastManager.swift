@@ -62,6 +62,18 @@ public class ServerPodcastManager: NSObject {
     }
 
     public func addFromUuid(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool) -> Void)?) {
+        // Local-first: if we already have this podcast on device with a feed
+        // URL, refresh through LocalFeedService instead of the (now-stubbed)
+        // cache server.
+        if let existing = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true),
+           let feedURLString = existing.podcastUrl,
+           let feedURL = URL(string: feedURLString) {
+            addFromFeedURL(feedURL, subscribe: subscribe, autoDownloads: autoDownloads) { added, _ in
+                completion?(added)
+            }
+            return
+        }
+
         CacheServerHandler.shared.loadPodcastInfo(podcastUuid: podcastUuid) { [weak self] podcastInfo, lastModified in
             if let podcastInfo {
                 self?.addFromJson(podcastUuid: podcastUuid, lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
@@ -315,46 +327,10 @@ public class ServerPodcastManager: NSObject {
         return episode
     }
 
+    /// Recommendations are server-curated. With no Pocket Casts server they
+    /// are unavailable; return nil and let the UI render an empty state.
     public func loadRecommendations(for podcastUUID: String, in region: String?) async throws -> PodcastCollection? {
-        let components = URLComponents(string: ServerConstants.Urls.api())
-
-        guard var components else {
-            assertionFailure("[ServerPodcastManager] Recommendations API URL failed")
-            throw URLError(.badURL)
-        }
-
-        components.path += "recommendations/podcast/\(podcastUUID)"
-
-        if let region {
-            components.queryItems = [
-                URLQueryItem(name: "country", value: region)
-            ]
-        }
-
-        guard let url = components.url else {
-            assertionFailure("[ServerPodcastManager] Recommendations API construction failed")
-            throw URLError(.badURL)
-        }
-
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-        request.setValue("application/json; charset=UTF8", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-        request.addLocalizationHeaders()
-        let (data, response) = try await urlConnection.send(request: request)
-
-        if (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.notModified {
-            return nil
-        }
-
-        guard let data else {
-            return nil
-        }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        return try decoder.decode(PodcastCollection.self, from: data)
+        nil
     }
 
     private func loadFrom(url: String) -> [String: Any]? {
