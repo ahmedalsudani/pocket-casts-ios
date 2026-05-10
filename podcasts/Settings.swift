@@ -1,6 +1,5 @@
 import PocketCastsDataModel
 #if !os(watchOS)
-import Firebase
 #endif
 import PocketCastsServer
 import UIKit
@@ -1697,59 +1696,51 @@ class Settings: NSObject {
         }
     }
 
-    // MARK: - Variables that are loaded/changed through Firebase
+    // MARK: - Variables that used to be loaded through Firebase Remote Config
 
     #if !os(watchOS)
         class func minTimeBetweenProgressSaves() -> TimeInterval {
-            remoteMsToTime(key: Constants.RemoteParams.periodicSaveTimeMs)
+            Constants.RemoteParams.periodicSaveTimeMsDefault / 1000
         }
 
         class func podcastSearchDebounceTime() -> TimeInterval {
             if FeatureFlag.searchPredictive.enabled {
                 return 0.2
             } else {
-                return remoteMsToTime(key: Constants.RemoteParams.podcastSearchDebounceMs)
+                return Constants.RemoteParams.podcastSearchDebounceMsDefault / 1000
             }
         }
 
         class func episodeSearchDebounceTime() -> TimeInterval {
-            remoteMsToTime(key: Constants.RemoteParams.episodeSearchDebounceMs)
+            Constants.RemoteParams.episodeSearchDebounceMsDefault / 1000
         }
 
         static var endOfYearRequireAccount: Bool {
-            let remote = RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.endOfYearRequireAccount)
-            return remote.boolValue
+            Constants.RemoteParams.endOfYearRequireAccountDefault
         }
 
         static var addMissingEpisodes: Bool {
-            let remote = RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.addMissingEpisodes)
-            return remote.boolValue
+            Constants.RemoteParams.addMissingEpisodesDefault
         }
 
         static var plusCloudStorageLimit: Int {
-            RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.customStorageLimitGB).numberValue.intValue
+            Constants.RemoteParams.customStorageLimitGBDefault
         }
 
         static var patronCloudStorageLimit: Int {
-            RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.patronCloudStorageGB).numberValue.intValue
+            Constants.RemoteParams.patronCloudStorageGBDefault
         }
 
         static var errorLogoutHandling: Bool {
-            return RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.errorLogoutHandling).boolValue
+            Constants.RemoteParams.errorLogoutHandlingDefault
         }
 
     static var slumberPromoCode: String? {
-        RemoteConfig.remoteConfig().configValue(forKey: Constants.RemoteParams.slumberStudiosPromoCode).stringValue
+        Constants.RemoteParams.slumberStudiosPromoCodeDefault
     }
 
-        private class func remoteMsToTime(key: String) -> TimeInterval {
-            let remoteMs = RemoteConfig.remoteConfig().configValue(forKey: key)
-
-            return TimeInterval(remoteMs.numberValue.doubleValue / 1000)
-        }
-
         static var newSettingsStorage: Bool {
-            RemoteConfig.remoteConfig().configValue(forKey: FeatureFlag.newSettingsStorage.remoteKey).boolValue
+            FeatureFlag.newSettingsStorage.default
         }
     #endif
 }

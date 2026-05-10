@@ -1,115 +1,48 @@
 import Foundation
 import PocketCastsUtils
-import EventHorizonSDK
 
+/// Telemetry has been removed. This shim keeps the `Analytics.track(...)`
+/// surface so call sites compile, but every call is a no-op. The
+/// `AnalyticsAdapter` / `AnalyticsDescribable` protocols stay because
+/// peripheral types still conform to them.
 class Analytics {
     static let shared = Analytics()
-    private var adapters: [AnalyticsAdapter]?
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-    var analyticsAppThemeProvider: AnalyticsAppThemeProviding?
-#endif
 
-    // Whether we have adapters registered or not
     var adaptersRegistered: Bool = false
 
-    static func register(adapters: [AnalyticsAdapter]) {
-        Self.shared.adapters = adapters
-        Self.shared.setAdaptersRegisteredStatus(true)
-    }
+    static func register(adapters: [AnalyticsAdapter]) {}
 
-    /// Unregisters all the registered adapters, disabling analytics
-    static func unregister() {
-        Self.shared.adapters = nil
-        Self.shared.setAdaptersRegisteredStatus(false)
-    }
+    static func unregister() {}
+
 #if !os(watchOS) && !APPCLIP && !os(tvOS)
-    static func add(analyticsAppThemeProvider: AnalyticsAppThemeProviding) {
-        Self.shared.analyticsAppThemeProvider = analyticsAppThemeProvider
-    }
+    var analyticsAppThemeProvider: AnalyticsAppThemeProviding?
+
+    static func add(analyticsAppThemeProvider: AnalyticsAppThemeProviding) {}
 #endif
 
-    /// Convenience method to call Analytics.shared.track*
-    static func track(_ event: AnalyticsEvent, properties: [AnyHashable: Any]? = nil) {
-        Self.shared.track(event, properties: properties)
-    }
+    static func track(_ event: AnalyticsEvent, properties: [AnyHashable: Any]? = nil) {}
 
-    func track(_ event: AnalyticsEvent, properties: [AnyHashable: Any]? = nil) {
-        _track(event.eventName, properties: properties)
-    }
-
-    private func _track(_ eventName: String, properties: [AnyHashable: Any]? = nil) {
-        var newProperties = (properties ?? [:]).mapValues { (($0 as? AnalyticsDescribable)?.analyticsDescription) ?? $0 }
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-        if FeatureFlag.appThemePropertiesLogging.enabled {
-            analyticsAppThemeProvider?.appThemeProperties.forEach { key, value in
-                newProperties[key] = value
-            }
-        }
-#endif
-        adapters?.forEach {
-            $0.track(name: eventName, properties: newProperties)
-        }
-    }
-
-    private static func logCurrentAdapters() {
-#if DEBUG
-        FileLog.shared.console("Analytics adapters: \(Self.shared.adapters ?? [])")
-#endif
-    }
-
-    fileprivate func setAdaptersRegisteredStatus(_ value: Bool) {
-        adaptersRegistered = value
-        Self.logCurrentAdapters()
-    }
-}
-
-// MARK: Analytics (EventHorizon)
-
-extension Analytics {
-    static func send(_ event: some EventHorizonSDK.Trackable) {
-        Analytics.shared._track(event.analyticsName, properties: event.analyticsProperties)
-    }
+    func track(_ event: AnalyticsEvent, properties: [AnyHashable: Any]? = nil) {}
 }
 
 // MARK: - Analytics + Source
 
 extension Analytics {
-    static func track(_ event: AnalyticsEvent, source: Any, properties: [AnyHashable: Any]? = nil) {
-        var sourceProperties = properties ?? [:]
-        sourceProperties.updateValue(source, forKey: "source")
-
-        track(event, properties: sourceProperties)
-    }
+    static func track(_ event: AnalyticsEvent, source: Any, properties: [AnyHashable: Any]? = nil) {}
 }
 
 // MARK: - Opt out/in
 
 extension Analytics {
     func optOutOfAnalytics() {
-        Analytics.track(.analyticsOptOut)
         Settings.setAnalytics(optOut: true)
-        refreshRegistered()
     }
 
     func optInOfAnalytics() {
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
         Settings.setAnalytics(optOut: false)
-        setAdaptersRegisteredStatus(false)
-        (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
-        Analytics.track(.analyticsOptIn)
-#endif
     }
 
-    func refreshRegistered() {
-        if Settings.analyticsOptOut() {
-            Analytics.unregister()
-        }
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
-        (UIApplication.shared.delegate as? AppDelegate)?.setupAnalytics()
-#endif
-        FileLog.shared.addMessage("Analytics: Refreshed Registered Adapters")
-        Analytics.logCurrentAdapters()
-    }
+    func refreshRegistered() {}
 }
 
 // MARK: - Protocols

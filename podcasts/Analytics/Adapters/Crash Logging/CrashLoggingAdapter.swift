@@ -1,15 +1,14 @@
 import Foundation
-import AutomatticRemoteLogging
 
+/// Automattic remote crash logging has been removed. The adapter is kept
+/// only because some call sites still reference `CrashLoggingAdapter.sharedManager`
+/// (e.g. for graceful nil-checks) — every member is a no-op now.
 class CrashLoggingAdapter: AnalyticsAdapter {
-    let crashLogging: CrashLogging?
-
     static var sharedManager: CrashLoggingAdapter?
 
     init() {
-        self.crashLogging = try? CrashLogging(dataProvider: CrashLoggingDataProvider()).start()
         Self.sharedManager = self
     }
 
-    func track(name: String, properties: [AnyHashable: Any]?) { }
+    func track(name: String, properties: [AnyHashable: Any]?) {}
 }

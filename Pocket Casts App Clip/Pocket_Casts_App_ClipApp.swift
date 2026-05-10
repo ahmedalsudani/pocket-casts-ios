@@ -1,6 +1,5 @@
 import SwiftUI
 import PocketCastsServer
-import AutomatticTracks
 
 @main
 struct Pocket_Casts_App_ClipApp: App {
@@ -13,8 +12,6 @@ struct Pocket_Casts_App_ClipApp: App {
 
         ServerSettings.setSkipBackTime(10, syncChange: false)
         ServerSettings.setSkipForwardTime(45, syncChange: false)
-
-        Analytics.register(adapters: [AnalyticsLoggingAdapter(), TracksAdapter()])
     }
 
     var body: some Scene {
@@ -22,9 +19,6 @@ struct Pocket_Casts_App_ClipApp: App {
             ZStack {
                 NowPlayingView()
                     .background(Color(UIColor.systemBackground))
-            }
-            .onAppear {
-                Analytics.track(.appClipOpened)
             }
         }
     }

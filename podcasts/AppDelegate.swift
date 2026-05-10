@@ -1,13 +1,9 @@
 import BackgroundTasks
-import AutomatticRemoteLogging
-import Firebase
-import FirebasePerformance
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 import Combine
-import Sentry
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     private static let initialRefreshDelay = 2.seconds
@@ -33,15 +29,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: - App Lifecycle
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        configureFirebase()
-        TraceManager.shared.setup(handler: traceHandler)
-
         setupSecrets()
-        addAnalyticsObservers()
-        setupAnalytics()
-
-        DataManager.logger = SentryLogger()
-        ServerConfig.shared.errorLogger = SentryLogger()
 
         appInstallState = appLifecycleAnalytics.checkApplicationInstalledOrUpgraded()
 
@@ -271,15 +259,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         badgeHelper.updateBadge()
     }
 
-    private func configureFirebase() {
-        FirebaseApp.configure()
-
-        FirebaseManager.refreshRemoteConfig() { [weak self] _ in
-            self?.updateEndOfYearRemoteValue()
-            self?.updateRemoteFeatureFlags()
-        }
-    }
-
+    /// Firebase / Remote Config has been removed along with the rest of the
+    /// telemetry stack. Feature flags now use only their local defaults; the
+    /// public hook stays so existing callers continue to compile.
     func updateRemoteFeatureFlags(forceReload: Bool = false) {
         guard BuildEnvironment.current != .debug || forceReload else { return }
 
@@ -292,18 +274,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         try? FeatureFlagOverrideStore().override(FeatureFlag.slumber, withValue: Settings.slumberPromoCode?.isEmpty == false)
 
-        FeatureFlag.allCases.forEach { flag in
-            if let remoteKey = flag.remoteKey {
-                let remoteValue = RemoteConfig.remoteConfig().configValue(forKey: remoteKey)
-                if remoteValue.source == .remote {
-                    do {
-                        FileLog.shared.console("Override \(flag): \(remoteValue.boolValue)")
-                        try FeatureFlagOverrideStore().override(flag, withValue: remoteValue.boolValue)
-                    } catch {
-                        FileLog.shared.addMessage("Failed to set remote feature flag \(flag): \(error)")
-                    }
-                }
-            }
+        // Remote-Config-driven flag overrides used to live here. With no
+        // remote config, every flag falls back to its compiled default.
+        _ = forceReload
         }
     }
 
@@ -386,19 +359,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
+/// Sentry crash logging has been removed. This shim is kept only because
+/// `DataManager.logger` and `ServerConfig.shared.errorLogger` were typed
+/// against the `ErrorLogger` protocol — anything that still references it
+/// gets a no-op.
 struct SentryLogger: ErrorLogger {
-    func log(error: Error, context: [String: String]?) {
-        if BuildEnvironment.current == .appStore {
-            let crumb = Breadcrumb()
-            crumb.level = SentryLevel.info
-            crumb.category = "grdb"
-            crumb.message = error.localizedDescription
-            SentrySDK.addBreadcrumb(crumb)
-            return
-        }
-
-    #if os(iOS)
-    CrashLoggingAdapter.sharedManager?.crashLogging?.logError(error, tags: context ?? [:], level: .warning)
-    #endif
-    }
+    func log(error: Error, context: [String: String]?) {}
 }

@@ -66,72 +66,10 @@ enum AnalyticsSource: String, AnalyticsDescribable {
     var analyticsDescription: String { rawValue }
 }
 
+/// Telemetry has been removed. The coordinator is preserved as a no-op
+/// so existing call sites compile, but every call drops on the floor.
 class AnalyticsCoordinator {
-    /// Sometimes the playback source can't be inferred, just inform it here
     var currentSource: AnalyticsSource?
 
-    private var currentEpisodeIsVideo: Bool {
-        PlaybackManager.shared.currentEpisode()?.videoPodcast() ?? false
-    }
-
-    var currentAnalyticsSource: AnalyticsSource {
-        if let currentSource {
-            self.currentSource = nil
-            return currentSource
-        }
-
-        #if !os(watchOS) && !APPCLIP
-        return topAnalyticsSourceProvider()?.analyticsSource ?? .unknown
-        #else
-        return .unknown
-        #endif
-    }
-
-#if !os(watchOS) && !APPCLIP
-        func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {
-            // Only dispatch async on the main thread if needed
-            guard Thread.isMainThread else {
-                DispatchQueue.main.async {
-                    self.track(event, properties: properties)
-                }
-                return
-            }
-
-            let defaultProperties: [String: Any] = ["source": currentAnalyticsSource, "content_type": currentEpisodeIsVideo ? "video" : "audio"]
-            let mergedProperties = defaultProperties.merging(properties ?? [:]) { current, _ in current }
-            Analytics.track(event, properties: mergedProperties)
-        }
-
-    func getTopViewController(base: UIViewController? = SceneHelper.rootViewController()) -> UIViewController? {
-            guard UIApplication.shared.applicationState == .active else {
-                return nil
-            }
-
-            if let nav = base as? UINavigationController {
-                return getTopViewController(base: nav.visibleViewController)
-            } else if let tab = base as? UITabBarController, let selected = tab.selectedViewController {
-                return getTopViewController(base: selected)
-            } else if let presented = base?.presentedViewController {
-                return getTopViewController(base: presented)
-            }
-            return base
-        }
-
-    func topAnalyticsSourceProvider() -> AnalyticsSourceProvider? {
-        guard let topViewController = getTopViewController() else { return nil }
-
-        var candidate: UIViewController? = topViewController
-        while let viewController = candidate {
-            if let provider = viewController as? AnalyticsSourceProvider {
-                return provider
-            }
-            candidate = viewController.parent ?? viewController.presentingViewController
-        }
-
-        return nil
-    }
-    #else
-        /// NOOP track event to preventing needing to wrap all the events in #if checks
-        func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {}
-    #endif
+    func track(_ event: AnalyticsEvent, properties: [String: Any]? = nil) {}
 }
