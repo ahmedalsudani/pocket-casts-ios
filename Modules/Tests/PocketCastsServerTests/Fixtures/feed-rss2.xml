@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sample Podcast</title>
+    <link>https://example.com/podcast</link>
+    <description>A sample podcast for testing.</description>
+    <language>en-us</language>
+    <itunes:author>Jane Doe</itunes:author>
+    <itunes:summary>The iTunes summary of the show.</itunes:summary>
+    <itunes:image href="https://example.com/cover.jpg"/>
+    <itunes:category text="Technology"/>
+    <image>
+      <url>https://example.com/cover-rss.jpg</url>
+      <title>Sample Podcast</title>
+      <link>https://example.com/podcast</link>
+    </image>
+    <atom:link href="https://example.com/feed.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Episode One</title>
+      <guid isPermaLink="false">episode-one-guid</guid>
+      <link>https://example.com/podcast/episode-one</link>
+      <description>The first episode summary.</description>
+      <content:encoded><![CDATA[<p>The first episode <strong>HTML</strong> body.</p>]]></content:encoded>
+      <pubDate>Mon, 05 May 2025 12:00:00 +0000</pubDate>
+      <enclosure url="https://example.com/episodes/one.mp3" length="12345678" type="audio/mpeg"/>
+      <itunes:duration>1:23:45</itunes:duration>
+      <itunes:season>1</itunes:season>
+      <itunes:episode>1</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+    </item>
+    <item>
+      <title>Episode Two</title>
+      <guid isPermaLink="false">episode-two-guid</guid>
+      <description>The second episode summary.</description>
+      <pubDate>Mon, 12 May 2025 12:00:00 +0000</pubDate>
+      <enclosure url="https://example.com/episodes/two.mp3" length="9876543" type="audio/mpeg"/>
+      <itunes:duration>2400</itunes:duration>
+      <itunes:season>1</itunes:season>
+      <itunes:episode>2</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+    </item>
+  </channel>
+</rss>
