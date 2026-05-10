@@ -24,13 +24,8 @@ public class RefreshManager {
     #endif
 
     public func syncUpNext() {
-        if !SyncManager.isUserLoggedIn() { return }
-
-        // if the user has an active subscription, there might be custom episodes in their Up Next, so grab those first
-        if SubscriptionHelper.hasActiveSubscription() {
-            refreshQueue.addOperation(RetrieveCustomFilesTask())
-        }
-        refreshQueue.addOperation(UpNextSyncTask())
+        // The Pocket Casts account / sync subsystem has been removed.
+        // Up Next state is now exclusively local.
     }
 
 
@@ -41,12 +36,7 @@ public class RefreshManager {
     public func refresh(podcast: Podcast, from episodeUuid: String) {
         podcast.forceRefreshEpisodeFrom = episodeUuid
         refresh(podcasts: [podcast]) {
-            if SyncManager.isUserLoggedIn() {
-                guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
-
-                DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-                podcast.forceRefreshEpisodeFrom = nil
-            }
+            podcast.forceRefreshEpisodeFrom = nil
         }
     }
 
@@ -54,12 +44,7 @@ public class RefreshManager {
         podcast.forceRefreshEpisodeFrom = episodeUuid
         await withCheckedContinuation { continuation in
             refresh(podcasts: [podcast]) {
-                if SyncManager.isUserLoggedIn() {
-                    guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
-
-                    DataManager.sharedManager.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-                    podcast.forceRefreshEpisodeFrom = nil
-                }
+                podcast.forceRefreshEpisodeFrom = nil
                 continuation.resume()
             }
         }

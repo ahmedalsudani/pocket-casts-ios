@@ -51,46 +51,10 @@ class RefreshOperation: Operation {
                 return
             }
 
-            // refresh is done, now perform a sync if the user has a sync account
-            if SyncManager.isUserLoggedIn() {
-                NotificationCenter.default.post(name: ServerNotifications.syncStarted, object: nil)
-
-                if SubscriptionHelper.hasActiveSubscription() { apiQueue.addOperation(RetrieveCustomFilesTask()) }
-                apiQueue.addOperation(UpNextSyncTask())
-                let syncTask = SyncTask()
-                apiQueue.addOperation(syncTask)
-
-                apiQueue.addOperation(SyncHistoryTask())
-
-                apiQueue.addOperation(SyncSettingsTask())
-
-                #if !os(watchOS)
-                    ServerSettings.iapUnverifiedPurchaseReceiptDate() == nil ? apiQueue.addOperation(SubscriptionStatusTask()) : apiQueue.addOperation(PurchaseReceiptTask())
-                #endif
-
-                #if !os(watchOS)
-                    // update our local copy of the remote stats. Doesn't really matter if this fails or succeeds
-                    StatsManager.shared.loadRemoteStats(completion: nil)
-                #endif
-
-                apiQueue.waitUntilAllOperationsAreFinished()
-
-                // we use the sync task as the main indication of whether the sync has failed
-                let syncResult = syncTask.status
-                if syncResult == .failed || syncResult == .cancelled {
-                    completionHandler?(.failed)
-                } else {
-                    // however we use the refresh to indicate to iOS whether we found new stuff or not
-                    completionHandler?(refreshResult == .successNewData ? .newData : .noData)
-
-                    FileLog.shared.addMessage("Sync succeeded")
-
-                    ServerNotificationsHelper.shared.fireSyncCompleted()
-                    ServerConfig.shared.syncDelegate?.playlistChanged()
-                }
-            } else { // no sync required, we're done
-                completionHandler?(refreshResult == .successNewData ? .newData : .noData)
-            }
+            // The Pocket Casts account / sync subsystem has been removed —
+            // refresh is local-only now. Once the feed fan-out completes
+            // there's nothing left to do server-side.
+            completionHandler?(refreshResult == .successNewData ? .newData : .noData)
 
             ServerConfig.shared.syncDelegate?.applyAutoArchivingToAllPodcasts()
 

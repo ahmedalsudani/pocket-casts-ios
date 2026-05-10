@@ -4,18 +4,15 @@ import PocketCastsUtils
 import UIKit
 
 public class SyncManager {
+    /// The Pocket Casts account / sync subsystem has been removed. Every
+    /// caller that gates behavior on "is the user logged in" should now take
+    /// the local-only branch.
     public class func isUserLoggedIn() -> Bool {
-        if let email = ServerSettings.syncingEmail(), !email.isEmpty {
-            return true
-        }
-        return false
+        false
     }
 
     public class func isFirstSyncInProgress() -> Bool {
-        let lastSyncStartDate = UserDefaults.standard.string(forKey: ServerConstants.UserDefaults.lastSyncStartDate)
-        let lastModifiedServerDate = UserDefaults.standard.string(forKey: ServerConstants.UserDefaults.lastModifiedServerDate)
-
-        return (lastSyncStartDate != nil && lastModifiedServerDate == nil)
+        false
     }
 
     public class func isRefreshInProgress() -> Bool {

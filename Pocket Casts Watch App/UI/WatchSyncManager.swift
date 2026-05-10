@@ -113,36 +113,8 @@ class WatchSyncManager {
     }
 
     func loginAndRefreshIfRequired() {
-        if SyncManager.isUserLoggedIn() {
-            periodicCheckSubscriptionStatus()
-            if SubscriptionHelper.hasActiveSubscription() {
-                let comparisonResult = compareUpNextLists()
-                if comparisonResult == .watchNeedsUpdate || comparisonResult == .notEnoughInformation {
-                    RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: false)
-                } else {
-                    periodicRefresh()
-                }
-            }
-        } else {
-            FileLog.shared.addMessage("Non Plus user - getting login details")
-            SessionManager.shared.requestLoginDetails(replyHandler: { response in
-                let username = response[WatchConstants.Messages.LoginDetailsResponse.username] as? String ?? ""
-                let password = response[WatchConstants.Messages.LoginDetailsResponse.password] as? String ?? ""
-                let refreshToken = response[WatchConstants.Messages.LoginDetailsResponse.refreshToken] as? String
-
-                ServerSettings.setSyncingEmail(email: username)
-                ServerSettings.saveSyncingPassword(password)
-                ServerSettings.setRefreshToken(refreshToken)
-
-                if !username.isEmpty {
-                    self.login()
-                } else {
-                    FileLog.shared.addMessage("No username or password, don't attempt login")
-                }
-            }, errorHandler: { error in
-                FileLog.shared.addMessage("Failed to get login details: \(error?.localizedDescription ?? "No error information")")
-            })
-        }
+        // Account / sync is gone — refresh the local feed list and we're done.
+        RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: false)
     }
 
     func login() {

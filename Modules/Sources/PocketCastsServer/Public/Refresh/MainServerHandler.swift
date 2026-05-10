@@ -100,104 +100,24 @@ public class MainServerHandler {
         }
     }
 
+    /// OPML import used to round-trip through `refresh.pocketcasts.com`. With
+    /// the server gone, OpmlImporter parses URLs locally and calls
+    /// `addFromFeedURL` directly — this entry point is unused.
     public func sendOpmlChunk(feedUrls: [String] = [], pollUuids: [String] = [], completion: @escaping (ImportOpmlResponse?) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(ImportOpmlResponse.failedResponse())
-            return
-        }
-
-        var baseRequest: BaseRequest = UploadOpmlRequest()
-        addStandardParams(baseRequest: &baseRequest, uniqueId: uniqueId)
-
-        var uploadRequest = baseRequest as! UploadOpmlRequest
-        uploadRequest.urls = feedUrls
-        uploadRequest.pollUuids = pollUuids
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "import/opml")
-        guard let request = ServerHelper.createJsonRequest(url: url, params: uploadRequest, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData) else {
-            completion(ImportOpmlResponse.failedResponse())
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            guard let data, error == nil else {
-                completion(ImportOpmlResponse.failedResponse())
-                return
-            }
-
-            do {
-                let refreshResponse = try JSONDecoder().decode(ImportOpmlResponse.self, from: data)
-                completion(refreshResponse)
-            } catch {
-                completion(ImportOpmlResponse.failedResponse())
-            }
-
-        }.resume()
+        completion(ImportOpmlResponse.failedResponse())
     }
 
+    /// OPML export used to ask the server to assemble feed URLs from a list
+    /// of UUIDs. With the server gone, on-device export should iterate
+    /// `Podcast.podcastUrl` directly.
     public func exportPodcasts(uuids: [String], completion: @escaping (ExportPodcastsResponse?) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(ExportPodcastsResponse.failedResponse())
-            return
-        }
-
-        var baseRequest: BaseRequest = ExportPodcastsRequest()
-        addStandardParams(baseRequest: &baseRequest, uniqueId: uniqueId)
-
-        var exportRequest = baseRequest as! ExportPodcastsRequest
-        exportRequest.uuids = uuids
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "import/export_feed_urls")
-        guard let request = ServerHelper.createJsonRequest(url: url, params: exportRequest, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData) else {
-            completion(ExportPodcastsResponse.failedResponse())
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            guard let data, error == nil else {
-                completion(ExportPodcastsResponse.failedResponse())
-                return
-            }
-
-            do {
-                let refreshResponse = try JSONDecoder().decode(ExportPodcastsResponse.self, from: data)
-                completion(refreshResponse)
-            } catch {
-                completion(ExportPodcastsResponse.failedResponse())
-            }
-
-        }.resume()
+        completion(ExportPodcastsResponse.failedResponse())
     }
 
+    /// Share-link resolution lived on the Pocket Casts server. Returning a
+    /// failed response makes share-link consumers degrade to "not found".
     public func lookupShareLink(sharePath: String, completion: @escaping (ShareListResponse?) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(ShareListResponse.failedResponse())
-            return
-        }
-
-        var shareLinkRequest: BaseRequest = ShareListRequest()
-        addStandardParams(baseRequest: &shareLinkRequest, uniqueId: uniqueId)
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + sharePath)
-        guard let request = ServerHelper.createJsonRequest(url: url, params: shareLinkRequest as! ShareListRequest, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData) else {
-            completion(ShareListResponse.failedResponse())
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            guard let data, error == nil else {
-                completion(ShareListResponse.failedResponse())
-                return
-            }
-
-            do {
-                let refreshResponse = try JSONDecoder().decode(ShareListResponse.self, from: data)
-                completion(refreshResponse)
-            } catch {
-                completion(ShareListResponse.failedResponse())
-            }
-
-        }.resume()
+        completion(ShareListResponse.failedResponse())
     }
 
     public func refresh(podcasts: [Podcast], completion: @escaping (PodcastRefreshResponse?) -> Void) {
@@ -211,51 +131,17 @@ public class MainServerHandler {
         }
     }
 
+    /// Returns nil — the background URL session refresh path that used this
+    /// has been replaced by a direct LocalFeedService refresh in
+    /// BackgroundSyncManager.
     public func createRefreshRequest(podcasts: [Podcast]) -> URLRequest? {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            return nil
-        }
-
-        for podcast in podcasts { // ensure podcasts have up to date latest episode uuids
-            ServerPodcastManager.shared.updateLatestEpisodeInfo(podcast: podcast, setDefaults: false)
-        }
-
-        let pushEnabled = ServerConfig.shared.syncDelegate?.isPushEnabled() ?? false
-
-        var jsonRequest = jsonWithStandardParams(uniqueId: uniqueId)
-        jsonRequest["push_sound"] = "11" // for legacy reasons, this is always the push sound we send, since it's no longer configurable
-        jsonRequest["podcasts"] = podcasts.map(\.uuid).joined(separator: ",")
-        jsonRequest["last_episodes"] = podcasts.map { $0.forceRefreshEpisodeFrom ?? $0.latestEpisodeUuid ?? "" }.joined(separator: ",")
-        jsonRequest["push_messages_on"] = podcasts.map { (pushEnabled && $0.isPushEnabled) ? "1" : "0" }.joined()
-        if let pushToken = ServerSettings.pushToken() {
-            jsonRequest["push_token"] = pushToken
-        }
-        jsonRequest["push_on"] = pushEnabled ? "true" : "false"
-        guard let data = try? JSONSerialization.data(withJSONObject: jsonRequest) else {
-            FileLog.shared.addMessage("Failed to create refresh request")
-            return nil
-        }
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "user/update")
-        let request = ServerHelper.createJsonRequest(url: url, data: data, timeout: MainServerHandler.callTimeout, cachePolicy: .reloadIgnoringCacheData)
-
-        return request
+        nil
     }
 
+    /// Server-backed podcast search is gone. Use `PodcastSearchTask` /
+    /// `iTunesSearchService` instead.
     public func podcastSearch(searchTerm: String, completion: @escaping (PodcastSearchResponse?) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(PodcastSearchResponse.failedResponse())
-            return
-        }
-
-        var baseQuery: BaseRequest = PodcastSearchQuery()
-        addStandardParams(baseRequest: &baseQuery, uniqueId: uniqueId)
-
-        var searchQuery = baseQuery as! PodcastSearchQuery
-        searchQuery.q = searchTerm
-
-        let searchOperation = PodcastSearchOperation(searchQuery: searchQuery, completionHandler: completion)
-        searchQueue.addOperation(searchOperation)
+        completion(PodcastSearchResponse.failedResponse())
     }
 
     func podcastSearchQuery(searchTerm: String) -> PodcastSearchQuery? {
@@ -279,105 +165,25 @@ public class MainServerHandler {
         }
     }
 
+    /// iTunes-id resolution now lives in `LocalFeedService.iTunesLookup`,
+    /// which returns the publisher's RSS feed URL directly.
     public func findPodcastByiTunesId(_ iTunesId: Int, completion: @escaping (String?) -> Void) {
-        guard let uniqueId = ServerConfig.shared.syncDelegate?.uniqueAppId() else {
-            completion(nil)
-            return
-        }
-
-        var baseQuery: BaseRequest = PodcastUuidSearchQuery()
-        addStandardParams(baseRequest: &baseQuery, uniqueId: uniqueId)
-
-        var searchQuery = baseQuery as! PodcastUuidSearchQuery
-        searchQuery.id = iTunesId
-
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "podcasts/show")
-        guard let request = ServerHelper.createJsonRequest(url: url, params: searchQuery, timeout: MainServerHandler.callTimeout, cachePolicy: .useProtocolCachePolicy) else {
-            completion(nil)
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, _, error in
-            guard let data, error == nil else {
-                completion(nil)
-                return
-            }
-
-            do {
-                let searchResponse = try JSONDecoder().decode(PodcastSearchResponse.self, from: data)
-                completion(searchResponse.result?.podcast?.uuid)
-            } catch {
-                completion(nil)
-            }
-
-        }.resume()
+        completion(nil)
     }
 
+    /// `updatePodcast` used to ask the Pocket Casts server to re-pull a
+    /// podcast's feed. With the local feed pipeline we just refresh that
+    /// podcast directly and report success.
     public func updatePodcast(uuid: String, lastEpisodeUuid: String?) async throws -> Bool {
-        var query = "podcast_uuid=\(uuid)"
-        if let lastEpisodeUuid {
-            query += "&last_episode_uuid=\(lastEpisodeUuid)"
-        }
-        let url = ServerHelper.asUrl(ServerConstants.Urls.main() + "api/v1/update_podcast?\(query)")
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-
-        FileLog.shared.console("Update Podcast API start request \(url.absoluteString)")
-
-        if Task.isCancelled {
+        guard let podcast = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) else {
             return false
         }
-
-        let response = try await URLSession.shared.data(for: request)
-        guard let urlResponse = response.1 as? HTTPURLResponse else {
-            return false
-        }
-
-        FileLog.shared.console("Update Podcast API response status code \(urlResponse.statusCode)")
-
-        var statusCode = urlResponse.statusCode
-        let allHeaderFields = urlResponse.allHeaderFields
-        while statusCode == 202 {
-            guard
-                let location = allHeaderFields["Location"] as? String,
-                let retry = allHeaderFields["retry-after"] as? String,
-                let interval = UInt(retry) else {
-                FileLog.shared.console("Update Podcast API response incorrect header")
-                return false
+        await withCheckedContinuation { continuation in
+            refreshPodcastFeed(podcast: podcast) { _ in
+                continuation.resume()
             }
-            FileLog.shared.console("Poll Podcast API with delay of \(interval) sec")
-            let delay = UInt64(interval * 1_000_000_000)
-            try await Task<Never, Never>.sleep(nanoseconds: delay)
-            if Task.isCancelled {
-                return false
-            }
-            guard let newUrlResponse = try await pollUpdatePodcast(url: location) else {
-                FileLog.shared.console("Poll Podcast API no response")
-                return false
-            }
-            statusCode = newUrlResponse.statusCode
-            FileLog.shared.console("Poll Podcast API new status code \(statusCode)")
         }
-
-        if statusCode == 200 {
-            return true
-        }
-        return false
-    }
-
-    private func pollUpdatePodcast(url: String) async throws -> HTTPURLResponse? {
-        guard let url = URL(string: url) else {
-            FileLog.shared.console("Poll Podcast API anavailable url: \(url)")
-            return nil
-        }
-        FileLog.shared.console("Poll Podcast API start fetching \(url)")
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-
-        let response = try await URLSession.shared.data(for: request)
-        return response.1 as? HTTPURLResponse
+        return true
     }
 
     private func jsonWithStandardParams(uniqueId: String) -> [String: Any] {

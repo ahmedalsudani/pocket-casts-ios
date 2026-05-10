@@ -45,16 +45,11 @@ class IAPHelper: NSObject {
         addSubscriptionNotifications()
     }
 
-    func setup(hasSubscription: Bool) {
-        SKPaymentQueue.default().add(self)
-        if !hasSubscription {
-            IAPHelper.shared.requestProductInfo()
-        }
-    }
+    /// In-app purchases are disabled — every user is unlocked locally.
+    /// `setup`/`tearDown` are kept as no-ops so legacy call sites compile.
+    func setup(hasSubscription: Bool) {}
 
-    func tearDown() {
-        SKPaymentQueue.default().remove(self)
-    }
+    func tearDown() {}
 
     /// Requests the product info if we're not checking already, and the products we have already are different
     func requestProductInfoIfNeeded() {

@@ -26,7 +26,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     lazy var lenticularFilter: LenticularFilter = .init()
     lazy var appLifecycleAnalytics = AppLifecycleAnalytics()
 
-    private var backgroundSignOutListener: BackgroundSignOutListener?
     private(set) var appInstallState: AppLifecycleAnalytics.AppInstallState?
 
     lazy var whatsNew: WhatsNew = WhatsNew()
@@ -85,13 +84,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         setupRoutes()
 
-        if Settings.shouldResultEndOfYearSyncStatus {
-            Settings.setHasSyncedEpisodesForPlayback(false, year: 2025)
-            Settings.setHasSyncedEpisodesForPlaybackAsPlusUser(false, year: 2025)
-            Settings.shouldResultEndOfYearSyncStatus = false
-        }
-
-
         NotificationsHelper.shared.register(checkToken: false)
 
         DispatchQueue.global().async { [weak self] in
@@ -125,17 +117,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         setupBackgroundRefresh()
 
-        IAPHelper.shared.setup(hasSubscription: SubscriptionHelper.hasActiveSubscription())
-
-        setupSignOutListener()
-
-        if FeatureFlag.earlyReloadSubscriptionStatus.enabled,
-           SyncManager.isUserLoggedIn(),
-           appInstallState == .updated {
-            ApiServerHandler.shared.retrieveSubscriptionStatus()
-            FileLog.shared.addMessage("Reload subscription status early as the app updated")
-        }
-
         return true
     }
 
@@ -158,7 +139,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func handleBecomeActive() {
-        setupSignOutListener()
         appLifecycleAnalytics.didBecomeActive()
 
         // give the network a few seconds to come up before refreshing, also only refresh if the last refresh was more than 5 minutes ago
@@ -209,7 +189,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         badgeHelper.teardown()
         shortcutManager.stopListeningForShortcutChanges()
 
-        IAPHelper.shared.tearDown()
         UIApplication.shared.endReceivingRemoteControlEvents()
     }
 
@@ -404,14 +383,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func setupSecrets() {
         ServerCredentials.sharing = ApiCredentials.sharingServerSecret
-    }
-
-    private func setupSignOutListener() {
-        guard backgroundSignOutListener == nil else {
-            return
-        }
-
-        backgroundSignOutListener = BackgroundSignOutListener(presentingViewController: SceneHelper.rootViewController())
     }
 }
 

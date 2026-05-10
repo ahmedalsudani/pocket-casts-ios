@@ -27,25 +27,11 @@ open class SubscriptionHelper: NSObject {
         hasActiveSubscription() ? subscriptionType() : .none
     }
 
-    /// Returns the users active subscription tier or .none if they don't currently have one
+    /// Returns the users active subscription tier. With accounts gone every
+    /// user is treated as the highest tier locally so that PaidFeature gates
+    /// always unlock.
     public static var activeTier: SubscriptionTier {
-        guard hasActiveSubscription() else {
-            return .none
-        }
-
-        let tier = subscriptionTier
-
-        // Fallback handling
-        // If the server isn't returning the subscription tier yet then the tier will be none
-        // If the user has an active subscription, and the tier is none, and their subscription type is plus
-        // Then fallback to returning plus as the tier
-        //
-        // This should be removed after the Patron server changes have been pushed to production
-        guard tier == .none, subscriptionType() == .plus else {
-            return tier
-        }
-
-        return .plus
+        .patron
     }
 
     /// The users subscription tier, or .none if there isn't one available
@@ -61,9 +47,10 @@ open class SubscriptionHelper: NSObject {
         }
     }
 
+    /// With the Pocket Casts account / billing path removed, every user gets
+    /// the highest tier locally — no paywalls, all features unlocked.
     public class func hasActiveSubscription() -> Bool {
-        let status = UserDefaults.standard.bool(forKey: ServerConstants.UserDefaults.subscriptionPaid)
-        return status
+        true
     }
 
     public class func hasRenewingSubscription() -> Bool {
@@ -178,7 +165,8 @@ open class SubscriptionHelper: NSObject {
     }
 
     public class func subscriptionType() -> SubscriptionType {
-        SubscriptionType(rawValue: UserDefaults.standard.integer(forKey: ServerConstants.UserDefaults.subscriptionType)) ?? SubscriptionType.none
+        // Locally, treat every user as having the highest subscription tier.
+        .patron
     }
 
     public class func setSubscriptionPodcasts(_ value: [PodcastSubscription]) {
