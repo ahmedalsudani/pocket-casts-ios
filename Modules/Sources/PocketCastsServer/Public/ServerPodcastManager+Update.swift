@@ -4,21 +4,43 @@ import PocketCastsUtils
 
 extension ServerPodcastManager {
 
-    /// Update a podcast if required.
+    /// Update a podcast if required, by conditionally re-fetching its RSS feed
+    /// through `LocalFeedService` (the cache server this used to hit is gone).
+    /// A 304 means nothing to do; a 200 runs the full update path, which also
+    /// persists the new Last-Modified and prunes episodes that left the feed.
     /// - Parameters:
     ///   - podcast: a `Podcast`
     ///   - addMissingEpisodes: if set to `true` it will add missing episodes that are not the latest ones.
     ///   Latest ones are handled by a refresh (due to auto-download/up next)
     ///   - completion: a completion block that receives a `Bool`
     public func updatePodcastIfRequired(podcast: Podcast, addMissingEpisodes: Bool = false, completion: ((Bool) -> Void)?) {
-        CacheServerHandler.shared.loadPodcastIfModified(podcast: podcast) { [weak self] podcastInfo, lastModified in
-            if let podcastInfo {
-                self?.updatePodcast(podcast: podcast, lastModified: lastModified, podcastInfo: podcastInfo, addMissingEpisodes: addMissingEpisodes, completion: {
-                    FileLog.shared.addMessage("\(podcast.title ?? "") updated from cache server")
-                    completion?(true)
-                })
-            } else {
-                FileLog.shared.addMessage("\(podcast.title ?? "") didn't need to be updated from cache server")
+        guard let urlString = podcast.podcastUrl, let feedURL = URL(string: urlString) else {
+            FileLog.shared.addMessage("\(podcast.title ?? "") has no feed URL, can't update")
+            completion?(false)
+            return
+        }
+
+        Task { [weak self] in
+            guard let self else {
+                completion?(false)
+                return
+            }
+
+            do {
+                let result = try await LocalFeedService.shared.fetch(feedURL: feedURL, lastModified: podcast.lastUpdatedAt)
+                switch result {
+                case .notModified:
+                    FileLog.shared.addMessage("\(podcast.title ?? "") feed not modified, no update needed")
+                    completion?(false)
+                case .success(let feed, let lastModified, _):
+                    let podcastInfo = feed.toPodcastInfoJson(uuid: podcast.uuid, feedURLString: urlString)
+                    self.updatePodcast(podcast: podcast, lastModified: lastModified ?? podcast.lastUpdatedAt, podcastInfo: podcastInfo, addMissingEpisodes: addMissingEpisodes, completion: {
+                        FileLog.shared.addMessage("\(podcast.title ?? "") updated from local feed")
+                        completion?(true)
+                    })
+                }
+            } catch {
+                FileLog.shared.addMessage("\(podcast.title ?? "") feed update failed: \(error.localizedDescription)")
                 completion?(false)
             }
         }

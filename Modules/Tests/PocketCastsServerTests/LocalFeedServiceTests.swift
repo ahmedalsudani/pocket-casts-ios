@@ -135,6 +135,36 @@ final class LocalFeedServiceTests: XCTestCase {
         XCTAssertEqual(feed.episodes[0].uuid, expected)
     }
 
+    func testMixedContentTextIsNotTruncatedByChildElements() async throws {
+        // Atom XHTML bodies interleave text with child elements — the text
+        // before and after a child must all survive into the description.
+        let feedXML = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom">
+          <title>Mixed Content Feed</title>
+          <entry>
+            <id>mixed-1</id>
+            <title>Mixed Episode</title>
+            <link rel="enclosure" href="https://example.com/mixed/one.mp3" type="audio/mpeg" length="1000"/>
+            <content type="xhtml"><div>Hello <b>world</b> and beyond</div></content>
+          </entry>
+        </feed>
+        """
+        let connection = URLConnection(mockHandler: { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)
+            return (Data(feedXML.utf8), response)
+        })
+        let service = LocalFeedService(connection: connection)
+
+        let result = try await service.fetch(feedURL: URL(string: "https://example.com/mixed.xml")!)
+        guard case .success(let feed, _, _) = result else {
+            return XCTFail("Expected success, got \(result)")
+        }
+
+        XCTAssertEqual(feed.episodes.count, 1)
+        XCTAssertEqual(feed.episodes[0].descriptionHTML, "Hello world and beyond")
+    }
+
     func testNotModifiedShortCircuits() async throws {
         let url = URL(string: "https://example.com/feed.xml")!
         let connection = URLConnection(mockHandler: { request in

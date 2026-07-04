@@ -61,6 +61,10 @@ public class LocalFeedService {
         self.connection = connection
     }
 
+    /// Fetches and parses a feed. `lastModified`/`etag` are sent as
+    /// conditional-GET headers. Only Last-Modified is persisted by callers —
+    /// there's no podcast column for an ETag, and servers that honor
+    /// If-None-Match essentially always honor If-Modified-Since too.
     public func fetch(feedURL: URL, lastModified: String? = nil, etag: String? = nil) async throws -> LocalFeedFetchResult {
         var request = URLRequest(url: feedURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
         request.httpMethod = "GET"
@@ -97,38 +101,44 @@ public class LocalFeedService {
         )
     }
 
+    /// The refresh fan-out hits a different host per feed, so URLSession's
+    /// per-host connection limit doesn't bound it — we cap it ourselves.
+    private static let maxConcurrentFetches = 8
+
     /// Fans out a refresh across all subscribed podcasts that have a stored
     /// feed URL (in `Podcast.podcastUrl`). Failures on individual feeds are
-    /// logged and skipped — they don't fail the overall response.
+    /// logged and skipped — they don't fail the overall response. At most
+    /// `maxConcurrentFetches` feeds are in flight at once.
     public func refresh(podcasts: [Podcast]) async -> PodcastRefreshResponse {
+        let eligible: [(podcast: Podcast, feedURL: URL)] = podcasts.compactMap { podcast in
+            guard let urlString = podcast.podcastUrl, let url = URL(string: urlString) else {
+                FileLog.shared.addMessage("LocalFeedService: skipping podcast \(podcast.uuid) — no feed URL stored")
+                return nil
+            }
+            return (podcast, url)
+        }
+
         var podcastUpdates: [String: [RefreshEpisode]] = [:]
 
         await withTaskGroup(of: (String, [RefreshEpisode]).self) { group in
-            for podcast in podcasts {
-                guard let urlString = podcast.podcastUrl, let url = URL(string: urlString) else {
-                    FileLog.shared.addMessage("LocalFeedService: skipping podcast \(podcast.uuid) — no feed URL stored")
-                    continue
-                }
-                let podcastUuid = podcast.uuid
-                group.addTask { [weak self] in
-                    guard let self else { return (podcastUuid, []) }
-                    do {
-                        let result = try await self.fetch(feedURL: url, lastModified: podcast.lastUpdatedAt)
-                        switch result {
-                        case .notModified:
-                            return (podcastUuid, [])
-                        case .success(let feed, _, _):
-                            return (podcastUuid, feed.refreshEpisodes())
-                        }
-                    } catch {
-                        FileLog.shared.addMessage("LocalFeedService: refresh failed for \(podcastUuid): \(error.localizedDescription)")
-                        return (podcastUuid, [])
-                    }
+            var nextIndex = 0
+
+            func addNextFetch() {
+                guard nextIndex < eligible.count else { return }
+                let (podcast, feedURL) = eligible[nextIndex]
+                nextIndex += 1
+                group.addTask {
+                    (podcast.uuid, await self.refreshEpisodes(for: podcast, feedURL: feedURL))
                 }
             }
 
-            for await (uuid, episodes) in group where !episodes.isEmpty {
-                podcastUpdates[uuid] = episodes
+            for _ in 0 ..< Self.maxConcurrentFetches { addNextFetch() }
+
+            for await (uuid, episodes) in group {
+                if !episodes.isEmpty {
+                    podcastUpdates[uuid] = episodes
+                }
+                addNextFetch()
             }
         }
 
@@ -138,6 +148,28 @@ public class LocalFeedService {
         refreshResult.podcastUpdates = podcastUpdates
         response.result = refreshResult
         return response
+    }
+
+    /// Fetches one podcast's feed for refresh, persisting the response's
+    /// Last-Modified so the next refresh's conditional GET can short-circuit
+    /// with a 304 instead of re-downloading the whole feed.
+    private func refreshEpisodes(for podcast: Podcast, feedURL: URL) async -> [RefreshEpisode] {
+        do {
+            let result = try await fetch(feedURL: feedURL, lastModified: podcast.lastUpdatedAt)
+            switch result {
+            case .notModified:
+                return []
+            case .success(let feed, let lastModified, _):
+                if let lastModified, lastModified != podcast.lastUpdatedAt {
+                    podcast.lastUpdatedAt = lastModified
+                    DataManager.sharedManager.save(podcast: podcast)
+                }
+                return feed.refreshEpisodes()
+            }
+        } catch {
+            FileLog.shared.addMessage("LocalFeedService: refresh failed for \(podcast.uuid): \(error.localizedDescription)")
+            return []
+        }
     }
 
     /// Look up an iTunes podcast by its iTunes Id and return its RSS feed URL,
@@ -273,7 +305,11 @@ final class FeedXMLParser: NSObject, XMLParserDelegate {
     }
 
     private var elementStack: [String] = []
-    private var charBuffer = ""
+    /// One text buffer per open element, aligned with `elementStack`. When an
+    /// element closes, its text is folded back into its parent's buffer so
+    /// mixed content (text interrupted by child elements, e.g. Atom XHTML
+    /// bodies) isn't truncated at the first child.
+    private var charStack: [String] = []
 
     private var feedTitle: String?
     private var feedAuthor: String?
@@ -330,7 +366,7 @@ final class FeedXMLParser: NSObject, XMLParserDelegate {
     func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String: String] = [:]) {
         let name = qName ?? elementName
         elementStack.append(name)
-        charBuffer = ""
+        charStack.append("")
 
         switch name {
         case "feed":
@@ -378,23 +414,27 @@ final class FeedXMLParser: NSObject, XMLParserDelegate {
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        charBuffer += string
+        guard !charStack.isEmpty else { return }
+        charStack[charStack.count - 1] += string
     }
 
     func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
-        if let s = String(data: CDATABlock, encoding: .utf8) {
-            charBuffer += s
-        }
+        guard !charStack.isEmpty, let s = String(data: CDATABlock, encoding: .utf8) else { return }
+        charStack[charStack.count - 1] += s
     }
 
     func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         let name = qName ?? elementName
         defer {
             if !elementStack.isEmpty { elementStack.removeLast() }
-            charBuffer = ""
         }
 
-        let value = charBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw = charStack.popLast() ?? ""
+        if !charStack.isEmpty {
+            charStack[charStack.count - 1] += raw
+        }
+
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         let parent = elementStack.dropLast().last
 
         if itemActive {
