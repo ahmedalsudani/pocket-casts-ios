@@ -9,6 +9,7 @@ class DiscoverCollectionViewController: PCViewController {
         case loading(String?)
         case noNetwork
         case noResults
+        case searchPrompt
         case empty
         case item(DiscoverCellType.ItemType)
     }
@@ -76,15 +77,14 @@ class DiscoverCollectionViewController: PCViewController {
     }
 
     func reloadData(completion: (() -> Void)? = nil) {
-        showPageLoading()
-
-        DiscoverServerHandler.shared.discoverPage { [weak self] discoverLayout, _ in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.populateFrom(discoverLayout: discoverLayout)
-                completion?()
-            }
-        }
+        // The Discover server is gone in this local-only build; the tab exists
+        // for its search bar (iTunes search + add-by-RSS-URL), so show a
+        // search prompt instead of fetching a layout that can never load.
+        var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
+        snapshot.appendSections([0])
+        snapshot.appendItems([CellType.searchPrompt])
+        dataSource.apply(snapshot)
+        completion?()
     }
 
     override func handleThemeChanged() {
@@ -258,6 +258,14 @@ extension DiscoverCollectionViewController {
             cell.contentConfiguration = ContentUnavailableConfiguration.noResults()
         }
 
+        let searchPromptRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { cell, _, _ in
+            cell.contentConfiguration = ContentUnavailableConfiguration.emptyState(
+                title: L10n.searchPodcasts,
+                message: L10n.searchLabel,
+                icon: { Image("discover_noresult") }
+            )
+        }
+
         let emptyRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { cell, _, _ in
             cell.contentConfiguration = ContentUnavailableConfiguration.empty()
         }
@@ -270,6 +278,8 @@ extension DiscoverCollectionViewController {
                 return collectionView.dequeueConfiguredReusableCell(using: noNetworkRegistration, for: indexPath, item: item)
             case .noResults:
                 return collectionView.dequeueConfiguredReusableCell(using: noResultsRegistration, for: indexPath, item: item)
+            case .searchPrompt:
+                return collectionView.dequeueConfiguredReusableCell(using: searchPromptRegistration, for: indexPath, item: item)
             case .empty:
                 return collectionView.dequeueConfiguredReusableCell(using: emptyRegistration, for: indexPath, item: item)
             case .item(let item):
