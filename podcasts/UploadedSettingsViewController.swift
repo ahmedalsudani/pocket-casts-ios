@@ -40,27 +40,15 @@ class UploadedSettingsViewController: PCViewController, UITableViewDelegate, UIT
         }
     }
 
+    // Local-only build: the cloud sections (auto upload/download, remove from
+    // cloud after playing, upload only on WiFi, Plus upsell) are gone — files
+    // never leave the device.
     private func tableSections() -> [TableSections] {
-        var sections: [TableSections] = [.autoAddToUpNext, .afterPlaying, .autoSync, .onlyOnWifi]
-        if !SubscriptionHelper.hasActiveSubscription(), !Settings.plusInfoDismissedOnFilesSettings() {
-            sections.append(.lockedInfo)
-        }
-
-        return sections
+        [.autoAddToUpNext, .afterPlaying]
     }
 
     private func tableRows() -> [[TableRows]] {
-        let hasSubscription = SubscriptionHelper.hasActiveSubscription()
-
-        var rows: [[TableRows]] = [[.autoAddToUpNext], [.removeFileAfterPlaying], [.autoUpload, .autoDownload], [.onlyOnWifi]]
-        if hasSubscription {
-            rows[1].append(.removeFromCloudAfterPlaying)
-        }
-        if !hasSubscription, !Settings.plusInfoDismissedOnFilesSettings() {
-            rows.append([.lockedInfo])
-        }
-
-        return rows
+        [[.autoAddToUpNext], [.removeFileAfterPlaying]]
     }
 
     // MARK: - UITableView Methods

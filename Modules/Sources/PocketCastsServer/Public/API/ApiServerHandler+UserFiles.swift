@@ -2,61 +2,45 @@ import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
 
+/// Cloud file storage lived on the Pocket Casts API. In this local-only build
+/// files never leave the device, so every endpoint completes immediately
+/// without queueing a network operation. The methods stay so remaining call
+/// sites (and the watch target) keep compiling.
 public extension ApiServerHandler {
     func retrieveCustomFilesTask() {
-        let retrieveTask = RetrieveCustomFilesTask()
-        apiQueue.addOperation(retrieveTask)
     }
 
     func uploadFileRequest(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
-        let uploadOperation = UploadFileRequestTask(episode: episode)
-        uploadOperation.completion = completion
-        apiQueue.addOperation(uploadOperation)
+        completion(nil)
     }
 
     func uploadImageRequest(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
-        let uploadOperation = UploadImageRequestTask(episode: episode)
-        uploadOperation.completion = completion
-        apiQueue.addOperation(uploadOperation)
+        completion(nil)
     }
 
     func uploadFileDelete(episode: UserEpisode, completion: @escaping (Bool?) -> Void) {
-        let deleteOperation = UploadFileDeleteTask(episode: episode)
-        deleteOperation.completion = completion
-        apiQueue.addOperation(deleteOperation)
+        completion(false)
     }
 
     func uploadFilePlayRequest(episode: UserEpisode, completion: @escaping (URL?) -> Void) {
-        let requestOperation = UploadFilePlayRequestTask(episode: episode)
-        requestOperation.completion = completion
-        apiQueue.addOperation(requestOperation)
+        completion(nil)
     }
 
     func uploadFilesUpdateRequest(episodes: [UserEpisode], completion: @escaping (Int) -> Void) {
-        let saveOperation = UploadFilesUpdateTask(episodes: episodes)
-        saveOperation.completion = completion
-        apiQueue.addOperation(saveOperation)
+        completion(0)
     }
 
     func uploadSingleFileUpdateRequest(episode: UserEpisode, completion: @escaping (Int) -> Void) {
-        let saveOperation = UploadFilesUpdateTask(episodes: [episode])
-        saveOperation.completion = completion
-        apiQueue.addOperation(saveOperation)
+        completion(0)
     }
 
     func uploadFilesUpdateStatusRequest(episode: UserEpisode) {
-        let statusOperation = RetrieveFileUploadStatusTask(episode: episode)
-        apiQueue.addOperation(statusOperation)
     }
 
     func uploadImageDelete(episode: UserEpisode, completion: @escaping (Bool?) -> Void) {
-        let deleteOperation = UploadImageDeleteTask(episode: episode)
-        deleteOperation.completion = completion
-        apiQueue.addOperation(deleteOperation)
+        completion(false)
     }
 
     func uploadFileUsageRequest() {
-        let fileUsageOperation = RetrieveFileUsageTask()
-        apiQueue.addOperation(fileUsageOperation)
     }
 }

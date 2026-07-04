@@ -158,16 +158,11 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
     private func tableData() -> [TableRow] {
         var data: [TableRow] = [.upNext, .markAsPlayed, .bookmarks, .editDetails, .delete]
 
+        // Local-only build: no upload / remove-from-cloud rows.
         if episode.queued() || episode.downloading() || episode.waitingForWifi() {
             data.insert(.cancelDownload, at: 3)
-        } else if episode.uploadQueued() || episode.uploading() || episode.uploadWaitingForWifi() {
-            data.insert(.cancelUpload, at: 3)
         } else if !episode.downloaded(pathFinder: DownloadManager.shared) {
             data.insert(.download, at: 3)
-        } else if episode.uploaded() {
-            data.insert(.removeFromCloud, at: 3)
-        } else {
-            data.insert(.upload, at: 3)
         }
         return data
     }

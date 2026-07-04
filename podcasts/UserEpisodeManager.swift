@@ -49,21 +49,12 @@ struct UserEpisodeManager {
         DataManager.sharedManager.save(episode: userEpisode)
     }
 
+    /// Local-only build: cloud upload is gone, files stay on device.
     static func uploadUserEpisode(userEpisode: UserEpisode) {
-        if ServerSettings.userEpisodeOnlyOnWifi(), !NetworkUtils.shared.isConnectedToUnexpensiveConnection() {
-            UploadManager.shared.queueForLaterUpload(episodeUuid: userEpisode.uuid, fireNotification: true)
-        } else {
-            UploadManager.shared.addToQueue(episodeUuid: userEpisode.uuid)
-        }
     }
 
+    /// Local-only build: there's no cloud file list to sync with.
     static func updateUserEpisodes() {
-        let episodes = DataManager.sharedManager.unsyncedUserEpisodes()
-        if !episodes.isEmpty {
-            ApiServerHandler.shared.uploadFilesUpdateRequest(episodes: episodes, completion: { _ in })
-        }
-
-        ApiServerHandler.shared.retrieveCustomFilesTask()
     }
 
     // MARK: Delete
@@ -125,28 +116,13 @@ struct UserEpisodeManager {
         })
     }
 
+    /// Local-only build: nothing is ever uploaded, so nothing can be pending
+    /// deletion from the cloud.
     static func checkForPendingCloudDeletes() {
-        let allCloudDeletes = DataManager.sharedManager.findUserEpisodesWithUploadStatus(.deleteFromCloudPending)
-        if !allCloudDeletes.isEmpty {
-            ApiServerHandler.shared.processPendingCloudDeletes(episodes: allCloudDeletes, deleteCompletedHandler: nil)
-        }
-
-        let allLocalAndCloudDeletes = DataManager.sharedManager.findUserEpisodesWithUploadStatus(.deleteFromCloudAndLocalPending)
-        if !allLocalAndCloudDeletes.isEmpty {
-            ApiServerHandler.shared.processPendingCloudDeletes(episodes: allLocalAndCloudDeletes) { episode in
-                UserEpisodeManager.deleteFromDevice(userEpisode: episode, removeFromPlaybackQueue: false)
-            }
-        }
     }
 
+    /// Local-only build: nothing queues for upload.
     static func checkForPendingUploads() {
-        // check if any existing episode that have been queued need to be uploaded
-        if NetworkUtils.shared.isConnectedToUnexpensiveConnection() {
-            let queuedEpisodes = DataManager.sharedManager.findUserEpisodesWithUploadStatus(.waitingForWifi)
-            for episode in queuedEpisodes {
-                UploadManager.shared.addToQueue(episodeUuid: episode.uuid, fireNotification: true)
-            }
-        }
     }
 
     static func removeOrphanedUserEpisodes() {
@@ -159,25 +135,17 @@ struct UserEpisodeManager {
         guard let episode = DataManager.sharedManager.findUserEpisode(uuid: uuid) else {
             return
         }
-        var episodeSyncRequired = false
         if episode.title != title {
             episode.title = title
             episode.titleModified = TimeFormatter.currentUTCTimeInMillis()
-            episodeSyncRequired = true
         }
         if episode.imageColor != Int32(color) || episode.imageColorModified > 0 {
             episode.imageColor = Int32(color)
             episode.imageColorModified = TimeFormatter.currentUTCTimeInMillis()
-            episodeSyncRequired = true
         }
 
         DataManager.sharedManager.save(episode: episode)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.userEpisodeUpdated, object: episode.uuid)
-        if episodeSyncRequired {
-            ApiServerHandler.shared.uploadSingleFileUpdateRequest(episode: episode, completion: { response in
-                FileLog.shared.addMessage("User file update response \(response)")
-            })
-        }
     }
 
     #if !os(watchOS) && !os(tvOS)

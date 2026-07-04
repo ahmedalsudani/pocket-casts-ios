@@ -50,36 +50,16 @@ public class UploadManager: NSObject {
         } catch {}
     }
 
+    /// Local-only build: cloud upload is gone, nothing ever queues.
     public func queueForLaterUpload(episodeUuid: String, fireNotification: Bool) {
-        guard let episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid), !episode.uploaded() else { return }
-
-        DataManager.sharedManager.saveEpisode(uploadStatus: .waitingForWifi, episode: episode)
-
-        if fireNotification {
-            NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid)
-        }
     }
 
     public func addToQueue(episodeUuid: String) {
         addToQueue(episodeUuid: episodeUuid, fireNotification: true)
     }
 
+    /// Local-only build: cloud upload is gone, nothing ever queues.
     public func addToQueue(episodeUuid: String, fireNotification: Bool) {
-        // if this episode is already uploading, ignore it
-        if !shouldAddUpload(episodeUuid) { return }
-
-        guard let episode = DataManager.sharedManager.findUserEpisode(uuid: episodeUuid) else { return }
-
-        let previousUploadFailed = episode.uploadFailed()
-        episode.uploadStatus = UploadStatus.queued.rawValue
-        episode.uploadTaskId = episode.uuid
-        DataManager.sharedManager.save(episode: episode)
-
-        progressManager.updateStatusForEpisode(episode.uuid, status: .queued)
-
-        if fireNotification { NotificationCenter.default.post(name: ServerNotifications.userEpisodeUploadStatusChanged, object: episode.uuid) }
-
-        performAddToQueue(episode: episode, previousUploadFailed: previousUploadFailed, fireNotification: fireNotification)
     }
 
     private func performAddToQueue(episode: UserEpisode, previousUploadFailed: Bool, fireNotification: Bool) {
@@ -218,38 +198,7 @@ public class UploadManager: NSObject {
         })
     }
 
+    /// Local-only build: cloud upload is gone, custom artwork stays on device.
     public func uploadImageFor(episode: UserEpisode, session: URLSession?) {
-        guard episode.imageColor == 0 else { return }
-
-        ApiServerHandler.shared.uploadImageRequest(episode: episode, completion: { uploadURL in
-            guard let url = uploadURL else {
-                // TODO: handle this failure
-                return
-            }
-
-            var sessionToUse = session
-
-            if sessionToUse == nil {
-                sessionToUse = self.cellularBackgroundSession
-            }
-            var request = URLRequest(url: url)
-            request.httpMethod = "PUT"
-
-            request.addValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-            request.addValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-            request.addLocalizationHeaders()
-            request.timeoutInterval = 30.seconds
-
-            let fileString = UploadManager.shared.customImageDirectory + "/" + episode.uuid + ".jpg"
-            let fileURL = URL(fileURLWithPath: fileString)
-            let uploadTask = sessionToUse?.uploadTask(with: request, fromFile: fileURL)
-
-            uploadTask?.taskDescription = "\(self.imageTaskPrefix)\(episode.uuid)"
-            if let taskId = uploadTask?.taskDescription {
-                self.uploadingEpisodesCache[taskId] = episode
-            }
-            uploadTask?.resume()
-
-        })
     }
 }

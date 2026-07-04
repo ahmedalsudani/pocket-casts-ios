@@ -589,7 +589,8 @@ class Settings: NSObject {
 
     private static let userEpisodeAutoUploadKey = "UserEpisodeAutoUpload"
     class func userFilesAutoUpload() -> Bool {
-        UserDefaults.standard.bool(forKey: userEpisodeAutoUploadKey)
+        // Local-only build: cloud upload is gone, never auto-upload.
+        false
     }
 
     class func setUserEpisodeAutoUpload(_ value: Bool) {

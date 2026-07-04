@@ -13,8 +13,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
             uploadsTable.allowsMultipleSelectionDuringEditing = true
             uploadsTable.rowHeight = UITableView.automaticDimension
             uploadsTable.estimatedRowHeight = 80
-            uploadsTable.sectionHeaderHeight = UITableView.automaticDimension
-            uploadsTable.estimatedSectionHeaderHeight = 56
+            uploadsTable.sectionHeaderHeight = CGFloat.leastNonzeroMagnitude
+            uploadsTable.estimatedSectionHeaderHeight = CGFloat.leastNonzeroMagnitude
             uploadsTable.sectionHeaderTopPadding = 0
         }
     }
@@ -24,9 +24,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
             refreshContentUnavailable()
         }
     }
-    let headerView = UploadedStorageHeaderView()
-
-    private var tableRefreshController: UploadedFilesRefreshController?
     var userEpisodeDetailVC: UserEpisodeDetailViewController?
 
     private func refreshContentUnavailable() {
@@ -111,15 +108,9 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         registerCells()
         title = L10n.files
 
-        if SubscriptionHelper.hasActiveSubscription() {
-            let controller = UploadedFilesRefreshController(source: .files)
-            tableRefreshController = controller
-            uploadsTable.refreshControl = controller.refreshControl
-        }
+        // Local-only build: no pull-to-refresh and no storage header — the
+        // cloud file sync and cloud storage meter they surfaced are gone.
 
-        headerView.controllerForPresenting = self
-
-        updateHeaderView()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: uploadsTable)
         reloadLocalFiles()
 
@@ -234,16 +225,11 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         uploadsTable.isHidden = (uploadedEpisodes.isEmpty)
 
         uploadsTable.reloadData()
-        updateHeaderView()
     }
 
     private func reloadAllFiles() {
-        if SubscriptionHelper.hasActiveSubscription() {
-            UserEpisodeManager.updateUserEpisodes()
-            updateHeaderView()
-        } else {
-            reloadLocalFiles()
-        }
+        // Local-only build: files live on device, there's no cloud list to sync.
+        reloadLocalFiles()
     }
 
     func howTo() {
@@ -285,10 +271,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         }
 
         return action
-    }
-
-    @objc func updateHeaderView() {
-        headerView.update()
     }
 
     @objc func uploadCompletedRefresh(notification: Notification) {

@@ -95,18 +95,9 @@ public class ApiServerHandler {
         RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
     }
 
+    /// Local-only build: nothing is ever uploaded, so there are no cloud
+    /// deletes to process.
     public func processPendingCloudDeletes(episodes: [UserEpisode], deleteCompletedHandler: ((UserEpisode) -> Void)?) {
-        FileLog.shared.addMessage("\(episodes.count) episodes pending to be cloud deleted, processing those now")
-        for episode in episodes {
-            let deleteOperation = UploadFileDeleteTask(episode: episode)
-            deleteOperation.completion = { success in
-                guard success else { return } // failed deletes will remain as pending
-
-                DataManager.sharedManager.saveEpisode(uploadStatus: .notUploaded, episode: episode)
-                deleteCompletedHandler?(episode)
-            }
-            apiQueue.addOperation(deleteOperation)
-        }
     }
 
     /// Swaps the current auth token with one scoped for use in Sonos connections
