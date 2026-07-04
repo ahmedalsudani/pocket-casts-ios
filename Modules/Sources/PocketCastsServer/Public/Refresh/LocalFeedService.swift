@@ -177,6 +177,7 @@ extension ParsedFeed {
         if let descriptionHTML { podcastJson["description_html"] = descriptionHTML }
         if let category { podcastJson["category"] = category }
         if let funding { podcastJson["fundings"] = [["url": funding]] }
+        if let imageURL { podcastJson["image_url"] = imageURL }
 
         podcastJson["episodes"] = episodes.map { $0.toEpisodeJson() }
 
@@ -210,6 +211,12 @@ extension ParsedEpisode {
         if let episodeNumber { json["number"] = episodeNumber }
         if let seasonNumber { json["season"] = seasonNumber }
         if let episodeType { json["type"] = episodeType }
+        if let description { json["description"] = description }
+        if let descriptionHTML { json["description_html"] = descriptionHTML }
+        if let chaptersURL { json["chapters_url"] = chaptersURL }
+        if let chaptersType { json["chapters_type"] = chaptersType }
+        if let transcriptURL { json["transcript_url"] = transcriptURL }
+        if let transcriptType { json["transcript_type"] = transcriptType }
         return json
     }
 
@@ -226,6 +233,10 @@ extension ParsedEpisode {
         episode.episodeType = episodeType
         episode.seasonNumber = seasonNumber
         episode.episodeNumber = episodeNumber
+        episode.chaptersUrl = chaptersURL
+        episode.chaptersType = chaptersType
+        episode.transcriptUrl = transcriptURL
+        episode.transcriptType = transcriptType
         if let publishedDate {
             episode.publishedDate = LocalFeedDateFormatter.refreshDateString(from: publishedDate)
         }

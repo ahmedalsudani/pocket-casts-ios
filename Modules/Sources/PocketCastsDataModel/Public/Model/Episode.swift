@@ -54,6 +54,12 @@ public class Episode: NSObject, BaseEpisode {
     @objc public var deselectedChaptersModified = 0 as Int64
     @objc public var wasDeleted = false
     public var hasGeneratedTranscript: Bool? = nil
+    /// Podcasting 2.0 <podcast:chapters> URL from the feed item, if any.
+    @objc public var chaptersUrl: String?
+    @objc public var chaptersType: String?
+    /// Podcasting 2.0 <podcast:transcript> URL from the feed item, if any.
+    @objc public var transcriptUrl: String?
+    @objc public var transcriptType: String?
 
     public var hasBookmarks: Bool {
         // This wil cause a regression in which the bookmarks won't be displayed
@@ -218,6 +224,15 @@ public class Episode: NSObject, BaseEpisode {
 
         public let transcripts: [Transcript]
         public let pocketCastsTranscripts: [Transcript]?
+
+        public init(showNotes: String?, image: String? = nil, chapters: [EpisodeChapter]? = nil, chaptersUrl: String? = nil, transcripts: [Transcript] = [], pocketCastsTranscripts: [Transcript]? = nil) {
+            self.showNotes = showNotes
+            self.image = image
+            self.chapters = chapters
+            self.chaptersUrl = chaptersUrl
+            self.transcripts = transcripts
+            self.pocketCastsTranscripts = pocketCastsTranscripts
+        }
 
         public struct Transcript: Decodable {
             public let url: String

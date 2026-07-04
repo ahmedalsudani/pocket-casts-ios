@@ -46,7 +46,11 @@ class EpisodeDataManager {
         "deselectedChapters",
         "deselectedChaptersModified",
         "wasDeleted",
-        "hasGeneratedTranscript"
+        "hasGeneratedTranscript",
+        "chaptersUrl",
+        "chaptersType",
+        "transcriptUrl",
+        "transcriptType"
     ]
 
     enum Constants {
@@ -1208,6 +1212,10 @@ class EpisodeDataManager {
         values.append(episode.deselectedChaptersModified)
         values.append(episode.wasDeleted)
         values.append(DBUtils.nullIfNil(value: episode.hasGeneratedTranscript))
+        values.append(DBUtils.nullIfNil(value: episode.chaptersUrl))
+        values.append(DBUtils.nullIfNil(value: episode.chaptersType))
+        values.append(DBUtils.nullIfNil(value: episode.transcriptUrl))
+        values.append(DBUtils.nullIfNil(value: episode.transcriptType))
 
         if includeIdForWhere {
             values.append(episode.id)

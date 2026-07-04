@@ -81,6 +81,9 @@ extension ServerPodcastManager {
         if let fundingsJson = podcastJson["fundings"] as? [[String: Any]], let url = fundingsJson.first?["url"] as? String {
             podcast.fundingURL = url
         }
+        if let imageURL = podcastJson["image_url"] as? String {
+            podcast.imageURL = imageURL
+        }
 
         DataManager.sharedManager.save(podcast: podcast)
 
@@ -118,6 +121,30 @@ extension ServerPodcastManager {
                 }
                 if let type = episodeJson["type"] as? String, existingEpisode.episodeType != type {
                     existingEpisode.episodeType = type
+                    episodeChanged = true
+                }
+                if let description = episodeJson["description"] as? String, existingEpisode.episodeDescription != description {
+                    existingEpisode.episodeDescription = description
+                    episodeChanged = true
+                }
+                if let descriptionHTML = episodeJson["description_html"] as? String, existingEpisode.detailedDescription != descriptionHTML {
+                    existingEpisode.detailedDescription = descriptionHTML
+                    episodeChanged = true
+                }
+                if let chaptersUrl = episodeJson["chapters_url"] as? String, existingEpisode.chaptersUrl != chaptersUrl {
+                    existingEpisode.chaptersUrl = chaptersUrl
+                    episodeChanged = true
+                }
+                if let chaptersType = episodeJson["chapters_type"] as? String, existingEpisode.chaptersType != chaptersType {
+                    existingEpisode.chaptersType = chaptersType
+                    episodeChanged = true
+                }
+                if let transcriptUrl = episodeJson["transcript_url"] as? String, existingEpisode.transcriptUrl != transcriptUrl {
+                    existingEpisode.transcriptUrl = transcriptUrl
+                    episodeChanged = true
+                }
+                if let transcriptType = episodeJson["transcript_type"] as? String, existingEpisode.transcriptType != transcriptType {
+                    existingEpisode.transcriptType = transcriptType
                     episodeChanged = true
                 }
 
@@ -186,6 +213,24 @@ extension ServerPodcastManager {
             }
             if let type = episodeJson["type"] as? String {
                 episode.episodeType = type
+            }
+            if let description = episodeJson["description"] as? String {
+                episode.episodeDescription = description
+            }
+            if let descriptionHTML = episodeJson["description_html"] as? String {
+                episode.detailedDescription = descriptionHTML
+            }
+            if let chaptersUrl = episodeJson["chapters_url"] as? String {
+                episode.chaptersUrl = chaptersUrl
+            }
+            if let chaptersType = episodeJson["chapters_type"] as? String {
+                episode.chaptersType = chaptersType
+            }
+            if let transcriptUrl = episodeJson["transcript_url"] as? String {
+                episode.transcriptUrl = transcriptUrl
+            }
+            if let transcriptType = episodeJson["transcript_type"] as? String {
+                episode.transcriptType = transcriptType
             }
 
             if let type = episodeJson["has_generated_transcript"] as? Bool? {

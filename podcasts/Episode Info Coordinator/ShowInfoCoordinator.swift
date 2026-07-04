@@ -6,26 +6,15 @@ import PocketCastsUtils
 actor ShowInfoCoordinator: ShowInfoCoordinating {
     static let shared = ShowInfoCoordinator()
 
-    private let dataRetriever: ShowInfoDataRetriever
     private let podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever
     private let dataManager: DataManager
-    private let transcriptDataRetriever: TranscriptsDataRetriever
-
-    private var requestingShowInfo: [String: Task<Episode.Metadata?, Error>] = [:]
-    private var requestingRawMetadata: [String: Task<String?, Error>] = [:]
 
     init(
-        dataRetriever: ShowInfoDataRetriever = ShowInfoDataRetriever(),
         podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever = PodcastIndexChapterDataRetriever(),
-        dataManager: DataManager = .sharedManager,
-        transcriptDataRetriever: TranscriptsDataRetriever = TranscriptsDataRetriever()
+        dataManager: DataManager = .sharedManager
     ) {
-        self.dataRetriever = dataRetriever
         self.podcastIndexChapterRetriever = podcastIndexChapterRetriever
         self.dataManager = dataManager
-        self.transcriptDataRetriever = transcriptDataRetriever
-
-
     }
 
     func loadShowNotes(
@@ -102,48 +91,30 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
         try await requestShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
     }
 
+    /// Builds episode metadata from the local database row. The cache server
+    /// that used to supply this JSON is gone — descriptions and Podcasting 2.0
+    /// chapter/transcript URLs are captured from the RSS feed at
+    /// subscribe/refresh time and stored on the episode.
     @discardableResult
     func requestShowInfo(
         podcastUuid: String,
         episodeUuid: String
     ) async throws -> Episode.Metadata? {
-        if let task = requestingShowInfo[episodeUuid] {
-            return try await task.value
+        guard let episode = dataManager.findEpisode(uuid: episodeUuid) else { return nil }
+
+        let showNotes = episode.detailedDescription?.isEmpty == false
+            ? episode.detailedDescription
+            : episode.episodeDescription
+
+        var transcripts = [Episode.Metadata.Transcript]()
+        if let transcriptUrl = episode.transcriptUrl, let transcriptType = episode.transcriptType {
+            transcripts = [Episode.Metadata.Transcript(url: transcriptUrl, type: transcriptType, language: nil)]
         }
 
-        let task = Task<Episode.Metadata?, Error> { [weak self] in
-            guard let self else { throw TaskError.nilSelf }
-
-            do {
-                let data = try await dataRetriever.loadEpisodeDataFromCache(for: podcastUuid, episodeUuid: episodeUuid)
-                await setRequestingShowInfoToNil(for: episodeUuid)
-                return await getShowInfo(for: data?.data(using: .utf8))
-            } catch {
-                await setRequestingShowInfoToNil(for: episodeUuid)
-                throw error
-            }
-        }
-
-        requestingShowInfo[episodeUuid] = task
-
-        return try await task.value
-    }
-
-    private func setRequestingShowInfoToNil(for episodeUuid: String) {
-        requestingShowInfo[episodeUuid] = nil
-    }
-
-    private func getShowInfo(for data: Data?) async -> Episode.Metadata? {
-        guard let data else {
-            return nil
-        }
-
-        do {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            return try decoder.decode(Episode.Metadata.self, from: data)
-        } catch {
-            return nil
-        }
+        return Episode.Metadata(
+            showNotes: showNotes,
+            chaptersUrl: episode.chaptersUrl,
+            transcripts: transcripts
+        )
     }
 }

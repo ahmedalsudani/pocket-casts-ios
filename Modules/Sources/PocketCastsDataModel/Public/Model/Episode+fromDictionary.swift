@@ -38,6 +38,24 @@ extension Episode {
         if let type = episodeJson["type"] as? String {
             episode.episodeType = type
         }
+        if let description = episodeJson["description"] as? String {
+            episode.episodeDescription = description
+        }
+        if let descriptionHTML = episodeJson["description_html"] as? String {
+            episode.detailedDescription = descriptionHTML
+        }
+        if let chaptersUrl = episodeJson["chapters_url"] as? String {
+            episode.chaptersUrl = chaptersUrl
+        }
+        if let chaptersType = episodeJson["chapters_type"] as? String {
+            episode.chaptersType = chaptersType
+        }
+        if let transcriptUrl = episodeJson["transcript_url"] as? String {
+            episode.transcriptUrl = transcriptUrl
+        }
+        if let transcriptType = episodeJson["transcript_type"] as? String {
+            episode.transcriptType = transcriptType
+        }
 
         if let type = episodeJson["has_generated_transcript"] as? Bool {
             episode.hasGeneratedTranscript = type

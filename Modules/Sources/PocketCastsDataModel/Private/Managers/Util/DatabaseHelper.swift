@@ -903,6 +903,19 @@ class DatabaseHelper {
             }
         }
 
+        if schemaVersion < 74 {
+            do {
+                try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN chaptersUrl TEXT;", values: nil)
+                try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN chaptersType TEXT;", values: nil)
+                try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN transcriptUrl TEXT;", values: nil)
+                try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN transcriptType TEXT;", values: nil)
+                schemaVersion = 74
+            } catch {
+                failedAt(74)
+                return
+            }
+        }
+
         db.commit()
     }
 }

@@ -49,6 +49,10 @@ extension Episode {
         episode.deselectedChaptersModified = rs.longLongInt(forColumn: "deselectedChaptersModified")
         episode.wasDeleted = rs.bool(forColumn: "wasDeleted")
         episode.hasGeneratedTranscript = rs.optionalBool(forColumn: "hasGeneratedTranscript")
+        episode.chaptersUrl = rs.string(forColumn: "chaptersUrl")
+        episode.chaptersType = rs.string(forColumn: "chaptersType")
+        episode.transcriptUrl = rs.string(forColumn: "transcriptUrl")
+        episode.transcriptType = rs.string(forColumn: "transcriptType")
         return episode
     }
 }

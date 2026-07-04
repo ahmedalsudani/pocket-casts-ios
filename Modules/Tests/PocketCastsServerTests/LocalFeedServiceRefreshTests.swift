@@ -135,6 +135,47 @@ final class LocalFeedServiceRefreshTests: XCTestCase {
         XCTAssertEqual(episodes[0]["file_size"] as? Int64, 12345678)
         XCTAssertEqual(episodes[0]["type"] as? String, "full")
         XCTAssertNotNil(episodes[0]["published"] as? String)
+        XCTAssertNotNil(episodes[0]["description"] as? String)
+        XCTAssertEqual(episodes[0]["description_html"] as? String, "<p>The first episode <strong>HTML</strong> body.</p>")
+    }
+
+    func testPodcastInfoJsonCarriesImageAndPodcasting2Fields() throws {
+        let connection = URLConnection(mockHandler: { request in
+            let body = self.fixtureData(name: "feed-podcasting2", ext: "xml")
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)
+            return (body, response)
+        })
+        let service = LocalFeedService(connection: connection)
+
+        let expectation = self.expectation(description: "fetch")
+        var capturedFeed: ParsedFeed?
+        Task {
+            let result = try await service.fetch(feedURL: URL(string: "https://example.com/p2/feed.xml")!)
+            if case .success(let feed, _, _) = result { capturedFeed = feed }
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 5)
+
+        let feed = try XCTUnwrap(capturedFeed)
+        let info = feed.toPodcastInfoJson(uuid: "p2-uuid", feedURLString: "https://example.com/p2/feed.xml")
+
+        let podcastDict = try XCTUnwrap(info["podcast"] as? [String: Any])
+        XCTAssertEqual(podcastDict["image_url"] as? String, "https://example.com/p2/cover.jpg")
+
+        let episodes = try XCTUnwrap(podcastDict["episodes"] as? [[String: Any]])
+        XCTAssertEqual(episodes.count, 1)
+        XCTAssertEqual(episodes[0]["chapters_url"] as? String, "https://example.com/p2/episodes/one.chapters.json")
+        XCTAssertEqual(episodes[0]["chapters_type"] as? String, "application/json+chapters")
+        XCTAssertEqual(episodes[0]["transcript_url"] as? String, "https://example.com/p2/episodes/one.vtt")
+        XCTAssertEqual(episodes[0]["transcript_type"] as? String, "text/vtt")
+        XCTAssertEqual(episodes[0]["description"] as? String, "Episode with transcript and chapters.")
+
+        let refreshEpisode = try XCTUnwrap(feed.refreshEpisodes().first)
+        XCTAssertEqual(refreshEpisode.chaptersUrl, "https://example.com/p2/episodes/one.chapters.json")
+        XCTAssertEqual(refreshEpisode.chaptersType, "application/json+chapters")
+        XCTAssertEqual(refreshEpisode.transcriptUrl, "https://example.com/p2/episodes/one.vtt")
+        XCTAssertEqual(refreshEpisode.transcriptType, "text/vtt")
+        XCTAssertEqual(refreshEpisode.episodeDescription, "Episode with transcript and chapters.")
     }
 
     // MARK: - Helpers

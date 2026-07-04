@@ -123,6 +123,10 @@ public struct RefreshEpisode: Decodable {
     public var seasonNumber: Int64?
     public var episodeNumber: Int64?
     public var publishedDate: String?
+    public var chaptersUrl: String?
+    public var chaptersType: String?
+    public var transcriptUrl: String?
+    public var transcriptType: String?
 
     enum CodingKeys: String, CodingKey {
         case title
@@ -137,6 +141,10 @@ public struct RefreshEpisode: Decodable {
         case seasonNumber = "epSeason"
         case episodeNumber = "epNumber"
         case publishedDate = "publishedAt"
+        case chaptersUrl
+        case chaptersType
+        case transcriptUrl
+        case transcriptType
     }
 }
 
