@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsDataModel
 import PocketCastsUtils
 
 public class ServerHelper: NSObject {
@@ -8,14 +9,24 @@ public class ServerHelper: NSObject {
         URL(string: url)!
     }
 
+    /// Prefer the artwork URL captured from the podcast's RSS feed. Podcasts
+    /// added by feed URL have locally generated UUIDs the Pocket Casts CDN has
+    /// never heard of, so the legacy URL 404s for them. The lookup is served
+    /// from PodcastDataManager's in-memory cache, so it's safe in scroll paths.
     public static func image(podcastUuid: String, size: Int) -> String {
-        "\(ServerConstants.Urls.discover())images/\(size)/\(podcastUuid).jpg"
+        if let feedImage = DataManager.sharedManager.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)?.imageURL, !feedImage.isEmpty {
+            return feedImage
+        }
+        return legacyCDNImage(podcastUuid: podcastUuid, size: size)
     }
 
     public static func imageUrl(podcastUuid: String, size: Int) -> URL {
-        let location = "\(ServerConstants.Urls.discover())images/\(size)/\(podcastUuid).jpg"
+        URL(string: image(podcastUuid: podcastUuid, size: size))
+            ?? URL(string: legacyCDNImage(podcastUuid: podcastUuid, size: size))!
+    }
 
-        return URL(string: location)!
+    private static func legacyCDNImage(podcastUuid: String, size: Int) -> String {
+        "\(ServerConstants.Urls.discover())images/\(size)/\(podcastUuid).jpg"
     }
 
     public static func userEpisodeDefaultImageUrl(isDark: Bool, color: Int, size: Int) -> URL {
