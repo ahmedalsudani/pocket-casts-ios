@@ -1,5 +1,6 @@
 import Foundation
 @testable import PocketCastsServer
+import PocketCastsUtils
 import XCTest
 
 final class LocalFeedServiceTests: XCTestCase {
@@ -94,6 +95,44 @@ final class LocalFeedServiceTests: XCTestCase {
 
         XCTAssertEqual(f1.episodes.map(\.uuid), f2.episodes.map(\.uuid))
         XCTAssertNotEqual(f1.episodes[0].uuid, f1.episodes[1].uuid)
+    }
+
+    func testEpisodeUUIDsDifferAcrossFeedsWithSameGuids() async throws {
+        // Two different feeds serving items with identical GUIDs must not
+        // produce colliding episode UUIDs — identity is scoped to the feed URL.
+        let service1 = LocalFeedService(connection: makeConnection(fixture: "feed-rss2", ext: "xml"))
+        let service2 = LocalFeedService(connection: makeConnection(fixture: "feed-rss2", ext: "xml"))
+
+        let r1 = try await service1.fetch(feedURL: URL(string: "https://a.example.com/feed.xml")!)
+        let r2 = try await service2.fetch(feedURL: URL(string: "https://b.example.com/feed.xml")!)
+
+        guard case .success(let f1, _, _) = r1, case .success(let f2, _, _) = r2 else {
+            return XCTFail("Expected success on both fetches")
+        }
+
+        let uuids1 = Set(f1.episodes.map(\.uuid))
+        let uuids2 = Set(f2.episodes.map(\.uuid))
+        XCTAssertEqual(uuids1.count, f1.episodes.count)
+        XCTAssertEqual(uuids2.count, f2.episodes.count)
+        XCTAssertTrue(uuids1.isDisjoint(with: uuids2))
+    }
+
+    func testEpisodeUUIDIsDeterministicV5() async throws {
+        // Pins the identity derivation formula: v5(episodeNamespace, feedURL + "\n" + guid).
+        // If this test ever fails, the change would re-key every episode in
+        // existing libraries — don't change the formula.
+        let service = LocalFeedService(connection: makeConnection(fixture: "feed-rss2", ext: "xml"))
+
+        let result = try await service.fetch(feedURL: URL(string: "https://example.com/feed.xml")!)
+        guard case .success(let feed, _, _) = result else {
+            return XCTFail("Expected success, got \(result)")
+        }
+
+        let expected = UUID.v5(
+            namespace: .pocketCastsEpisodeNamespace,
+            name: "https://example.com/feed.xml\nepisode-one-guid"
+        ).uuidString.lowercased()
+        XCTAssertEqual(feed.episodes[0].uuid, expected)
     }
 
     func testNotModifiedShortCircuits() async throws {

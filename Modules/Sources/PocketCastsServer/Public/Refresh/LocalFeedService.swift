@@ -17,8 +17,12 @@ public struct ParsedFeed {
 
 public struct ParsedEpisode {
     public let guid: String
-    /// Stable UUID v5 derived from the feed's GUID, suitable for the existing
-    /// Podcast Casts data model where episodes are keyed by UUID.
+    /// Stable UUID v5 derived from the feed URL plus the item's GUID, suitable
+    /// for the existing Pocket Casts data model where episodes are keyed by
+    /// UUID. Scoping to the feed URL keeps episodes from different podcasts
+    /// distinct even when their feeds reuse the same GUIDs (e.g. "1", "2").
+    /// Like the podcast-level UUID, this keys on the exact feed URL string, so
+    /// the same feed reached via a different URL yields a different identity.
     public let uuid: String
     public let title: String?
     public let downloadURL: String?
@@ -83,7 +87,7 @@ public class LocalFeedService {
 
         guard let data else { throw LocalFeedFetchError.invalidResponse }
 
-        let parser = FeedXMLParser()
+        let parser = FeedXMLParser(feedURLString: feedURL.absoluteString)
         guard let feed = parser.parse(data: data) else { throw LocalFeedFetchError.parseFailed }
 
         return .success(
@@ -251,6 +255,12 @@ enum LocalFeedDateFormatter {
 }
 
 final class FeedXMLParser: NSObject, XMLParserDelegate {
+    private let feedURLString: String
+
+    init(feedURLString: String) {
+        self.feedURLString = feedURLString
+    }
+
     private var elementStack: [String] = []
     private var charBuffer = ""
 
@@ -450,7 +460,10 @@ final class FeedXMLParser: NSObject, XMLParserDelegate {
     private func commitItem() {
         guard let identity = itemGuid ?? itemDownloadURL else { return }
 
-        let uuid = UUID.v5(namespace: .pocketCastsEpisodeNamespace, name: identity).uuidString.lowercased()
+        // Feed-scoped identity: GUIDs are only unique within a feed, so the v5
+        // name includes the feed URL. The newline separator keeps distinct
+        // (feed URL, GUID) pairs from ever concatenating to the same name.
+        let uuid = UUID.v5(namespace: .pocketCastsEpisodeNamespace, name: feedURLString + "\n" + identity).uuidString.lowercased()
 
         episodes.append(ParsedEpisode(
             guid: identity,
