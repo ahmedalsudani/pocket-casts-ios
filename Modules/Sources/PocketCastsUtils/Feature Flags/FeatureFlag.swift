@@ -360,12 +360,14 @@ public enum FeatureFlag: String, CaseIterable {
             false
         case .ignoreRouteDisconnectedInterruption:
             true
+        // Referral passes were created and redeemed on the Pocket Casts
+        // server; without accounts the flows dead-end, so keep them hidden.
         case .referrals:
-            true
+            false
         case .referralsClaim:
-            true
+            false
         case .referralsSend:
-            true
+            false
         case .syncStats:
             true
         case .playerIsReadyToPlay:
@@ -406,8 +408,9 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .libroFm:
             false
+        // Accounts no longer exist, so never prompt to create one.
         case .encourageAccountCreation:
-            true
+            false
         case .refreshAndSaveWatchLogsOnSend:
             true
         case .avoidReplaceOnEpisodeSwap:
@@ -450,8 +453,11 @@ public enum FeatureFlag: String, CaseIterable {
             true
         case .limitPlaybackPositionChanges:
             true
+        // Only affects reachable UI through the notifications-permission
+        // modal, where the "new onboarding" variant hides the Not Now button
+        // and adds a newsletter opt-in that went to the account server.
         case .newOnboardingAccountCreation:
-            true
+            false
         case .shareTranscripts:
             true
         case .doNotSwitchToDownloadedFile:

@@ -52,18 +52,14 @@ struct ProfileHeaderView: View {
         }
     }
 
-    /// Shows the display name, email, and account button
+    /// Shows the display name and email
     @ViewBuilder
     private func profileInfo() -> some View {
         let alignment: HorizontalAlignment = isShowingVertically ? .center : .leading
 
+        // The account button used to live here; accounts no longer exist.
         VStack(alignment: alignment, spacing: Constants.spacing) {
             ProfileInfoLabels(profile: viewModel.profile, alignment: alignment, spacing: Constants.spacing)
-
-            Button(viewModel.profile.isLoggedIn ? L10n.account : L10n.setupAccount) {
-                viewModel.accountTapped()
-            }
-            .buttonStyle(ProfileStrokeButtonStyle())
         }
         // The top spacing appears too high when showing the badge or exp date for some reason so we'll offset it a bit to balance it out
         .padding(.top, {
