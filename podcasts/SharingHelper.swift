@@ -65,13 +65,9 @@ class SharingHelper: NSObject {
     }
 
     func createActivityController(episode: Episode, shareTime: TimeInterval) -> UIActivityViewController {
-        var sharingUrl = episode.shareURL
-        if shareTime > 0 {
-            AnalyticsHelper.sharedEpisodeWithTimestamp()
-            sharingUrl += "?t=\(round(episode.playedUpTo))"
-        } else {
-            AnalyticsHelper.sharedEpisode()
-        }
+        // Timestamped links only worked on the web player; the audio URL is shared as-is.
+        let sharingUrl = episode.shareURL
+        AnalyticsHelper.sharedEpisode()
 
         let activityController = UIActivityViewController(activityItems: [URL(string: sharingUrl)!], applicationActivities: nil)
         activityController.completionWithItemsHandler = nil
@@ -79,14 +75,17 @@ class SharingHelper: NSObject {
     }
 }
 
+// pca.st share links resolved on the Pocket Casts server and our UUIDs are
+// locally generated now, so share things any app can open instead: the RSS
+// feed for a podcast, the audio file for an episode.
 extension Podcast {
     var shareURL: String {
-        "\(ServerConstants.Urls.share())podcast/\(uuid)"
+        podcastUrl ?? ""
     }
 }
 
 extension Episode {
     var shareURL: String {
-        "\(ServerConstants.Urls.share())episode/\(uuid)"
+        downloadUrl ?? parentPodcast()?.podcastUrl ?? ""
     }
 }

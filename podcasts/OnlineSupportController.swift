@@ -100,10 +100,8 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
         let controller = UIAlertController()
         controller.popoverPresentationController?.barButtonItem = sender
 
-        controller.addAction(.init(title: L10n.settingsConnectionStatus, style: .default, handler: { [weak self] _ in
-            self?.showStatusPage()
-        }))
-
+        // The connection status page only checked *.pocketcasts.com endpoints,
+        // which are no longer used — it would always report failures.
         controller.addAction(.init(title: L10n.exportDatabase, style: .default, handler: { [weak self] _ in
             self?.export(sender)
         }))
@@ -115,11 +113,6 @@ class OnlineSupportController: PCViewController, WKNavigationDelegate, UIAdaptiv
         controller.addAction(.init(title: L10n.cancel, style: .destructive))
 
         present(controller, animated: true)
-    }
-
-    private func showStatusPage() {
-        let hostingController = ThemedHostingController(rootView: StatusPageView(source: source))
-        navigationController?.pushViewController(hostingController, animated: true)
     }
 
     private func load() {

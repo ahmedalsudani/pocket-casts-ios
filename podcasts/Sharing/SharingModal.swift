@@ -272,21 +272,19 @@ extension SharingModal.Option {
         }
     }
 
+    // Timestamp query parameters only meant something to the Pocket Casts web
+    // player; the feed/audio URLs shared now are used as-is.
     var shareURL: String {
-        let formatter = SignificantDigitsFormatStyle(significantDigits: 4)
         switch self {
         case .episode(let episode):
             return episode.shareURL
         case .podcast(let podcast):
             return podcast.shareURL
-        case .currentPosition(let episode, let timeInterval):
-            return episode.shareURL + "?t=\(round(timeInterval))"
-        case .bookmark(let episode, let timeInterval):
-            return episode.shareURL + "?t=\(round(timeInterval))"
-        case .clip(let episode, let timeInterval):
-            return episode.shareURL + "?t=\(round(timeInterval))"
-        case .clipShare(let episode, let clipTime, _):
-            return episode.shareURL + "?t=\(clipTime.start.formatted(formatter)),\(clipTime.end.formatted(formatter))"
+        case .currentPosition(let episode, _),
+             .bookmark(let episode, _),
+             .clip(let episode, _),
+             .clipShare(let episode, _, _):
+            return episode.shareURL
         }
     }
 }

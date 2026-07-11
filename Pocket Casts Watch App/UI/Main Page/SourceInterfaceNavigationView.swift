@@ -63,7 +63,7 @@ struct SourceInterfaceNavigationView: View {
                 SourceRow(sourceSymbol: L10n.phone.sourceUnicode(isWatch: false), label: L10n.phone, showPlusOnly: false, active: model.activeSource == .phone)
             }
             NavigationLink(destination: InterfaceView(source: .watch), tag: Source.watch.rawValue, selection: $activeSource) {
-                SourceRow(sourceSymbol: L10n.watch.sourceUnicode(isWatch: true), label: L10n.watch, showPlusOnly: !model.isLoggedIn || !model.isPlusUser, active: model.activeSource == .watch)
+                SourceRow(sourceSymbol: L10n.watch.sourceUnicode(isWatch: true), label: L10n.watch, showPlusOnly: !model.isPlusUser, active: model.activeSource == .watch)
             }.disabled(!model.isPlusUser)
         } footer: {
             if model.isPlusUser {
@@ -130,11 +130,11 @@ struct SourceInterfaceNavigationView: View {
 
     var body: some View {
         NavigationView {
+            // The user/account sections were removed along with Pocket Casts
+            // accounts — there is nothing to sign in to anymore.
             List {
                 sourceSection
                 dataRefreshSection
-                userSection
-                refreshAccountSection
             }.onAppear {
                 model.willActivate()
             }.onChange(of: activeSource) { newValue in
