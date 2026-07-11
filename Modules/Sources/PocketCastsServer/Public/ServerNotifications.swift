@@ -13,6 +13,12 @@ public enum ServerNotifications {
     public static let syncProgressPodcastUpto = NSNotification.Name(rawValue: "PCSyncUpto")
     public static let episodeTypeOrLengthChanged = NSNotification.Name(rawValue: "SJEpisodeTypeChanged")
 
+    /// Posted after a refresh inserts new episodes for podcasts that have
+    /// notifications enabled. The notification `object` is a
+    /// `[NewEpisodeNotificationInfo]`. Episode push came from the server
+    /// before; the app now schedules local notifications from this instead.
+    public static let newEpisodesDetected = NSNotification.Name(rawValue: "PCNewEpisodesDetected")
+
     // IAP notifications
     public static let iapProductsUpdated = NSNotification.Name(rawValue: "SJIapProductsUpdated")
     public static let iapProductsFailed = NSNotification.Name(rawValue: "SJIapProductsFailed")
@@ -32,4 +38,18 @@ public enum ServerNotifications {
 public extension NSNotification.Name {
     /// Fired before the user will be signed out
     static let serverUserWillBeSignedOut = NSNotification.Name("Server.User.WillBeSignedOut")
+}
+
+/// Payload for `ServerNotifications.newEpisodesDetected`: one entry per newly
+/// added episode belonging to a podcast with notifications enabled.
+public struct NewEpisodeNotificationInfo {
+    public let podcastTitle: String
+    public let episodeUuid: String
+    public let episodeTitle: String
+
+    public init(podcastTitle: String, episodeUuid: String, episodeTitle: String) {
+        self.podcastTitle = podcastTitle
+        self.episodeUuid = episodeUuid
+        self.episodeTitle = episodeTitle
+    }
 }

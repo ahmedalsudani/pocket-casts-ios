@@ -78,11 +78,12 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         notificationCenter.delegate = self
         notificationCenter.setNotificationCategories([episodeCategory, podcastCategory, deepLinkCategory])
 
+        // Episode notifications are local now (see NewEpisodeNotificationScheduler),
+        // so there's no APNS registration — only the authorization prompt.
         notificationCenter.getNotificationSettings { settings in
             guard settings.authorizationStatus == .notDetermined else {
                 DispatchQueue.main.async {
                     completion?(settings.authorizationStatus != .denied)
-                    UIApplication.shared.registerForRemoteNotifications()
                 }
                 return
             }
@@ -90,9 +91,6 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
             notificationCenter.requestAuthorization(options: [.alert, .badge, .sound], completionHandler: { granted, _ in
                 if granted {
                     Analytics.track(.notificationsOptInAllowed)
-                    DispatchQueue.main.async {
-                        UIApplication.shared.registerForRemoteNotifications()
-                    }
                 } else {
                     Analytics.track(.notificationsOptInDenied)
                 }

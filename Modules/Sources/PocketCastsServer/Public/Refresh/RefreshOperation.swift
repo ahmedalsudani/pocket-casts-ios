@@ -72,6 +72,7 @@ class RefreshOperation: Operation {
         }
 
         var newEpisodesAdded = 0
+        var newEpisodeNotifications = [NewEpisodeNotificationInfo]()
 
         // the returned dictionary is indexed by podcast UUID and contains all the new episodes for that podcast
         let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
@@ -95,6 +96,12 @@ class RefreshOperation: Operation {
             })
 
             DataManager.sharedManager.bulkSave(episodes: episodes)
+
+            if podcast.isPushEnabled {
+                newEpisodeNotifications.append(contentsOf: episodes.map {
+                    NewEpisodeNotificationInfo(podcastTitle: podcast.title ?? "", episodeUuid: $0.uuid, episodeTitle: $0.title ?? "")
+                })
+            }
 
             for episode in episodes {
                 if isCancelled {
@@ -128,6 +135,13 @@ class RefreshOperation: Operation {
         ServerConfig.shared.syncDelegate?.cleanupAllUnusedEpisodeBuffers()
 
         UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshEndTime)
+
+        if !newEpisodeNotifications.isEmpty {
+            let notifications = newEpisodeNotifications
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: ServerNotifications.newEpisodesDetected, object: notifications)
+            }
+        }
 
         FileLog.shared.addMessage("Refresh complete found \(newEpisodesAdded) new episodes")
 

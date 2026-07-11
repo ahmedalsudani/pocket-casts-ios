@@ -12,6 +12,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private let shortcutManager = ShortcutManager()
     private let badgeHelper = BadgeHelper()
     private let traceHandler = TraceHelper()
+    private let newEpisodeNotificationScheduler = NewEpisodeNotificationScheduler()
 
     @objc var backgroundSessionCompletionHandler: (() -> Void)?
 
