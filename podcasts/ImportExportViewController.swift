@@ -82,23 +82,25 @@ class ImportExportViewController: PCViewController, UIDocumentInteractionControl
         Analytics.track(.settingsImportExportStarted)
         let podcasts = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false)
 
-        let uuids = podcasts.map(\.uuid)
-
-        MainServerHandler.shared.exportPodcasts(uuids: uuids) { exportResponse in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.loadingAlert?.hideAlert(false)
-                self.loadingAlert = nil
-
-                guard let exportResponse, exportResponse.success(), let mapping = exportResponse.result else {
-                    self.presentError()
-                    Analytics.track(.settingsImportExportFailed)
-                    return
-                }
-
-                self.performOpmlExport(podcasts, mappingDictionary: mapping)
+        // The uuid → feed URL mapping used to come from the server; every
+        // podcast now carries its own feed URL locally.
+        var mapping = [String: String]()
+        for podcast in podcasts {
+            if let feedUrl = podcast.podcastUrl {
+                mapping[podcast.uuid] = feedUrl
             }
         }
+
+        loadingAlert?.hideAlert(false)
+        loadingAlert = nil
+
+        guard !mapping.isEmpty else {
+            presentError()
+            Analytics.track(.settingsImportExportFailed)
+            return
+        }
+
+        performOpmlExport(podcasts.filter { mapping[$0.uuid] != nil }, mappingDictionary: mapping)
     }
 
     private func performOpmlExport(_ podcasts: [Podcast], mappingDictionary: [String: String]) {

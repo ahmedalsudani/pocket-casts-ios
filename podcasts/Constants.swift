@@ -342,7 +342,8 @@ struct Constants {
         static let customStorageLimitGBDefault: Int = 20
 
         static let endOfYearRequireAccount = "end_of_year_require_account"
-        static let endOfYearRequireAccountDefault: Bool = true
+        // End of Year stats are computed locally; never demand the (removed) account.
+        static let endOfYearRequireAccountDefault: Bool = false
 
         static let patronCloudStorageGB = "patron_custom_storage_limit_gb"
         static let patronCloudStorageGBDefault = 100
