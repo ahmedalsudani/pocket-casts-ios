@@ -124,8 +124,10 @@ enum NotificationType: String {
             return false
         }
         switch self {
-            case .onboardingSignUp:
-                return !SyncManager.isUserLoggedIn()
+            // These deep-link into removed features: account creation is gone
+            // and Discover's server-curated staff picks / trending are gone.
+            case .onboardingSignUp, .onboardingStaffPicks, .recommendationsTrending:
+                return false
             case .onboardingUpsell, .upsell:
                 return !SubscriptionHelper.hasActiveSubscription()
             case .recommendationsYouMightLike:

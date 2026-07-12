@@ -10,7 +10,9 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     private let soundOff = 0
 
     private var sections: [Section] = [.episodes]
-    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.trendingRecommendations, .dailyReminders], [.newFeaturesAndTips, .pocketCastsOffers]]
+    // Trending recommendations and Pocket Casts offers notifications relied
+    // on removed server/subscription features, so their toggles are gone.
+    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.dailyReminders], [.newFeaturesAndTips]]
 
     private var notificationsDenied = false
 
