@@ -83,18 +83,6 @@ class PodcastManager: NSObject {
         }
     }
 
-    func didReceiveToken(_ token: String) {
-        #if !os(watchOS)
-            let currentToken = ServerSettings.pushToken()
-
-            if currentToken == token { return } // they are the same, no need to do anything
-
-            ServerSettings.setPushToken(token: token)
-
-            RefreshManager.shared.refreshPodcasts(forceEvenIfRefreshedRecently: true)
-        #endif
-    }
-
     // MARK: - Downloads
 
     func checkForPendingAndAutoDownloads() {

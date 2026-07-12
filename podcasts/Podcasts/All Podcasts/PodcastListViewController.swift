@@ -382,15 +382,8 @@ class PodcastListViewController: PCViewController, UIGestureRecognizerDelegate, 
         }
         optionsPicker.addAction(action: badgesAction)
 
-        let shareAction = OptionAction(label: L10n.podcastsShare, icon: "podcast-share") {
-            let shareController = SharePodcastsViewController()
-            shareController.delegate = self
-            let navController = SJUIUtils.navController(for: shareController)
-            self.present(navController, animated: true, completion: nil)
-            Analytics.track(.podcastsListModalOptionTapped, properties: ["option": "share"])
-        }
-        optionsPicker.addAction(action: shareAction)
-
+        // "Share Podcasts" published a list on the Pocket Casts sharing
+        // server, which is gone — use Settings → Export instead.
         optionsPicker.show(statusBarStyle: preferredStatusBarStyle)
 
         Analytics.track(.podcastsListOptionsButtonTapped)

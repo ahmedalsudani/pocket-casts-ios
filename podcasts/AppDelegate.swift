@@ -149,23 +149,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         backgroundSessionCompletionHandler = completionHandler
     }
 
-    // This method will be invoked even if the application was launched or resumed because of the remote notification. The respective delegate methods will be invoked first. Note that this behavior is in contrast to application:didReceiveRemoteNotification:, which is not called in those cases, and which will not be invoked if this method is implemented.
-    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        RefreshManager.shared.refreshPodcasts(completion: { refreshFetchResult in
-            completionHandler(self.convertRefreshResult(result: refreshFetchResult))
-        })
-        badgeHelper.updateBadge()
-    }
-
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let token = deviceToken.reduce("") { $0 + String(format: "%02X", $1) }
-
-        PodcastManager.shared.didReceiveToken(token)
-    }
-
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        ServerSettings.removePushToken()
-    }
+    // The remote-notification delegate methods were removed along with APNS
+    // registration — the server that sent pushes is gone, and background
+    // refresh (BGAppRefreshTask) keeps episodes up to date instead.
 
     func application(_ application: UIApplication, didChangeStatusBarFrame oldStatusBarFrame: CGRect) {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.statusBarHeightChanged)
@@ -316,17 +302,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
-    }
-
-    private func convertRefreshResult(result: RefreshFetchResult) -> UIBackgroundFetchResult {
-        switch result {
-        case .failed:
-            return UIBackgroundFetchResult.failed
-        case .newData:
-            return UIBackgroundFetchResult.newData
-        case .noData:
-            return UIBackgroundFetchResult.noData
-        }
     }
 
     // MARK: UISceneSession Lifecycle
