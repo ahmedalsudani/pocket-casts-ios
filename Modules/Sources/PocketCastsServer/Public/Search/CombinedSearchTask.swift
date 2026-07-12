@@ -37,16 +37,18 @@ public struct CombinedSearchResult: Decodable, Hashable {
 
 public class CombinedSearchTask {
     private let session: URLSession
+    private let episodeSearch = EpisodeSearchTask()
 
     public init(session: URLSession = .shared) {
         self.session = session
     }
 
     /// The combined podcast+episode endpoint lived on `cache.pocketcasts.com`.
-    /// We surface only podcast results now (via iTunes Search). Cross-catalog
-    /// episode search has no on-device equivalent.
+    /// Podcast results come from iTunes Search now, and episode results from
+    /// the local database (subscribed podcasts only).
     public func search(term: String) async throws -> [CombinedSearchResultType] {
         let podcasts = try await iTunesSearchService.shared.search(term: term)
-        return podcasts.map { CombinedSearchResultType.podcast($0) }
+        let episodes = (try? await episodeSearch.search(term: term)) ?? []
+        return podcasts.map { CombinedSearchResultType.podcast($0) } + episodes.map { CombinedSearchResultType.episode($0) }
     }
 }

@@ -203,6 +203,17 @@ class EpisodeDataManager {
         return findEpisodesWhere(customWhere: query, arguments: [escapedSearch, podcastUUID], dbQueue: dbQueue)
     }
 
+    func findEpisodes(matching term: String, limit: Int, dbQueue: PCDBQueue) -> [Episode] {
+        let escapedSearch = term.escapeLike(escapeChar: "\\")
+        let query = """
+        (UPPER(title) LIKE '%' || UPPER(?) || '%'  ESCAPE '\\' AND
+        podcastUuid IN (SELECT uuid FROM \(DataManager.podcastTableName) WHERE subscribed = 1) AND wasDeleted = 0)
+        ORDER BY publishedDate DESC, addedDate DESC LIMIT \(limit)
+        """
+
+        return findEpisodesWhere(customWhere: query, arguments: [escapedSearch], dbQueue: dbQueue)
+    }
+
     func findPlaylistEpisodesWhere(query: String, arguments: [Any]?, dbQueue: PCDBQueue) -> [Episode] {
         loadMultiple(query: query, values: arguments, dbQueue: dbQueue)
     }

@@ -514,6 +514,11 @@ public class DataManager {
         episodeManager.findEpisodes(with: term, podcastUUID: podcastUUID, dbQueue: dbQueue)
     }
 
+    /// Title search across all subscribed podcasts' episodes, newest first.
+    public func findEpisodes(matching term: String, limit: Int = 50) -> [Episode] {
+        episodeManager.findEpisodes(matching: term, limit: limit, dbQueue: dbQueue)
+    }
+
     public func findPlaylistEpisodesWhere(query: String, arguments: [Any]?) -> [Episode] {
         episodeManager.findPlaylistEpisodesWhere(query: query, arguments: arguments, dbQueue: dbQueue)
     }

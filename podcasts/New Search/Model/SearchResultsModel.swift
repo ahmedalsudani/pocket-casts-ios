@@ -234,6 +234,13 @@ class SearchResultsModel: ObservableObject {
 
     private func showCombinedResults(_ results: [CombinedSearchResultType]) {
         isShowingPredictiveSearch = false
+
+        let episodeResults: [EpisodeSearchResult] = results.compactMap {
+            if case .episode(let episode) = $0 { return episode }
+            return nil
+        }
+        playedEpisodesUUIDs = buildPlayedEpisodesUUIDs(episodeResults)
+
         combinedResults = results
     }
 }

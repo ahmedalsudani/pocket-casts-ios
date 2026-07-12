@@ -1,4 +1,5 @@
 import Foundation
+import PocketCastsDataModel
 
 struct EpisodeSearchEnvelope: Decodable {
     public let episodes: [EpisodeSearchResult]
@@ -46,10 +47,23 @@ public class EpisodeSearchTask {
         self.session = session
     }
 
-    /// Cross-catalog episode search lived on `cache.pocketcasts.com`. It has
-    /// no on-device equivalent — there's no global episode index without a
-    /// server. Returns an empty list; the search UI degrades gracefully.
+    /// Cross-catalog episode search lived on `cache.pocketcasts.com`; without
+    /// a server there's no global index, but every subscribed podcast's
+    /// episodes are in the local database, so search those instead.
     public func search(term: String) async throws -> [EpisodeSearchResult] {
-        []
+        let episodes = DataManager.sharedManager.findEpisodes(matching: term)
+        guard !episodes.isEmpty else { return [] }
+
+        let podcastTitles = DataManager.sharedManager.allPodcasts(includeUnsubscribed: false).reduce(into: [String: String]()) { $0[$1.uuid] = $1.title }
+
+        return episodes.map { episode in
+            EpisodeSearchResult(uuid: episode.uuid,
+                                title: episode.title ?? "",
+                                publishedDate: episode.publishedDate ?? episode.addedDate ?? .distantPast,
+                                state: episode.archived ? .archived : .normal,
+                                duration: episode.duration,
+                                podcastUuid: episode.podcastUuid,
+                                podcastTitle: podcastTitles[episode.podcastUuid] ?? "")
+        }
     }
 }
