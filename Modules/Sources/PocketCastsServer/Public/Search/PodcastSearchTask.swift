@@ -116,8 +116,37 @@ public class PodcastSearchTask {
     /// the (now-gone) Pocket Casts server. Each result carries an iTunesId
     /// so the subscribe flow can resolve the publisher's RSS feed URL via
     /// `iTunesLookup` and then call `addFromFeedURL`.
+    ///
+    /// A term that is itself a URL is treated as an RSS feed address (the old
+    /// server handled this case by returning `PodcastsSearchEnvelopeResult.podcast`):
+    /// the feed is fetched directly instead of being text-matched by iTunes.
     public func search(term: String) async throws -> [PodcastFolderSearchResult] {
-        try await iTunesSearchService.shared.search(term: term)
+        let trimmed = term.trimmingCharacters(in: .whitespacesAndNewlines)
+        if isURL(trimmed), let feedURL = URL(string: trimmed) {
+            return await searchByFeedURL(feedURL)
+        }
+        return try await iTunesSearchService.shared.search(term: trimmed)
+    }
+
+    private func isURL(_ term: String) -> Bool {
+        let lowercased = term.lowercased()
+        return lowercased.hasPrefix("http://") || lowercased.hasPrefix("https://")
+    }
+
+    /// Fetches the feed and stores it locally as an unsubscribed podcast, so
+    /// opening or subscribing to the returned result resolves through
+    /// `addFromUuid`'s local-first path (the cache server is gone).
+    private func searchByFeedURL(_ feedURL: URL) async -> [PodcastFolderSearchResult] {
+        await withCheckedContinuation { continuation in
+            ServerPodcastManager.shared.addFromFeedURL(feedURL, subscribe: false) { added, uuid in
+                guard added, let uuid,
+                      let podcast = DataManager.sharedManager.findPodcast(uuid: uuid, includeUnsubscribed: true) else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                continuation.resume(returning: [PodcastFolderSearchResult(uuid: uuid, title: podcast.title, author: podcast.author, kind: .podcast, isLocal: false, iTunesId: nil)])
+            }
+        }
     }
 }
 
