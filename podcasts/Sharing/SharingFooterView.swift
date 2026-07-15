@@ -8,7 +8,6 @@ struct SharingFooterView: View {
     @State var progress: Float?
 
     let destinations: [ShareDestination]
-    let style: ShareImageStyle
     let clipUUID: String
     let source: AnalyticsSource
 
@@ -38,7 +37,7 @@ struct SharingFooterView: View {
                 Button(L10n.next, action: {
                     Analytics.track(.shareScreenNavigationButtonTapped)
                     withAnimation {
-                        option = .clipShare(episode, clipTime, style)
+                        option = .clipShare(episode, clipTime)
                     }
                 }).buttonStyle(RoundedButtonStyle(theme: theme, backgroundColor: color))
             }
@@ -66,14 +65,14 @@ struct SharingFooterView: View {
     @ViewBuilder var buttons: some View {
         HStack(spacing: 24) {
             ForEach(destinations, id: \.self) { destination in
-                ShareButton(isExporting: $isExporting, shareTask: $shareTask, progress: $progress, option: option, destination: destination, style: style, clipTime: clipTime, clipUUID: clipUUID, source: source)
+                ShareButton(isExporting: $isExporting, shareTask: $shareTask, progress: $progress, option: option, destination: destination, clipUUID: clipUUID, source: source)
             }
         }
     }
 
     var color: Color {
         switch option {
-        case .clip(let episode, _), .clipShare(let episode, _, _):
+        case .clip(let episode, _), .clipShare(let episode, _):
             PlayerColorHelper.backgroundColor(for: episode)?.color ?? PlayerColorHelper.playerBackgroundColor01(for: theme.activeTheme).color
         default:
             PlayerColorHelper.playerBackgroundColor01(for: theme.activeTheme).color

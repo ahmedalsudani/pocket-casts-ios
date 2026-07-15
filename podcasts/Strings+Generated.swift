@@ -3847,8 +3847,8 @@ internal enum L10n {
   internal static var shareCopyLink: String { return L10n.tr("Localizable", "share_copy_link", fallback: "Copy link") }
   /// A common string used throughout the app. Option to share the episode at the current playback position.
   internal static var shareCurrentPosition: String { return L10n.tr("Localizable", "share_current_position", fallback: "Current Position") }
-  /// A message shown when sharing an image representation of a podcast or episode to social media platforms
-  internal static var shareDescription: String { return L10n.tr("Localizable", "share_description", fallback: "Choose a format and a platform to share to") }
+  /// A message shown when sharing a link to a podcast or episode
+  internal static var shareDescription: String { return L10n.tr("Localizable", "share_description", fallback: "Choose a platform to share to") }
   /// A title shown when sharing an episode
   internal static var shareEpisode: String { return L10n.tr("Localizable", "share_episode", fallback: "Share episode") }
   /// A common string used throughout the app. Option to share the episode at the current playback position.

@@ -12,11 +12,7 @@ enum SharingModal {
         case currentPosition(Episode, TimeInterval)
         case bookmark(Episode, TimeInterval)
         case clip(Episode, TimeInterval)
-        case clipShare(Episode, ClipTime, ShareImageStyle)
-
-        enum Constants {
-            static let exportedAssetScale: CGFloat = 3
-        }
+        case clipShare(Episode, ClipTime)
 
         var buttonTitle: String {
             switch self {
@@ -31,7 +27,7 @@ enum SharingModal {
             }
         }
 
-        func shareTitle(style: ShareImageStyle) -> String {
+        var shareTitle: String {
             switch self {
             case .episode:
                 L10n.shareEpisode
@@ -40,14 +36,20 @@ enum SharingModal {
             case .podcast:
                 L10n.sharePodcast
             case .clip:
-                switch style {
-                case .audio:
-                    L10n.createAudioClipTitle
-                default:
-                    L10n.createClip
-                }
+                L10n.createClip
             case .clipShare:
                 L10n.shareClip
+            }
+        }
+
+        var shareDescription: String? {
+            switch self {
+            case .episode, .podcast:
+                L10n.shareDescription
+            case .clip, .clipShare:
+                L10n.createAudioClipDescription
+            default:
+                nil
             }
         }
 
@@ -115,7 +117,7 @@ enum SharingModal {
             return
         }
 
-        let sharingDestinations: [ShareDestination] = ShareDestination.displayedApps + [.copyLink, .systemSheet(vc: viewController)]
+        let sharingDestinations: [ShareDestination] = [.copyLink, .systemSheet(vc: viewController)]
         let sharingView = SharingView(destinations: sharingDestinations, selectedOption: option, source: source)
         let modalView = ModalView {
             sharingView
@@ -132,86 +134,33 @@ enum SharingModal {
 
 extension SharingModal.Option {
 
-    private var description: String? {
-        switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
-            episode.parentPodcast()?.title
-        case .podcast(let podcast):
-            [podcast.episodeCount, podcast.frequency].compactMap { $0 }.joined(separator: " ⋅ ")
-        }
-    }
-
-    private var title: String? {
-        switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
-            episode.title
-        case .podcast(let podcast):
-            podcast.title
-        }
-    }
-
-    private var name: String? {
-        switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
-            if let date = episode.publishedDate {
-                return date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted))
-            } else {
-                return ""
-            }
-        case .podcast(let podcast):
-            return podcast.author
-        }
-    }
-
     fileprivate var podcast: Podcast {
         switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
+        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _), .bookmark(let episode, _):
             return episode.parentPodcast()!
         case .podcast(let podcast):
             return podcast
         }
     }
 
-    private var episode: Episode? {
-        switch self {
-        case .episode(let episode), .currentPosition(let episode, _), .clip(let episode, _), .clipShare(let episode, _, _), .bookmark(let episode, _):
-            episode
-        default:
-            nil
-        }
+    var artworkURL: URL {
+        ImageManager.sharedManager.podcastUrl(imageSize: .page, uuid: podcast.uuid)
     }
 
-    var imageInfo: ShareImageInfo {
-        let gradient = Gradient(colors: [
-            Color(uiColor: ColorManager.lightThemeTintForPodcast(podcast)),
-            Color(uiColor: UIColor.calculateColor(orgColor: UIColor.black, overlayColor: ColorManager.lightThemeTintForPodcast(podcast).withAlphaComponent(0.8))),
-        ])
-        let artwork = ImageManager.sharedManager.podcastUrl(imageSize: .page, uuid: podcast.uuid)
-        let imageInfo = ShareImageInfo(name: name ?? "",
-                                       title: title ?? "",
-                                       description: description ?? "",
-                                       artwork: artwork,
-                                       gradient: gradient)
-        return imageInfo
+    enum ExportError: Error {
+        case failedToDownload
     }
 
     @MainActor
-    func shareData(style: ShareImageStyle, destination: ShareDestination, clipUUID: String, progress: Binding<Float?>) async throws -> [ActivityItemSourceItem] {
+    func shareData(clipUUID: String, progress: Binding<Float?>) async throws -> [ActivityItemSourceItem] {
         let url = URL(string: shareURL) as NSURL?
 
         let media: Any?
         switch self {
-        case .clipShare(let episode, let clipTime, _):
-            media = try await mediaData(imageInfo: imageInfo, style: style, episode: episode, clipTime: clipTime, destination: destination, clipUUID: clipUUID, scale: Constants.exportedAssetScale, progress: progress)
+        case .clipShare(let episode, let clipTime):
+            media = try await mediaData(episode: episode, clipTime: clipTime, clipUUID: clipUUID, progress: progress)
         default:
-            let size: CGSize
-            switch destination {
-            case .instagram:
-                size = CGSize(width: style.videoSize.width, height: style.videoSize.height)
-            default:
-                size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
-            }
-            media = ShareImageView(info: imageInfo, style: style, angle: .constant(0)).frame(width: size.width, height: size.height).snapshot(scale: Constants.exportedAssetScale)
+            media = nil
         }
 
         return [url.map { ActivityItemSourceItem(item: $0, disallowedActivityTypes: [.airDrop]) },
@@ -219,7 +168,7 @@ extension SharingModal.Option {
     }
 
     @MainActor
-    func mediaData(imageInfo: ShareImageInfo, style: ShareImageStyle, episode: Episode, clipTime: ClipTime, destination: ShareDestination, clipUUID: String, scale: CGFloat, progress: Binding<Float?>) async throws -> Any? {
+    func mediaData(episode: Episode, clipTime: ClipTime, clipUUID: String, progress: Binding<Float?>) async throws -> Any? {
         let nsProgress = Progress(totalUnitCount: 100)
         let observation = nsProgress.publisher(for: \.fractionCompleted).receive(on: DispatchQueue.main).sink(receiveValue: { fractionCompleted in
             guard Task.isCancelled == false && nsProgress.isCancelled == false else { return }
@@ -232,44 +181,40 @@ extension SharingModal.Option {
 
         progress.wrappedValue = 0.01
 
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("video_export-\(clipUUID)-\(style.hashValue)-\(clipTime.start)-\(clipTime.end)-\(destination.hashValue)", conformingTo: .mpeg4Movie)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("audio_export-\(clipUUID)-\(clipTime.start)-\(clipTime.end)", conformingTo: .m4a)
         let fileURL: URL
         if FileManager.default.fileExistsAtURL(url) {
             fileURL = url
         } else {
-            fileURL = try await destination.export(info: imageInfo,
-                                            style: style,
-                                            episode: episode,
-                                            startTime: CMTime(seconds: clipTime.start, preferredTimescale: 600),
-                                            duration: CMTime(seconds: clipTime.end - clipTime.start, preferredTimescale: 600),
-                                            scale: scale,
-                                            progress: nsProgress,
-                                            to: url
-            )
+            guard let playerItem = DownloadManager.shared.downloadParallelToStream(of: episode) else {
+                throw ExportError.failedToDownload
+            }
+            try await AudioClipExporter.exportAudioClip(from: playerItem.asset,
+                                                        startTime: CMTime(seconds: clipTime.start, preferredTimescale: 600),
+                                                        duration: CMTime(seconds: clipTime.end - clipTime.start, preferredTimescale: 600),
+                                                        to: url,
+                                                        progress: nsProgress)
+            fileURL = url
         }
 
         progress.wrappedValue = nil
 
-        if destination == .instagram {
-            return try? Data(contentsOf: fileURL) // For some reason, I couldn't get this to work with just a URL
-        } else {
-            let components = [
-                episode.parentPodcast()?.title,
-                episode.title,
-                "\(clipTime.start.secondsFormatted())-\(clipTime.end.secondsFormatted())"
-            ].compactMap { $0 }
+        let components = [
+            episode.parentPodcast()?.title,
+            episode.title,
+            "\(clipTime.start.secondsFormatted())-\(clipTime.end.secondsFormatted())"
+        ].compactMap { $0 }
 
-            let fileName = components.joined(separator: " - ").appending(".\(fileURL.pathExtension)").sanitizedFileName()
-            var newURL = fileURL
-            newURL.deleteLastPathComponent()
-            newURL.appendPathComponent(fileName)
+        let fileName = components.joined(separator: " - ").appending(".\(fileURL.pathExtension)").sanitizedFileName()
+        var newURL = fileURL
+        newURL.deleteLastPathComponent()
+        newURL.appendPathComponent(fileName)
 
-            if FileManager.default.fileExistsAtURL(newURL) {
-                try FileManager.default.removeItem(at: newURL)
-            }
-            try FileManager.default.copyItem(at: fileURL, to: newURL)
-            return newURL as NSURL // Third party apps need URLs and won't accept Data
+        if FileManager.default.fileExistsAtURL(newURL) {
+            try FileManager.default.removeItem(at: newURL)
         }
+        try FileManager.default.copyItem(at: fileURL, to: newURL)
+        return newURL as NSURL // Third party apps need URLs and won't accept Data
     }
 
     // Timestamp query parameters only meant something to the Pocket Casts web
@@ -283,26 +228,9 @@ extension SharingModal.Option {
         case .currentPosition(let episode, _),
              .bookmark(let episode, _),
              .clip(let episode, _),
-             .clipShare(let episode, _, _):
+             .clipShare(let episode, _):
             return episode.shareURL
         }
-    }
-}
-
-fileprivate extension Podcast {
-    var episodeCount: String? {
-        let count = PodcastManager.episodeCountForPodcast(self, excludeArchive: false)
-        guard count > 0 else {
-            return nil
-        }
-        return L10n.episodeCountPluralFormat(count)
-    }
-
-    var frequency: String? {
-        guard let frequency = episodeFrequency?.lowercased(), frequency != "unknown" else {
-            return nil
-        }
-        return L10n.paidPodcastReleaseFrequencyFormat(frequency)
     }
 }
 

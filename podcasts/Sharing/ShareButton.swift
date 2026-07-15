@@ -8,8 +8,6 @@ struct ShareButton: View {
 
     let option: SharingModal.Option
     let destination: ShareDestination
-    let style: ShareImageStyle
-    let clipTime: ClipTime
     let clipUUID: String
     let source: AnalyticsSource
 
@@ -22,7 +20,7 @@ struct ShareButton: View {
             isExporting = true
             shareTask = Task.detached { @MainActor in
                 do {
-                    try await destination.share(option, style: style, clipTime: clipTime, clipUUID: clipUUID, progress: $progress, presentFrom: frame, source: source)
+                    try await destination.share(option, clipUUID: clipUUID, progress: $progress, presentFrom: frame, source: source)
                 } catch let error {
                     if Task.isCancelled { return }
                     await MainActor.run {
