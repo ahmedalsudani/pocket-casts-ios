@@ -1166,7 +1166,7 @@ public class DataManager {
 
     private static func pathToDbFolder() -> String {
         let documentsPath = NSSearchPathForDirectoriesInDomains(.applicationSupportDirectory, .userDomainMask, true).last as NSString?
-        let mainFolder = documentsPath?.appendingPathComponent("Pocket Casts")
+        let mainFolder = documentsPath?.appendingPathComponent("Burrow")
 
         return mainFolder!
     }

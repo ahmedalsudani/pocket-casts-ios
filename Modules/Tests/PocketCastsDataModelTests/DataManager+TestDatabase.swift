@@ -16,7 +16,7 @@ extension DatabasePool {
         config.busyMode = .timeout(10)
 
         let documentsPath = NSSearchPathForDirectoriesInDomains(.applicationSupportDirectory, .userDomainMask, true).last as NSString?
-        guard let dbFolderPath = documentsPath?.appendingPathComponent("Pocket Casts") as? NSString else {
+        guard let dbFolderPath = documentsPath?.appendingPathComponent("Burrow") as? NSString else {
             throw TestError.dbFolderPathFailure
         }
 
@@ -39,7 +39,7 @@ extension DatabasePool {
 
     static func copyDatabase(toFile: String) throws {
         let documentsPath = NSSearchPathForDirectoriesInDomains(.applicationSupportDirectory, .userDomainMask, true).last as NSString?
-        guard let dbFolderPath = documentsPath?.appendingPathComponent("Pocket Casts") as? NSString else {
+        guard let dbFolderPath = documentsPath?.appendingPathComponent("Burrow") as? NSString else {
             throw TestError.dbFolderPathFailure
         }
 

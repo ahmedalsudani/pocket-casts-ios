@@ -41,7 +41,7 @@
                     <nil key="textColor"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Welcome to Pocket Casts Plus!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YOO-bc-S3t" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Welcome to Burrow Plus!" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YOO-bc-S3t" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                     <rect key="frame" x="100.5" y="467.5" width="213" height="18"/>
                     <fontDescription key="fontDescription" type="system" pointSize="15"/>
                     <nil key="textColor"/>
@@ -67,7 +67,7 @@
                                 <action selector="newsletterOptInChanged:" destination="-1" eventType="valueChanged" id="VBY-vL-uhA"/>
                             </connections>
                         </switch>
-                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Pocket Casts Newsletter" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nyJ-wP-erN" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="252" text="Burrow Newsletter" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nyJ-wP-erN" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                             <rect key="frame" x="40" y="3" width="172.5" height="18"/>
                             <fontDescription key="fontDescription" type="system" weight="medium" pointSize="15"/>
                             <nil key="textColor"/>

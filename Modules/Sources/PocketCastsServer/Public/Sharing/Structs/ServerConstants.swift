@@ -111,7 +111,7 @@ public enum ServerConstants {
         static let syncingV2TokenKey = "SJSyncV2Token"
         static let refreshTokenKey = "SJRefreshToken"
         static let appleAuthUserIDKey = "SJAppleAuthUserID"
-        public static let appUserAgent = "Pocket Casts"
+        public static let appUserAgent = "Burrow"
         static let customStorageUsed = "SJCustomStorageUsed"
         static let customStorageNumFiles = "SJCustomStorageNumFiles"
         static let customStorageUserLimit = "SJCustomStorageUserLimit"

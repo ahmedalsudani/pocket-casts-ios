@@ -59,8 +59,8 @@ extension AppDelegate {
                 NavigationManager.sharedManager.navigateTo(NavigationManager.uploadedPageKey, data: [NavigationManager.uploadFileKey: url])
             }
         } else {
-            // check to see what the scheme is we support itpc, http, feed & our own pktc
-            if let scheme = url.scheme, scheme == "pktc" {
+            // check to see what the scheme is we support itpc, http, feed & our own burrow
+            if let scheme = url.scheme, scheme == "burrow" {
                 JLRoutes.routeURL(url)
             }
         }
@@ -177,7 +177,7 @@ extension AppDelegate {
                 return false
             }
 
-            let prefix = "pktc://subscribe/"
+            let prefix = "burrow://subscribe/"
             if prefix.count >= subscribeUrl.count { return true } // this request is missing a URL
 
             let feedUrl = subscribeUrl.replacingOccurrences(of: prefix, with: "")
@@ -263,7 +263,7 @@ extension AppDelegate {
         JLRoutes.global().addRoute("/applink/sonos/*") { [weak self] parameters -> Bool in
             guard let strongSelf = self, let originalUrl = parameters[JLRouteURLKey] as? URL else { return false }
 
-            let redirectUri = originalUrl.absoluteString.replacingOccurrences(of: "pktc://applink/sonos/", with: "")
+            let redirectUri = originalUrl.absoluteString.replacingOccurrences(of: "burrow://applink/sonos/", with: "")
 
             if let modalController = strongSelf.modalController {
                 modalController.dismiss(animated: false, completion: nil)
@@ -382,7 +382,7 @@ extension AppDelegate {
                   let rootViewController = SceneHelper.rootViewController(),
                   let originalUrl = parameters[JLRouteURLKey] as? URL else { return false }
 
-            let fileURLString = originalUrl.absoluteString.replacingOccurrences(of: "pktc://import-file/", with: "")
+            let fileURLString = originalUrl.absoluteString.replacingOccurrences(of: "burrow://import-file/", with: "")
 
             guard let fileURL = URL(string: fileURLString) else {
                 return true

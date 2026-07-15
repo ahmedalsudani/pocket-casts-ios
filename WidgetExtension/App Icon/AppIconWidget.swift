@@ -23,7 +23,7 @@ struct AppIconWidgetEntryView: View {
                 .resizable()
                 .frame(width: 55, height: 55)
         }
-        .widgetURL(URL(string: "pktc://last_opened"))
+        .widgetURL(URL(string: "burrow://last_opened"))
         .clearBackground()
     }
 }

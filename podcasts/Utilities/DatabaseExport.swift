@@ -9,7 +9,7 @@ class DatabaseExport {
 
     private var cancellables = Set<AnyCancellable>()
 
-    init(exportName: String = "Pocket Casts Export") {
+    init(exportName: String = "Burrow Export") {
         self.exportName = exportName
     }
 

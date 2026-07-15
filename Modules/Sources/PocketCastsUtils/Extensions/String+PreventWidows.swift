@@ -10,9 +10,9 @@ public extension String {
     }
 
     /// This attempts to prevent widows/orphaned text by applying a non-breaking space between the last words
-    /// This also prevents the Pocket Casts from being split up
+    /// This also prevents the app name from being split up
     func preventWidows() -> String {
-        // Prevent Pocket Casts from being separated
+        // Prevent the app name from being separated
         let returnText = self.replacingOccurrences(of: Constants.pocketCasts, with: Constants.pocketCastsNBSP)
 
         let components = returnText.components(separatedBy: Constants.space)
@@ -37,7 +37,7 @@ public extension String {
 
     private enum Constants {
         static let space = " "
-        static let pocketCasts = "Pocket Casts"
+        static let pocketCasts = "Burrow"
         static let pocketCastsNBSP = "Pocket" + .nbsp + "Casts"
     }
 }

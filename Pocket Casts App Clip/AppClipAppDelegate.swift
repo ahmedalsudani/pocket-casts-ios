@@ -5,7 +5,7 @@ import PocketCastsUtils
 import PocketCastsServer
 
 enum AppClipNotification {
-    static let appStoreNotificationID = "au.com.shiftyjelly.podcasts.prototype.Clip.reminder"
+    static let appStoreNotificationID = "app.burrow.prototype.Clip.reminder"
 
     static let appAppStoreURL = "itms-apps://itunes.apple.com/app/apple-store/id414834813?mt=8"
 }

@@ -107,7 +107,7 @@ class ImportExportViewController: PCViewController, UIDocumentInteractionControl
         let exportXML = AEXMLDocument()
         let opml = exportXML.addChild(name: "opml", attributes: ["version": "1.0"])
         let header = opml.addChild(name: "head")
-        _ = header.addChild(name: "title", value: "Pocket Casts Feeds")
+        _ = header.addChild(name: "title", value: "Burrow Feeds")
 
         let body = opml.addChild(name: "body")
         let outline = body.addChild(name: "outline", attributes: ["text": "feeds"])

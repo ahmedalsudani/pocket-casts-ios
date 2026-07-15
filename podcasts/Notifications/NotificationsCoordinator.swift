@@ -91,31 +91,31 @@ enum NotificationType: String {
     var link: String {
         switch self {
         case .onboardingSignUp:
-            return "pktc://signup"
+            return "burrow://signup"
         case .onboardingImport:
-            return "pktc://settings/import"
+            return "burrow://settings/import"
         case .onboardingThemes:
-            return "pktc://settings/themes"
+            return "burrow://settings/themes"
         case .onboardingUpNext:
-            return "pktc://upnext/?location=tab"
+            return "burrow://upnext/?location=tab"
         case .onboardingFilters:
-            return "pktc://filters"
+            return "burrow://filters"
         case .onboardingUpsell:
-            return "pktc://upsell"
+            return "burrow://upsell"
         case .onboardingStaffPicks:
-            return "pktc://discover/staff-picks"
+            return "burrow://discover/staff-picks"
         case .reengagementWeekly:
-            return "pktc://discover"
+            return "burrow://discover"
         case .reengagementDownloads:
-            return "pktc://profile/downloads"
+            return "burrow://profile/downloads"
         case .recommendationsTrending:
-            return "pktc://discover/trending"
+            return "burrow://discover/trending"
         case .recommendationsYouMightLike:
-            return "pktc://discover/recommendations_user"
+            return "burrow://discover/recommendations_user"
         case .upsell:
-            return "pktc://upsell"
+            return "burrow://upsell"
         case .newFeatureSuggestedFolders:
-            return "pktc://features/suggestedFolders"
+            return "burrow://features/suggestedFolders"
         }
     }
 

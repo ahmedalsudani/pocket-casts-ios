@@ -6,7 +6,7 @@ extension L10n {
 
     /// These strings are proper nouns and shouldn't be localized
     static let appleWatch = "Apple Watch"
-    static let pocketCasts = "Pocket Casts"
+    static let pocketCasts = "Burrow"
     static let pocketCastsShort = "Casts"
     static let xCom = "X"
     static let instagram = "Instagram"

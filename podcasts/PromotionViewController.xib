@@ -115,7 +115,7 @@
                                         <constraint firstAttribute="height" constant="56" id="BaM-1K-pHz"/>
                                     </constraints>
                                     <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="19"/>
-                                    <state key="normal" title="Sign Up To Pocket Casts Plus"/>
+                                    <state key="normal" title="Sign Up To Burrow Plus"/>
                                     <connections>
                                         <action selector="upgradeToPlusTapped:" destination="-1" eventType="touchUpInside" id="dft-DD-bFp"/>
                                     </connections>
@@ -126,7 +126,7 @@
                                         <constraint firstAttribute="height" constant="56" id="Nmd-W2-WfE"/>
                                     </constraints>
                                     <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="19"/>
-                                    <state key="normal" title="Create a Pocket Casts Account"/>
+                                    <state key="normal" title="Create a Burrow Account"/>
                                     <connections>
                                         <action selector="signUpNoPromoTapped:" destination="-1" eventType="touchUpInside" id="T54-po-zcK"/>
                                     </connections>

@@ -35,7 +35,7 @@ final class LiveAnalyticsStreamer: AnalyticsAdapter {
         let platform: String
     }
 
-    private let queue = DispatchQueue(label: "au.com.shiftyjelly.pocketcasts.liveanalytics")
+    private let queue = DispatchQueue(label: "app.burrow.liveanalytics")
     private var eventBuffer: [AnalyticsEvent] = []
     private var isFlushScheduled = false
     private var isBackingOff = false

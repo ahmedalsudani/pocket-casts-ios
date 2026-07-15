@@ -21,7 +21,7 @@ class ShareViewController: UIViewController {
     }
 
     func redirectToHostApp(_ url: String) {
-        guard let url = URL(string: "pktc://import-file/\(url)") else {
+        guard let url = URL(string: "burrow://import-file/\(url)") else {
             return
         }
 

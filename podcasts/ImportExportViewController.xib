@@ -62,9 +62,9 @@
                                     <constraints>
                                         <constraint firstAttribute="width" relation="lessThanOrEqual" constant="400" id="PIh-Mc-EaX"/>
                                     </constraints>
-                                    <string key="text">You can import your podcasts subscriptions to Pocket Casts using the widely supported OPML format. Export the file from another app and choose open in Pocket Casts.
+                                    <string key="text">You can import your podcasts subscriptions to Burrow using the widely supported OPML format. Export the file from another app and choose open in Burrow.
 
-Note: You may need to email the OPML file to yourself, long press on the attachment and select Pocket Casts.</string>
+Note: You may need to email the OPML file to yourself, long press on the attachment and select Burrow.</string>
                                     <fontDescription key="fontDescription" style="UICTFontTextStyleFootnote"/>
                                     <color key="textColor" systemColor="darkTextColor"/>
                                     <nil key="highlightedColor"/>

@@ -39,7 +39,7 @@ class DownloadManager: NSObject, FilePathProtocol {
         return manager
     }()
 
-    static let cellBackgroundSessionId = "au.com.shiftyjelly.PCManualSession"
+    static let cellBackgroundSessionId = "app.burrow.PCManualSession"
 
     var progressManager = DownloadProgressManager()
 
@@ -99,7 +99,7 @@ class DownloadManager: NSObject, FilePathProtocol {
     }
 
     lazy var wifiOnlyBackgroundSession: URLSession = {
-        var config = URLSessionConfiguration.background(withIdentifier: "au.com.shiftyjelly.PCBackgroundSession")
+        var config = URLSessionConfiguration.background(withIdentifier: "app.burrow.PCBackgroundSession")
         if FeatureFlag.useCellularNetworkApis.enabled {
             config.allowsCellularAccess = false
         } else {

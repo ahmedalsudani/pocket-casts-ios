@@ -4,12 +4,12 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>au.com.shiftyjelly.podcasts.Refresh</string>
+		<string>app.burrow.Refresh</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Pocket Casts</string>
+	<string>Burrow</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -74,7 +74,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>Pocket Casts Bundle</string>
+			<string>Burrow Bundle</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
@@ -933,7 +933,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Pocket Casts</string>
+	<string>Burrow</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -946,10 +946,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>au.com.shiftyjelly.podcasts</string>
+			<string>app.burrow</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>pktc</string>
+				<string>burrow</string>
 			</array>
 		</dict>
 		<dict>
@@ -1014,7 +1014,7 @@
 		</dict>
 	</dict>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Pocket Casts needs to access your bluetooth in order to detect nearby Google Cast devices.</string>
+	<string>Burrow needs to access your bluetooth in order to detect nearby Google Cast devices.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_googlecast._tcp</string>
@@ -1023,13 +1023,13 @@
 	<key>NSCameraUsageDescription</key>
 	<string>This allows you to add custom images to your files</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Pocket Casts uses this to find Google Cast devices on your network. If you don't use this feature feel free to say no.</string>
+	<string>Burrow uses this to find Google Cast devices on your network. If you don't use this feature feel free to say no.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Pocket Casts needs to access your microphone in order to detect nearby Google Cast devices.</string>
+	<string>Burrow needs to access your microphone in order to detect nearby Google Cast devices.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Pocket Casts needs permission to save this image to your photo library.</string>
+	<string>Burrow needs permission to save this image to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Pocket Casts needs permission to save this image to your photo library.</string>
+	<string>Burrow needs permission to save this image to your photo library.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>ChapterIntent</string>
@@ -1059,7 +1059,7 @@
 					<key>UISceneClassName</key>
 					<string>CPTemplateApplicationScene</string>
 					<key>UISceneConfigurationName</key>
-					<string>Pocket Casts Car</string>
+					<string>Burrow Car</string>
 					<key>UISceneDelegateClassName</key>
 					<string>$(PRODUCT_MODULE_NAME).CarPlaySceneDelegate</string>
 				</dict>
@@ -1140,7 +1140,7 @@
 				<string>com.apple.package</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>Pocket Casts Bundle</string>
+			<string>Burrow Bundle</string>
 			<key>UTTypeIconFiles</key>
 			<array/>
 			<key>UTTypeIdentifier</key>

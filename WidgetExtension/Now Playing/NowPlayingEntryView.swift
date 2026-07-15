@@ -44,7 +44,7 @@ struct NowPlayingWidgetEntryView: View {
                         .resizable()
                         .backwardWidgetAccentedDesaturatedRenderingMode()
                 }
-                .widgetURL(URL(string: "pktc://last_opened"))
+                .widgetURL(URL(string: "burrow://last_opened"))
                 .clearBackground()
             default:
                 nothingPlayingMedium
@@ -64,7 +64,7 @@ struct NowPlayingWidgetEntryView: View {
 
                 playToggleOrPlaybackLabel(playingEpisode: playingEpisode)
             }
-            .widgetURL(URL(string: "pktc://last_opened"))
+            .widgetURL(URL(string: "burrow://last_opened"))
             .clearBackground()
             .if(!showsWidgetBackground) { view in
                 view
@@ -108,7 +108,7 @@ struct NowPlayingWidgetEntryView: View {
             }
             .padding(16)
 
-            .widgetURL(URL(string: "pktc://last_opened"))
+            .widgetURL(URL(string: "burrow://last_opened"))
             .clearBackground()
             .if(!showsWidgetBackground) { view in
                 view
@@ -220,7 +220,7 @@ struct NowPlayingWidgetEntryView: View {
             }
             .padding(16)
         }
-        .widgetURL(URL(string: "pktc://discover?source=widget"))
+        .widgetURL(URL(string: "burrow://discover?source=widget"))
         .clearBackground()
         .if(!showsWidgetBackground) { view in
             view
@@ -266,7 +266,7 @@ struct NowPlayingWidgetEntryView: View {
             }
             nothingPlayingText
         }
-        .widgetURL(URL(string: "pktc://discover?source=widget"))
+        .widgetURL(URL(string: "burrow://discover?source=widget"))
         .clearBackground()
         .if(!showsWidgetBackground) { view in
             view

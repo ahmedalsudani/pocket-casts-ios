@@ -3,7 +3,7 @@ import PocketCastsUtils
 import UIKit
 
 class CommonWidgetHelper {
-    static let appGroupId = "group.au.com.shiftyjelly.pocketcasts"
+    static let appGroupId = "group.app.burrow"
     static let iconSize: CGFloat = 28
 
     class func loadAppIconName() -> String {
@@ -102,7 +102,7 @@ class CommonWidgetHelper {
     }
 
     class func urlForEpisodeUuid(uuid: String) -> URL? {
-        guard let url = URL(string: "pktc://widget-episode/\(uuid)") else {
+        guard let url = URL(string: "burrow://widget-episode/\(uuid)") else {
             return nil
         }
 

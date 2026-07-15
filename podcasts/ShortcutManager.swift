@@ -55,11 +55,11 @@ class ShortcutManager: CustomObserver {
         if let topPlaylist = DataManager.sharedManager.allPlaylists(includeDeleted: false).first, let iconName = topPlaylist.iconImageName() {
             shortcutItems.append(
                 UIMutableApplicationShortcutItem(
-                    type: "au.com.shiftyjelly.podcasts",
+                    type: "app.burrow",
                     localizedTitle: topPlaylist.playlistName,
                     localizedSubtitle: "\(DataManager.sharedManager.episodeCount(for: topPlaylist, episodeUuidToAdd: topPlaylist.episodeUuidToAddToQueries())) items",
                     icon: UIApplicationShortcutIcon(templateImageName: iconName),
-                    userInfo: ["url": "pktc://shortcuts/filter/\(topPlaylist.uuid)" as NSSecureCoding]
+                    userInfo: ["url": "burrow://shortcuts/filter/\(topPlaylist.uuid)" as NSSecureCoding]
                 )
             )
         }
@@ -69,21 +69,21 @@ class ShortcutManager: CustomObserver {
             if PlaybackManager.shared.playing() {
                 shortcutItems.append(
                     UIMutableApplicationShortcutItem(
-                        type: "au.com.shiftyjelly.podcasts",
+                        type: "app.burrow",
                         localizedTitle: L10n.pause,
                         localizedSubtitle: currentEpisode.displayableTitle(),
                         icon: UIApplicationShortcutIcon(type: .pause),
-                        userInfo: ["url": "pktc://shortcuts/pause" as NSSecureCoding]
+                        userInfo: ["url": "burrow://shortcuts/pause" as NSSecureCoding]
                     )
                 )
             } else {
                 shortcutItems.append(
                     UIMutableApplicationShortcutItem(
-                        type: "au.com.shiftyjelly.podcasts",
+                        type: "app.burrow",
                         localizedTitle: L10n.play,
                         localizedSubtitle: currentEpisode.displayableTitle(),
                         icon: UIApplicationShortcutIcon(type: .play),
-                        userInfo: ["url": "pktc://shortcuts/play" as NSSecureCoding]
+                        userInfo: ["url": "burrow://shortcuts/play" as NSSecureCoding]
                     )
                 )
             }
@@ -91,11 +91,11 @@ class ShortcutManager: CustomObserver {
             // discover
             shortcutItems.append(
                 UIMutableApplicationShortcutItem(
-                    type: "au.com.shiftyjelly.podcasts",
+                    type: "app.burrow",
                     localizedTitle: "Find New Podcasts",
                     localizedSubtitle: nil,
                     icon: UIApplicationShortcutIcon(type: .search),
-                    userInfo: ["url": "pktc://shortcuts/discover" as NSSecureCoding]
+                    userInfo: ["url": "burrow://shortcuts/discover" as NSSecureCoding]
                 )
             )
         }

@@ -27,7 +27,7 @@ class SupportFeedbackTask: ApiBaseTask {
 
             var request = Api_SupportFeedbackRequest()
             request.message = message
-            request.subject = "Pocket Casts - Kids Profile Ideas"
+            request.subject = "Burrow - Kids Profile Ideas"
             request.inbox = "research"
 
             let data = try request.serializedData()

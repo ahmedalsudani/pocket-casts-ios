@@ -57,7 +57,7 @@ enum AboutLogo: CaseIterable {
         case .dayone:
             return "Day One"
         case .pocketcasts:
-            return "Pocket Casts"
+            return "Burrow"
         case .simplenote:
             return "Simple Note"
         case .woo:

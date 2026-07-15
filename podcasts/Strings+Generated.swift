@@ -74,10 +74,10 @@ internal enum L10n {
   }
   /// An accessibility label used for the playlist image
   internal static var accessibilityPlaylistImage: String { return L10n.tr("Localizable", "accessibility_playlist_image", fallback: "Playlist image") }
-  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked behind Pocket Casts Plus subscription.
+  /// A common string used throughout the app. An accessibility label to inform the user that the selected item is locked behind Burrow Plus subscription.
   internal static var accessibilityPlusOnly: String { return L10n.tr("Localizable", "accessibility_plus_only", fallback: "Locked, Plus Feature") }
-  /// Accessibility label fir the profile settings icon in the app. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app.
-  internal static var accessibilityProfileSettings: String { return L10n.tr("Localizable", "accessibility_profile_settings", fallback: "Pocket Casts Settings") }
+  /// Accessibility label fir the profile settings icon in the app. 'Burrow' is treated as a proper noun and hasn't been localized in other places of the app.
+  internal static var accessibilityProfileSettings: String { return L10n.tr("Localizable", "accessibility_profile_settings", fallback: "Burrow Settings") }
   /// A common string used throughout the app. Accessibility hint to inform the user that this control will select the episode.
   internal static var accessibilitySelectEpisode: String { return L10n.tr("Localizable", "accessibility_select_episode", fallback: "Select Episode") }
   /// An accessibility label to direct the user tap to get access to filter details.
@@ -141,19 +141,19 @@ internal enum L10n {
   /// Subtitle to the Confirmation dialog informing the user that signing out will remove the given number of supported podcasts.
   internal static var accountSignOutSupporterSubtitle: String { return L10n.tr("Localizable", "account_sign_out_supporter_subtitle", fallback: "You can sign in again to regain access.") }
   /// Message/Body of an alert that explains that the user should tap a button and sign in again
-  internal static var accountSignedOutAlertMessage: String { return L10n.tr("Localizable", "account_signed_out_alert_message", fallback: "Turns out, if you type Google into Google, you can break the internet. 🫢 \n\nTap the button below to sign into your Pocket Casts account again.") }
+  internal static var accountSignedOutAlertMessage: String { return L10n.tr("Localizable", "account_signed_out_alert_message", fallback: "Turns out, if you type Google into Google, you can break the internet. 🫢 \n\nTap the button below to sign into your Burrow account again.") }
   /// Title of an alert that informs the user that they have been signed out of their account
   internal static var accountSignedOutAlertTitle: String { return L10n.tr("Localizable", "account_signed_out_alert_title", fallback: "You've been signed out.") }
   /// Error message for when the account registration request has failed.
   internal static var accountSsoFailed: String { return L10n.tr("Localizable", "account_sso_failed", fallback: "Sign in failed. Please try again.") }
-  /// Title for the account screen for the user's Pocket Casts Account. 'Pocket Casts' refers to the app name and is treated as a proper noun so it shouldn't be localized.
-  internal static var accountTitle: String { return L10n.tr("Localizable", "account_title", fallback: "Pocket Casts Account") }
-  /// Title informing the user that their account has been successfully upgraded to Pocket Casts Plus
+  /// Title for the account screen for the user's Burrow Account. 'Burrow' refers to the app name and is treated as a proper noun so it shouldn't be localized.
+  internal static var accountTitle: String { return L10n.tr("Localizable", "account_title", fallback: "Burrow Account") }
+  /// Title informing the user that their account has been successfully upgraded to Burrow Plus
   internal static var accountUpgraded: String { return L10n.tr("Localizable", "account_upgraded", fallback: "Account Upgraded") }
-  /// Welcome message presented after a user has signed up for Pocket Casts
-  internal static var accountWelcome: String { return L10n.tr("Localizable", "account_welcome", fallback: "Welcome to Pocket Casts!") }
-  /// Welcome message presented after a user has signed up for Pocket Casts Plus
-  internal static var accountWelcomePlus: String { return L10n.tr("Localizable", "account_welcome_plus", fallback: "Welcome to Pocket Casts Plus!") }
+  /// Welcome message presented after a user has signed up for Burrow
+  internal static var accountWelcome: String { return L10n.tr("Localizable", "account_welcome", fallback: "Welcome to Burrow!") }
+  /// Welcome message presented after a user has signed up for Burrow Plus
+  internal static var accountWelcomePlus: String { return L10n.tr("Localizable", "account_welcome_plus", fallback: "Welcome to Burrow Plus!") }
   /// Title for an action that allows a user to create a new bookmark
   internal static var addBookmark: String { return L10n.tr("Localizable", "add_bookmark", fallback: "Add Bookmark") }
   /// The subtitle of a view where the user can edit their bookmark title
@@ -197,7 +197,7 @@ internal enum L10n {
   /// A common string used throughout the app. References to Badge settings for the app.
   internal static var appBadge: String { return L10n.tr("Localizable", "app_badge", fallback: "App Badge") }
   /// App Clip Placeholder view message for when the episode link parsing fails
-  internal static var appClipPlacholderMessage: String { return L10n.tr("Localizable", "app_clip_placholder_message", fallback: "It may have been removed or the link is broken.\nBut there's plenty more on Pocket Casts.\nDownload the app for the full experience!") }
+  internal static var appClipPlacholderMessage: String { return L10n.tr("Localizable", "app_clip_placholder_message", fallback: "It may have been removed or the link is broken.\nBut there's plenty more on Burrow.\nDownload the app for the full experience!") }
   /// App Clip Placeholder view title for when the episode link parsing fails
   internal static var appClipPlacholderTitle: String { return L10n.tr("Localizable", "app_clip_placholder_title", fallback: "Sorry, we couldn't find that episode") }
   /// The name for the Classic App Icon
@@ -222,9 +222,9 @@ internal enum L10n {
   internal static var appIconPatronGlow: String { return L10n.tr("Localizable", "app_icon_patron_glow", fallback: "Patron Glow") }
   /// The name for the Patron Round App Icon - Do not translate Patron
   internal static var appIconPatronRound: String { return L10n.tr("Localizable", "app_icon_patron_round", fallback: "Patron Round") }
-  /// The name for the Pocket Casts Plus App Icon
+  /// The name for the Burrow Plus App Icon
   internal static var appIconPlus: String { return L10n.tr("Localizable", "app_icon_plus", fallback: "Plus") }
-  /// The name for the Pocket Cats App Icon. The name for this one is meant to be a play on the App name Pocket Casts and the icon includes a cat image.
+  /// The name for the Pocket Cats App Icon. The name for this one is meant to be a play on the App name Burrow and the icon includes a cat image.
   internal static var appIconPocketCats: String { return L10n.tr("Localizable", "app_icon_pocket_cats", fallback: "Pocket Cats") }
   /// The name for the Radioactivity App Icon
   internal static var appIconRadioactivity: String { return L10n.tr("Localizable", "app_icon_radioactivity", fallback: "Radioactivity") }
@@ -237,7 +237,7 @@ internal enum L10n {
   /// The name for the Round Light App Icon
   internal static var appIconRoundLight: String { return L10n.tr("Localizable", "app_icon_round_light", fallback: "Round Light") }
   /// Text sent when sharing a link to our app with other people
-  internal static var appShareText: String { return L10n.tr("Localizable", "app_share_text", fallback: "Hey! Here is a link to download the Pocket Casts app. I'm really enjoying it and thought you might too.") }
+  internal static var appShareText: String { return L10n.tr("Localizable", "app_share_text", fallback: "Hey! Here is a link to download the Burrow app. I'm really enjoying it and thought you might too.") }
   /// App version label in the about controller. `%1$@` is a placeholder for the version number and %2$@ is a placeholder for the build number
   internal static func appVersion(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "app_version", String(describing: p1), String(describing: p2), fallback: "Version %1$@ (%2$@)")
@@ -251,7 +251,7 @@ internal enum L10n {
   /// Prompt to toggle on the use of artwork per episode, as opposed to per podcast.
   internal static var appearanceEmbeddedArtwork: String { return L10n.tr("Localizable", "appearance_embedded_artwork", fallback: "Use Episode Artwork") }
   /// Subtitle explaining episode artwork.
-  internal static var appearanceEmbeddedArtworkSubtitle: String { return L10n.tr("Localizable", "appearance_embedded_artwork_subtitle", fallback: "Some shows have custom artwork for certain episodes. Enable this option and Pocket Casts will display them instead of the show’s artwork.") }
+  internal static var appearanceEmbeddedArtworkSubtitle: String { return L10n.tr("Localizable", "appearance_embedded_artwork_subtitle", fallback: "Some shows have custom artwork for certain episodes. Enable this option and Burrow will display them instead of the show’s artwork.") }
   /// Label for letting the user choose a theme for iOS light mode.
   internal static var appearanceLightTheme: String { return L10n.tr("Localizable", "appearance_light_theme", fallback: "Light Theme") }
   /// Prompt to toggle whether the theme will match the device theme or not.
@@ -334,9 +334,9 @@ internal enum L10n {
   internal static var bannerAdsReportOther: String { return L10n.tr("Localizable", "banner_ads_report_other", fallback: "Other") }
   /// The title of an option to report a banner ad as occurring too often.
   internal static var bannerAdsReportTooOften: String { return L10n.tr("Localizable", "banner_ads_report_too_often", fallback: "See this ad too often") }
-  /// Message of an alert that informs the user purchasing is disabled in the beta. 'Pocket Casts' is treated as a proper noun and hasn't been localized in other places of the app. %1$@ is the name of the tier (Plus or Patron)
+  /// Message of an alert that informs the user purchasing is disabled in the beta. 'Burrow' is treated as a proper noun and hasn't been localized in other places of the app. %1$@ is the name of the tier (Plus or Patron)
   internal static func betaPurchaseDisabled(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "beta_purchase_disabled", String(describing: p1), fallback: "Please download Pocket Casts from the App Store to purchase %1$@.")
+    return L10n.tr("Localizable", "beta_purchase_disabled", String(describing: p1), fallback: "Please download Burrow from the App Store to purchase %1$@.")
   }
   /// Title of a message thanking the user for being a beta tester
   internal static var betaThankYou: String { return L10n.tr("Localizable", "beta_thank_you", fallback: "Thank you for beta testing!") }
@@ -372,11 +372,11 @@ internal enum L10n {
   internal static var bookmarksCountSingular: String { return L10n.tr("Localizable", "bookmarks_count_singular", fallback: "1 bookmark") }
   /// A message informing the user a feature is locked while in early access. %1$@ and %2$@ are the names of the tier (Plus or Patron)
   internal static func bookmarksEarlyAccessLockedMessage(_ p1: Any, _ p2: Any) -> String {
-    return L10n.tr("Localizable", "bookmarks_early_access_locked_message", String(describing: p1), String(describing: p2), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes. Available for %2$@ subscribers soon.")
+    return L10n.tr("Localizable", "bookmarks_early_access_locked_message", String(describing: p1), String(describing: p2), fallback: "Unlock this feature and many more with Burrow %1$@ and save timestamps of your favorite episodes. Available for %2$@ subscribers soon.")
   }
   /// A message informing the user a feature is locked. %1$@ is the name of the tier (Plus or Patron)
   internal static func bookmarksLockedMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "bookmarks_locked_message", String(describing: p1), fallback: "Unlock this feature and many more with Pocket Casts %1$@ and save timestamps of your favorite episodes.")
+    return L10n.tr("Localizable", "bookmarks_locked_message", String(describing: p1), fallback: "Unlock this feature and many more with Burrow %1$@ and save timestamps of your favorite episodes.")
   }
   /// A common string used throughout the app. Title option to place the item at the bottom of the queue.
   internal static var bottom: String { return L10n.tr("Localizable", "bottom", fallback: "Bottom") }
@@ -395,9 +395,9 @@ internal enum L10n {
   /// Title of a list item that informs the user their plus features will be locked if they cancel
   internal static var cancelConfirmItemPlus: String { return L10n.tr("Localizable", "cancel_confirm_item_plus", fallback: "After this date, access to Plus features like bookmarks, shuffle, wearables and more will be removed.") }
   /// Title of a list item that informs the user uploaded files will be removed if they cancel
-  internal static var cancelConfirmItemUploads: String { return L10n.tr("Localizable", "cancel_confirm_item_uploads", fallback: "All files uploaded to your Pocket Casts account will be deleted, but downloads on your mobile devices will remain.") }
+  internal static var cancelConfirmItemUploads: String { return L10n.tr("Localizable", "cancel_confirm_item_uploads", fallback: "All files uploaded to your Burrow account will be deleted, but downloads on your mobile devices will remain.") }
   /// Title of a list item that informs the user they will no longer be able to access plus on the web if they cancel
-  internal static var cancelConfirmItemWebPlayer: String { return L10n.tr("Localizable", "cancel_confirm_item_web_player", fallback: "You will no longer be able to access Pocket Casts using your web browser, or desktop computer.") }
+  internal static var cancelConfirmItemWebPlayer: String { return L10n.tr("Localizable", "cancel_confirm_item_web_player", fallback: "You will no longer be able to access Burrow using your web browser, or desktop computer.") }
   /// Button title that lets the user stop the cancellation process
   internal static var cancelConfirmStayButtonTitle: String { return L10n.tr("Localizable", "cancel_confirm_stay_button_title", fallback: "Keep my subscription") }
   /// Title of a list item that informs the user the date their subscription will expire. %1$@ is the date of expiration
@@ -414,7 +414,7 @@ internal enum L10n {
   internal static var cancelDownload: String { return L10n.tr("Localizable", "cancel_download", fallback: "Cancel Download") }
   /// Message title indicating that the cancel process has failed.
   internal static var cancelFailed: String { return L10n.tr("Localizable", "cancel_failed", fallback: "Unable To Cancel") }
-  /// Prompt to allow the user to cancel their Pocket Casts Plus subscription.
+  /// Prompt to allow the user to cancel their Burrow Plus subscription.
   internal static var cancelSubscription: String { return L10n.tr("Localizable", "cancel_subscription", fallback: "Cancel Subscription") }
   /// Badge that appears over the best value plan in the available plans list
   internal static var cancelSubscriptionAvailablePlansBestValueBadge: String { return L10n.tr("Localizable", "cancel_subscription_available_plans_best_value_badge", fallback: "Best Value") }
@@ -433,17 +433,17 @@ internal enum L10n {
   /// Cancel subscription: description for the help row
   internal static var cancelSubscriptionHelpDescription: String { return L10n.tr("Localizable", "cancel_subscription_help_description", fallback: "Struggling with any features or having issues.") }
   /// Cancel subscription: title for the help row
-  internal static var cancelSubscriptionHelpTitle: String { return L10n.tr("Localizable", "cancel_subscription_help_title", fallback: "Need help with Pocket Casts?") }
+  internal static var cancelSubscriptionHelpTitle: String { return L10n.tr("Localizable", "cancel_subscription_help_title", fallback: "Need help with Burrow?") }
   /// Cancel subscription: description for the new plan row
   internal static var cancelSubscriptionNewPlanDescription: String { return L10n.tr("Localizable", "cancel_subscription_new_plan_description", fallback: "Find the plan that’s right for you.") }
   /// Cancel subscription: title for the new plan row
   internal static var cancelSubscriptionNewPlanTitle: String { return L10n.tr("Localizable", "cancel_subscription_new_plan_title", fallback: "Looking for a different plan?") }
   /// Description of the success screen when the cancel subscription offer is applied
-  internal static var cancelSubscriptionOfferSuccessViewDescription: String { return L10n.tr("Localizable", "cancel_subscription_offer_success_view_description", fallback: "Thanks for choosing Pocket Casts. Your free month will be added to your current subscription.") }
+  internal static var cancelSubscriptionOfferSuccessViewDescription: String { return L10n.tr("Localizable", "cancel_subscription_offer_success_view_description", fallback: "Thanks for choosing Burrow. Your free month will be added to your current subscription.") }
   /// Title of the success screen when the cancel subscription offer is applied
   internal static var cancelSubscriptionOfferSuccessViewTitle: String { return L10n.tr("Localizable", "cancel_subscription_offer_success_view_title", fallback: "Enjoy your free month!") }
   /// Description of the success screen when the cancel yearly subscription offer is applied
-  internal static var cancelSubscriptionOfferYearlySuccessViewDescription: String { return L10n.tr("Localizable", "cancel_subscription_offer_yearly_success_view_description", fallback: "Thanks for choosing Pocket Casts. Your discounted year begins after your current plan ends.") }
+  internal static var cancelSubscriptionOfferYearlySuccessViewDescription: String { return L10n.tr("Localizable", "cancel_subscription_offer_yearly_success_view_description", fallback: "Thanks for choosing Burrow. Your discounted year begins after your current plan ends.") }
   /// Title of the success screen when the cancel yearly subscription offer is applied
   internal static var cancelSubscriptionOfferYearlySuccessViewTitle: String { return L10n.tr("Localizable", "cancel_subscription_offer_yearly_success_view_title", fallback: "50%% off your next year!") }
   /// Cancel subscription: description for the monthly promotion row. The %@ represents the price.
@@ -471,8 +471,8 @@ internal enum L10n {
   /// Title of the Send Button in the survey screen that appears when a user cancels the subscription
   internal static var cancelSubscriptionSurveySubmitFeedback: String { return L10n.tr("Localizable", "cancel_subscription_survey_submit_feedback", fallback: "Submit feedback") }
   /// Title of the survey screen that appears when a user cancels the subscription. 
-  ///  forces Pocket Casts to be on a new line
-  internal static var cancelSubscriptionSurveyTitle: String { return L10n.tr("Localizable", "cancel_subscription_survey_title", fallback: "Thanks for trying\nPocket Casts Plus") }
+  ///  forces Burrow to be on a new line
+  internal static var cancelSubscriptionSurveyTitle: String { return L10n.tr("Localizable", "cancel_subscription_survey_title", fallback: "Thanks for trying\nBurrow Plus") }
   /// Toast message that appears if the survey submission goes wrong
   internal static var cancelSubscriptionSurveyToastFail: String { return L10n.tr("Localizable", "cancel_subscription_survey_toast_fail", fallback: "Sorry, something went wrong.") }
   /// Toast message that appears if the survey submission goes well
@@ -485,10 +485,10 @@ internal enum L10n {
   /// Offer view: button used to prompt the system cancellation view
   internal static var cancelSubscriptionWinbackViewContinueCancellationButton: String { return L10n.tr("Localizable", "cancel_subscription_winback_view_continue_cancellation_button", fallback: "Continue with cancellation") }
   /// Offer view: description for the monthly promotion.
-  internal static var cancelSubscriptionWinbackViewDescriptionMontly: String { return L10n.tr("Localizable", "cancel_subscription_winback_view_description_montly", fallback: "Enjoy one month of Pocket Casts Plus on us! The offer will be added to your current subscription.") }
+  internal static var cancelSubscriptionWinbackViewDescriptionMontly: String { return L10n.tr("Localizable", "cancel_subscription_winback_view_description_montly", fallback: "Enjoy one month of Burrow Plus on us! The offer will be added to your current subscription.") }
   /// Offer view: description for the yearly promotion. The %@ represents the price.
   internal static func cancelSubscriptionWinbackViewDescriptionYearly(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "cancel_subscription_winback_view_description_yearly", String(describing: p1), fallback: "Pay %@ now to lock in a year of Pocket Casts Plus at half price. Your discounted year begins after your current plan ends.")
+    return L10n.tr("Localizable", "cancel_subscription_winback_view_description_yearly", String(describing: p1), fallback: "Pay %@ now to lock in a year of Burrow Plus at half price. Your discounted year begins after your current plan ends.")
   }
   /// Offer view: title for the monthly promotion. The %@ represents the price.
   internal static func cancelSubscriptionWinbackViewTitleMontly(_ p1: Any) -> String {
@@ -512,10 +512,10 @@ internal enum L10n {
   internal static var carplayPlaybackSpeed: String { return L10n.tr("Localizable", "carplay_playback_speed", fallback: "Playback Speed") }
   /// CarPlay prompt to navigate to the up next Queue.
   internal static var carplayUpNextQueue: String { return L10n.tr("Localizable", "carplay_up_next_queue", fallback: "Up Next Queue") }
-  /// Subtitle of the Pocket Casts champion screen
+  /// Subtitle of the Burrow champion screen
   internal static var championDescription: String { return L10n.tr("Localizable", "champion_description", fallback: "Thanks for being with us since the beginning! If you enjoy using our app, we’d love to hear your feedback.") }
-  /// Title of the Pocket Casts champion screen, greeting an user that has been using Pocket Casts for a long time
-  internal static var championTitle: String { return L10n.tr("Localizable", "champion_title", fallback: "You’re a true champion of Pocket Casts!") }
+  /// Title of the Burrow champion screen, greeting an user that has been using Burrow for a long time
+  internal static var championTitle: String { return L10n.tr("Localizable", "champion_title", fallback: "You’re a true champion of Burrow!") }
   /// Button label that changes the users chosen app icon
   internal static var changeAppIcon: String { return L10n.tr("Localizable", "change_app_icon", fallback: "Change App Icon") }
   /// The subtitle of a view where the user can edit their bookmark title
@@ -612,19 +612,19 @@ internal enum L10n {
   internal static var copy: String { return L10n.tr("Localizable", "copy", fallback: "Copy") }
   /// Prompt to open the create account options.
   internal static var createAccount: String { return L10n.tr("Localizable", "create_account", fallback: "Create Account") }
-  /// Error message shown when Pocket Casts can't connect to the App Store to retrieve in app purchase details
-  internal static var createAccountAppStoreErrorMessage: String { return L10n.tr("Localizable", "create_account_app_store_error_message", fallback: "Pocket Casts is having trouble connecting to the App Store. Please check your connection and try again.") }
-  /// Error title shown when Pocket Casts can't connect to the App Store to retrieve in app purchase details
+  /// Error message shown when Burrow can't connect to the App Store to retrieve in app purchase details
+  internal static var createAccountAppStoreErrorMessage: String { return L10n.tr("Localizable", "create_account_app_store_error_message", fallback: "Burrow is having trouble connecting to the App Store. Please check your connection and try again.") }
+  /// Error title shown when Burrow can't connect to the App Store to retrieve in app purchase details
   internal static var createAccountAppStoreErrorTitle: String { return L10n.tr("Localizable", "create_account_app_store_error_title", fallback: "Unable to contact App Store") }
-  /// Button title to find out more about Pocket Casts Plus. Note that "Pocket Casts Plus" shouldn't be translated as it's a product name
-  internal static var createAccountFindOutMorePlus: String { return L10n.tr("Localizable", "create_account_find_out_more_plus", fallback: "Find out more about Pocket Casts Plus") }
+  /// Button title to find out more about Burrow Plus. Note that "Burrow Plus" shouldn't be translated as it's a product name
+  internal static var createAccountFindOutMorePlus: String { return L10n.tr("Localizable", "create_account_find_out_more_plus", fallback: "Find out more about Burrow Plus") }
   /// Account type shown on the select account page. Regular as in the normal or default option
   internal static var createAccountFreeAccountType: String { return L10n.tr("Localizable", "create_account_free_account_type", fallback: "Regular") }
-  /// Shown under the create account type to indicate what you get with a free Pocket Casts account
+  /// Shown under the create account type to indicate what you get with a free Burrow account
   internal static var createAccountFreeDetails: String { return L10n.tr("Localizable", "create_account_free_details", fallback: "Almost everything") }
   /// Price shown for the free tier. "Free" in this case meaning the cost is free
   internal static var createAccountFreePrice: String { return L10n.tr("Localizable", "create_account_free_price", fallback: "Free") }
-  /// Shown under the create account type to indicate what you get in Pocket Casts Plus
+  /// Shown under the create account type to indicate what you get in Burrow Plus
   internal static var createAccountPlusDetails: String { return L10n.tr("Localizable", "create_account_plus_details", fallback: "Everything unlocked") }
   /// A description shown for a share option which creates an audio clip of an episode. This produces a ".m4a" file which is like an mp3
   internal static var createAudioClipDescription: String { return L10n.tr("Localizable", "create_audio_clip_description", fallback: "Create a .m4a audio file") }
@@ -989,7 +989,7 @@ internal enum L10n {
   /// Encourage Account Creation: card title for sync feature
   internal static var eacInformationalCardSyncTitle: String { return L10n.tr("Localizable", "eac_informational_card_sync_title", fallback: "Sync across devices") }
   /// Encourage Account Creation: modal description
-  internal static var eacInformationalViewModalDescription: String { return L10n.tr("Localizable", "eac_informational_view_modal_description", fallback: "Create an account or log in to enjoy\nPocket Casts to the fullest.") }
+  internal static var eacInformationalViewModalDescription: String { return L10n.tr("Localizable", "eac_informational_view_modal_description", fallback: "Create an account or log in to enjoy\nBurrow to the fullest.") }
   /// Encourage Account Creation: Get Started button
   internal static var eacInformationalViewModalGetStartedButton: String { return L10n.tr("Localizable", "eac_informational_view_modal_get_started_button", fallback: "Get Started") }
   /// Encourage Account Creation: modal title
@@ -1028,7 +1028,7 @@ internal enum L10n {
   internal static var eoyStoryEpilogueSubtitle: String { return L10n.tr("Localizable", "eoy_story_epilogue_subtitle", fallback: "Don't forget to share with your friends and give a shout out to your favorite podcast creators") }
   /// Title for the epilogue story
   internal static var eoyStoryEpilogueTitle: String { return L10n.tr("Localizable", "eoy_story_epilogue_title", fallback: "Thank you for listening with us this year.\nSee you in 2024!") }
-  /// Description that appears on the first story of the 2022 Pocket Casts wrap up (End of Year)
+  /// Description that appears on the first story of the 2022 Burrow wrap up (End of Year)
   internal static var eoyStoryIntroTitle: String { return L10n.tr("Localizable", "eoy_story_intro_title", fallback: "Let's celebrate your year of listening...") }
   /// String telling the user how much time they listened to podcasts in 2022, %1$@ is a placeholder for the amount of time.
   internal static func eoyStoryListenedTo(_ p1: Any) -> String {
@@ -1236,11 +1236,11 @@ internal enum L10n {
   internal static var errorGeneralPodcastNotFound: String { return L10n.tr("Localizable", "error_general_podcast_not_found", fallback: "Unable to find podcast. Please contact the podcast author.") }
   /// Title of an option to export the users data
   internal static var exportDatabase: String { return L10n.tr("Localizable", "export_database", fallback: "Export Database") }
-  /// Describes how the process to export podcasts from Pocket Casts works.
+  /// Describes how the process to export podcasts from Burrow works.
   internal static var exportPodcastsDescription: String { return L10n.tr("Localizable", "export_podcasts_description", fallback: "Exports all your podcasts as an OPML file, which you can import into other podcast apps.") }
-  /// Title for the button that allows the user to export podcasts from Pocket Casts
+  /// Title for the button that allows the user to export podcasts from Burrow
   internal static var exportPodcastsOption: String { return L10n.tr("Localizable", "export_podcasts_option", fallback: "Export Podcasts") }
-  /// Title for the section that provides information on how to export podcasts from Pocket Casts
+  /// Title for the section that provides information on how to export podcasts from Burrow
   internal static var exportPodcastsTitle: String { return L10n.tr("Localizable", "export_podcasts_title", fallback: "EXPORT") }
   /// Title of a message shown when the users data is being exported
   internal static var exportingDatabase: String { return L10n.tr("Localizable", "exporting_database", fallback: "Exporting Database...") }
@@ -1302,8 +1302,8 @@ internal enum L10n {
   internal static var fileUploadNameRequired: String { return L10n.tr("Localizable", "file_upload_name_required", fallback: "Name required") }
   /// The description for the screen when there are no files currently uploaded. '
   /// ' is a line break format to allow a clean wrapping of text
-  internal static var fileUploadNoFilesDescription: String { return L10n.tr("Localizable", "file_upload_no_files_description", fallback: "Upload your own files to Pocket Casts, and listen or watch them anytime.") }
-  /// The helper link describing how to add files to Pocket Casts.
+  internal static var fileUploadNoFilesDescription: String { return L10n.tr("Localizable", "file_upload_no_files_description", fallback: "Upload your own files to Burrow, and listen or watch them anytime.") }
+  /// The helper link describing how to add files to Burrow.
   internal static var fileUploadNoFilesHelper: String { return L10n.tr("Localizable", "file_upload_no_files_helper", fallback: "How do I do that?") }
   /// Title for the screen when there are no files currently uploaded
   internal static var fileUploadNoFilesTitle: String { return L10n.tr("Localizable", "file_upload_no_files_title", fallback: "Listen or watch your own files") }
@@ -1315,7 +1315,7 @@ internal enum L10n {
   internal static var fileUploadSupportError: String { return L10n.tr("Localizable", "file_upload_support_error", fallback: "This file type is not supported") }
   /// A common string used throughout the app. Refers to the Files settings menu
   internal static var files: String { return L10n.tr("Localizable", "files", fallback: "Files") }
-  /// Title for the screen that details how to add a file to Pocket Casts.
+  /// Title for the screen that details how to add a file to Burrow.
   internal static var filesHowToTitle: String { return L10n.tr("Localizable", "files_how_to_title", fallback: "How to save a file") }
   /// Message when the user didn't upload any files
   internal static var filesNotUploaded: String { return L10n.tr("Localizable", "files_not_uploaded", fallback: "No files uploaded") }
@@ -1566,7 +1566,7 @@ internal enum L10n {
   /// Description showed in the upsell overlay when a free user access the generated transcripts
   internal static var generatedTranscriptsOverlayDescription: String { return L10n.tr("Localizable", "generated_transcripts_overlay_description", fallback: "Subscribe to Plus to get access to it and other Premium features like bookmarks and folders.") }
   /// Title showed in the upsell overlay when a free user access the generated transcripts
-  internal static var generatedTranscriptsOverlayTitle: String { return L10n.tr("Localizable", "generated_transcripts_overlay_title", fallback: "This transcript is automatically generated by Pocket Casts.") }
+  internal static var generatedTranscriptsOverlayTitle: String { return L10n.tr("Localizable", "generated_transcripts_overlay_title", fallback: "This transcript is automatically generated by Burrow.") }
   /// A title for an action to navigate to the Discover section
   internal static var goToDiscover: String { return L10n.tr("Localizable", "go_to_discover", fallback: "Go to Discover") }
   /// A common string used throughout the app. Title for the prompt to navigate the user to the podcast associated to the selected item.
@@ -1599,12 +1599,12 @@ internal enum L10n {
   internal static var hoursSingularFormat: String { return L10n.tr("Localizable", "hours_singular_format", fallback: "1 hour") }
   /// The initial informational text explaining how to upload a file
   internal static var howToUploadExplanation: String { return L10n.tr("Localizable", "how_to_upload_explanation", fallback: "First, open an app that has the audio files you'd like to save") }
-  /// The text for copying a file to Pocket Casts
-  internal static var howToUploadShareActionImageCenterText: String { return L10n.tr("Localizable", "how_to_upload_share_action_image_center_text", fallback: "Copy to Pocket Casts") }
-  /// The text for copying a file to Pocket Casts
+  /// The text for copying a file to Burrow
+  internal static var howToUploadShareActionImageCenterText: String { return L10n.tr("Localizable", "how_to_upload_share_action_image_center_text", fallback: "Copy to Burrow") }
+  /// The text for copying a file to Burrow
   internal static var howToUploadShareActionImageSidesText: String { return L10n.tr("Localizable", "how_to_upload_share_action_image_sides_text", fallback: "Something Else") }
   /// The title for the second instructional image that explains how to upload a file by selecting the share action option for the app
-  internal static var howToUploadShareActionInstruction: String { return L10n.tr("Localizable", "how_to_upload_share_action_instruction", fallback: "In the menu tap \"Copy to Pocket Casts\"") }
+  internal static var howToUploadShareActionInstruction: String { return L10n.tr("Localizable", "how_to_upload_share_action_instruction", fallback: "In the menu tap \"Copy to Burrow\"") }
   /// The text for the button tapped first when uploading a file
   internal static var howToUploadShareMenuImageBackgroundButtonText: String { return L10n.tr("Localizable", "how_to_upload_share_menu_image_background_button_text", fallback: "Audio File") }
   /// The text for a generic menu option tapped first when uploading a file
@@ -1625,16 +1625,16 @@ internal enum L10n {
   internal static var `import`: String { return L10n.tr("Localizable", "import", fallback: "Import") }
   /// Step by Step instructions on how to import from the app Apple Podcasts. 
   ///  are new lines and Apple Podcasts is a proper noun and should not be translated.
-  internal static var importInstructionsApplePodcastsSteps: String { return L10n.tr("Localizable", "import_instructions_apple_podcasts_steps", fallback: "We can import your podcasts from Apple Podcasts by using the built-in Shortcuts app.\nNote: If you previously deleted the shortcuts app you will be prompted to reinstall it.\n\n1. Tap the Install Shortcut button below.\n2. When prompted tap the Add Shortcut button.\n3. Tap on the Shortcuts tab.\n4. Locate the \"Apple Podcasts to Pocket Casts\" shortcut in the list.\n5. Tap it to start the import process.\n6. Once the shortcut is done running Pocket Casts will reopen and finish the import process.") }
+  internal static var importInstructionsApplePodcastsSteps: String { return L10n.tr("Localizable", "import_instructions_apple_podcasts_steps", fallback: "We can import your podcasts from Apple Podcasts by using the built-in Shortcuts app.\nNote: If you previously deleted the shortcuts app you will be prompted to reinstall it.\n\n1. Tap the Install Shortcut button below.\n2. When prompted tap the Add Shortcut button.\n3. Tap on the Shortcuts tab.\n4. Locate the \"Apple Podcasts to Burrow\" shortcut in the list.\n5. Tap it to start the import process.\n6. Once the shortcut is done running Burrow will reopen and finish the import process.") }
   /// Step by Step instructions on how to import from the app Breaker. 
   ///  are new lines and Breaker is a proper noun and should not be translated.
-  internal static var importInstructionsBreaker: String { return L10n.tr("Localizable", "import_instructions_breaker", fallback: "1. Tap the Open Breaker button below\n2. Tap on Settings in the bottom tab bar\n3. Tap on Connection\n4. Tap on Export subscriptions\n5. When the dialog opens locate the Pocket Casts icon, and tap on it") }
+  internal static var importInstructionsBreaker: String { return L10n.tr("Localizable", "import_instructions_breaker", fallback: "1. Tap the Open Breaker button below\n2. Tap on Settings in the bottom tab bar\n3. Tap on Connection\n4. Tap on Export subscriptions\n5. When the dialog opens locate the Burrow icon, and tap on it") }
   /// Step by Step instructions on how to import from the app Castbox. 
   ///  are new lines and Castbox is a proper noun and should not be translated.
-  internal static var importInstructionsCastbox: String { return L10n.tr("Localizable", "import_instructions_castbox", fallback: "1. Tap the Open Castbox button below\n2. Tap the Personal tab\n3. Swipe down until you see the Settings option, then tap on it\n4. Swipe down until you see the OPML Export option, then tap on it\n5. If prompted, tap \"Open in Pocket Casts\"\n6. If the file opens in Safari, tap the Download button\n7. Once the download is complete, tap the download icon in the URL bar\n8. Tap the Downloads item\n9. Tap the castbox_opml file \n10. If needed, tap the Share icon, then open the file using Pocket Casts\n11. When the share dialog opens, locate the Pocket Casts icon, then tap on it") }
+  internal static var importInstructionsCastbox: String { return L10n.tr("Localizable", "import_instructions_castbox", fallback: "1. Tap the Open Castbox button below\n2. Tap the Personal tab\n3. Swipe down until you see the Settings option, then tap on it\n4. Swipe down until you see the OPML Export option, then tap on it\n5. If prompted, tap \"Open in Burrow\"\n6. If the file opens in Safari, tap the Download button\n7. Once the download is complete, tap the download icon in the URL bar\n8. Tap the Downloads item\n9. Tap the castbox_opml file \n10. If needed, tap the Share icon, then open the file using Burrow\n11. When the share dialog opens, locate the Burrow icon, then tap on it") }
   /// Step by Step instructions on how to import from the app Castro. 
   ///  are new lines and Castro is a proper noun and should not be translated.
-  internal static var importInstructionsCastro: String { return L10n.tr("Localizable", "import_instructions_castro", fallback: "1. Tap the Open Castro button below\n2. Tap the Cog icon in the top corner of the app\n3. Swipe down until you see the User Data option, then tap on it\n4. Tap the Export Subscriptions item\n5. When the share dialog opens, locate the Pocket Casts icon, then tap on it") }
+  internal static var importInstructionsCastro: String { return L10n.tr("Localizable", "import_instructions_castro", fallback: "1. Tap the Open Castro button below\n2. Tap the Cog icon in the top corner of the app\n3. Swipe down until you see the User Data option, then tap on it\n4. Tap the Export Subscriptions item\n5. When the share dialog opens, locate the Burrow icon, then tap on it") }
   /// Button title to import from the given app name,  %1$@ is the name of the app
   internal static func importInstructionsImportFrom(_ p1: Any) -> String {
     return L10n.tr("Localizable", "import_instructions_import_from", String(describing: p1), fallback: "Import from %1$@")
@@ -1649,18 +1649,18 @@ internal enum L10n {
   internal static var importInstructionsOtherAppsTitle: String { return L10n.tr("Localizable", "import_instructions_other_apps_title", fallback: "other apps") }
   /// Step by Step instructions on how to import from the app Overcast. 
   ///  are new lines and Overcast is a proper noun and should not be translated.
-  internal static var importInstructionsOvercast: String { return L10n.tr("Localizable", "import_instructions_overcast", fallback: "1. Tap the button below to open Overcast\n2. Tap the Cog icon in the top corner of the app\n3. Swipe down until you see Export OPML, then tap on it\n4. When the dialog opens locate the Pocket Casts icon, and tap on it") }
+  internal static var importInstructionsOvercast: String { return L10n.tr("Localizable", "import_instructions_overcast", fallback: "1. Tap the button below to open Overcast\n2. Tap the Cog icon in the top corner of the app\n3. Swipe down until you see Export OPML, then tap on it\n4. When the dialog opens locate the Burrow icon, and tap on it") }
   /// Description for importing opml from URL
   internal static var importOpmlFromUrl: String { return L10n.tr("Localizable", "import_opml_from_url", fallback: "Import your podcasts from an OPML file using a URL") }
-  /// Describes the process about how to import podcasts to Pocket Casts. '\
+  /// Describes the process about how to import podcasts to Burrow. '\
   /// \
   /// ' Is a line break format to separate the description from the following note.
-  internal static var importPodcastsDescription: String { return L10n.tr("Localizable", "import_podcasts_description", fallback: "You can import your podcasts subscriptions to Pocket Casts using the widely supported OPML format. Export the file from another app and choose open in Pocket Casts.\n\nNote: You may need to email the OPML file to yourself, long press on the attachment and select Pocket Casts.") }
-  /// Describes the process about how to import podcasts to Pocket Casts. '\
+  internal static var importPodcastsDescription: String { return L10n.tr("Localizable", "import_podcasts_description", fallback: "You can import your podcasts subscriptions to Burrow using the widely supported OPML format. Export the file from another app and choose open in Burrow.\n\nNote: You may need to email the OPML file to yourself, long press on the attachment and select Burrow.") }
+  /// Describes the process about how to import podcasts to Burrow. '\
   /// \
   /// ' Is a line break format to separate the description from the following note.
-  internal static var importPodcastsDescriptionNew: String { return L10n.tr("Localizable", "import_podcasts_description_new", fallback: "You can import your podcasts to Pocket Casts using the widely supported OPML format. Export the file from another app and choose open in Pocket Casts.\n\nNote: You may need to email the OPML file to yourself, long press on the attachment and select Pocket Casts.") }
-  /// Title for the section that provides information on how to import podcasts to Pocket Casts
+  internal static var importPodcastsDescriptionNew: String { return L10n.tr("Localizable", "import_podcasts_description_new", fallback: "You can import your podcasts to Burrow using the widely supported OPML format. Export the file from another app and choose open in Burrow.\n\nNote: You may need to email the OPML file to yourself, long press on the attachment and select Burrow.") }
+  /// Title for the section that provides information on how to import podcasts to Burrow
   internal static var importPodcastsTitle: String { return L10n.tr("Localizable", "import_podcasts_title", fallback: "IMPORT TO POCKET CASTS") }
   /// Title of a view explaining the import feature
   internal static var importSubtitle: String { return L10n.tr("Localizable", "import_subtitle", fallback: "Coming from another app? Import your podcasts and get listening. You can always do this later in settings.") }
@@ -1701,7 +1701,7 @@ internal enum L10n {
   /// Kids Profile Submit screen send button title
   internal static var kidsProfileSubmitFeedbackSendButton: String { return L10n.tr("Localizable", "kids_profile_submit_feedback_send_button", fallback: "Send") }
   /// Kids Profile Submit screen title
-  internal static var kidsProfileSubmitFeedbackTitle: String { return L10n.tr("Localizable", "kids_profile_submit_feedback_title", fallback: "What would you like to see in a Kids profile for Pocket Casts?") }
+  internal static var kidsProfileSubmitFeedbackTitle: String { return L10n.tr("Localizable", "kids_profile_submit_feedback_title", fallback: "What would you like to see in a Kids profile for Burrow?") }
   /// Kids Profile Toast message if feedback sent succeeded
   internal static var kidsProfileSubmitSuccess: String { return L10n.tr("Localizable", "kids_profile_submit_success", fallback: "Thank you for your feedback!") }
   /// Kids Profile Thank You screen close button title
@@ -1727,9 +1727,9 @@ internal enum L10n {
   /// Progress indicator informing the user that the selected item is still loading.
   internal static var loading: String { return L10n.tr("Localizable", "loading", fallback: "Loading...") }
   /// Subtitle of the login view
-  internal static var loginLandingSubtitle: String { return L10n.tr("Localizable", "login_landing_subtitle", fallback: "Your podcasts, always in sync. Keep your library safe, and enjoy Pocket Casts on web and desktop.") }
+  internal static var loginLandingSubtitle: String { return L10n.tr("Localizable", "login_landing_subtitle", fallback: "Your podcasts, always in sync. Keep your library safe, and enjoy Burrow on web and desktop.") }
   /// Title of the login view
-  internal static var loginLandingTitle: String { return L10n.tr("Localizable", "login_landing_title", fallback: "Create your Pocket Casts account") }
+  internal static var loginLandingTitle: String { return L10n.tr("Localizable", "login_landing_title", fallback: "Create your Burrow account") }
   /// Subtitle of the login marketing view
   internal static var loginSubtitle: String { return L10n.tr("Localizable", "login_subtitle", fallback: "Create an account to sync your listening experience across all your devices.") }
   /// Title of the login marketing view
@@ -1739,7 +1739,7 @@ internal enum L10n {
   /// Message when no email account is configured to be able to send the logs
   internal static var logsNoEmailAccountConfigured: String { return L10n.tr("Localizable", "logs_no_email_account_configured", fallback: "You need to configure an email account on the device in order to send the logs") }
   /// Message shown when watchOS logs are not available
-  internal static var logsWatchOsNotAvailable: String { return L10n.tr("Localizable", "logs_watch_os_not_available", fallback: "No watchOS logs available. Make sure you have an Apple Watch paired and the Pocket Casts watch app installed.") }
+  internal static var logsWatchOsNotAvailable: String { return L10n.tr("Localizable", "logs_watch_os_not_available", fallback: "No watchOS logs available. Make sure you have an Apple Watch paired and the Burrow watch app installed.") }
   /// Button title for manage downloads file space usage banner and modal.
   internal static var manageDownloadsAction: String { return L10n.tr("Localizable", "manage_downloads_action", fallback: "Manage downloads") }
   /// Detail for manage downloads file space usage banner and modal. %1$@ is the disk space in Mb/GB that the episodes take
@@ -1891,7 +1891,7 @@ internal enum L10n {
   /// A common string used throughout the app. Informs the user that they are not on WiFi and the action they're about to take will use data. Used for downloads and uploads.
   internal static var notOnWifi: String { return L10n.tr("Localizable", "not_on_wifi", fallback: "You're not on WiFi") }
   /// Notification body for App Clip reminder
-  internal static var notificationsAppClipBody: String { return L10n.tr("Localizable", "notifications_app_clip_body", fallback: "Install Pocket Casts to get the full experience with powerful playback and customization tools.") }
+  internal static var notificationsAppClipBody: String { return L10n.tr("Localizable", "notifications_app_clip_body", fallback: "Install Burrow to get the full experience with powerful playback and customization tools.") }
   /// Notification title for App Clip reminder
   internal static var notificationsAppClipTitle: String { return L10n.tr("Localizable", "notifications_app_clip_title", fallback: "Ready for more podcasts?") }
   /// Settings to control sending of daily reminders notifications
@@ -1919,7 +1919,7 @@ internal enum L10n {
   /// Notification title for filters onboarding message
   internal static var notificationsOnboardingFiltersTitle: String { return L10n.tr("Localizable", "notifications_onboarding_filters_title", fallback: "Organize your episodes") }
   /// Notification body for import onboarding message
-  internal static var notificationsOnboardingImportBody: String { return L10n.tr("Localizable", "notifications_onboarding_import_body", fallback: "Switching from another app? Bring all your favorite shows to Pocket Casts.") }
+  internal static var notificationsOnboardingImportBody: String { return L10n.tr("Localizable", "notifications_onboarding_import_body", fallback: "Switching from another app? Bring all your favorite shows to Burrow.") }
   /// Notification title for import podcast onboarding message
   internal static var notificationsOnboardingImportTitle: String { return L10n.tr("Localizable", "notifications_onboarding_import_title", fallback: "Easily import your podcasts") }
   /// Subtitle for Newsletter opt-in option in the Notifications screen during onboarding
@@ -1953,7 +1953,7 @@ internal enum L10n {
   /// Notifications permissions screen action button text
   internal static var notificationsPermissionsAction: String { return L10n.tr("Localizable", "notifications_permissions_action", fallback: "Allow Notifications") }
   /// Notifications permissions screen body text
-  internal static var notificationsPermissionsBody: String { return L10n.tr("Localizable", "notifications_permissions_body", fallback: "Notifications are the best way to keep track of new episodes, get recommendations of new shows and tips about Pocket Casts.") }
+  internal static var notificationsPermissionsBody: String { return L10n.tr("Localizable", "notifications_permissions_body", fallback: "Notifications are the best way to keep track of new episodes, get recommendations of new shows and tips about Burrow.") }
   /// Notification message to indicate that notification permissions are needed
   internal static var notificationsPermissionsNeedsAction: String { return L10n.tr("Localizable", "notifications_permissions_needs_action", fallback: "Please allow notifications in your device settings") }
   /// Notification button title to open device notification settings
@@ -1965,7 +1965,7 @@ internal enum L10n {
   /// Prompt to play the selected item now.
   internal static var notificationsPlayNow: String { return L10n.tr("Localizable", "notifications_play_now", fallback: "Play Now") }
   /// Settings to control sending of pocket casts offers notifications
-  internal static var notificationsPocketCastOffers: String { return L10n.tr("Localizable", "notifications_pocket_cast_offers", fallback: "Pocket Casts Offers") }
+  internal static var notificationsPocketCastOffers: String { return L10n.tr("Localizable", "notifications_pocket_cast_offers", fallback: "Burrow Offers") }
   /// Notification body for recommendations trending message
   internal static var notificationsRecommendationsTrendingBody: String { return L10n.tr("Localizable", "notifications_recommendations_trending_body", fallback: "Check out what everyone else is listening to this week.") }
   /// Notification title for recommendations trending message
@@ -1989,7 +1989,7 @@ internal enum L10n {
   /// Notification permission banner action
   internal static var notitificationsPermissionBannerAction: String { return L10n.tr("Localizable", "notitifications_permission_banner_action", fallback: "Go to device settings") }
   /// Notification permission banner message
-  internal static var notitificationsPermissionBannerMessage: String { return L10n.tr("Localizable", "notitifications_permission_banner_message", fallback: "To get notifications from Pocket Casts, you’ll need to turn them on in your device settings.") }
+  internal static var notitificationsPermissionBannerMessage: String { return L10n.tr("Localizable", "notitifications_permission_banner_message", fallback: "To get notifications from Burrow, you’ll need to turn them on in your device settings.") }
   /// Notification permission banner title
   internal static var notitificationsPermissionBannerTitle: String { return L10n.tr("Localizable", "notitifications_permission_banner_title", fallback: "Allow Push Notifications") }
   /// A common string used throughout the app. Refers to the Now Playing tab in the player.
@@ -2015,7 +2015,7 @@ internal enum L10n {
   /// A common string used throughout the app. Indicates that the feature is enabled.
   internal static var on: String { return L10n.tr("Localizable", "on", fallback: "On") }
   /// A generic label representing the authour of the onboarding quotes describing users of the app
-  internal static var onboardingQuoteAuthor: String { return L10n.tr("Localizable", "onboarding_quote_author", fallback: "Pocket Casts user") }
+  internal static var onboardingQuoteAuthor: String { return L10n.tr("Localizable", "onboarding_quote_author", fallback: "Burrow user") }
   /// A user review quote shown during onboarding
   internal static var onboardingQuoteBest: String { return L10n.tr("Localizable", "onboarding_quote_best", fallback: "The best podcast app out there. By far") }
   /// A user review quote shown during onboarding alongside an image of the playback effects
@@ -2104,7 +2104,7 @@ internal enum L10n {
   /// Label of a title explaining why to subscribe to Patron.
   internal static var patronCallout: String { return L10n.tr("Localizable", "patron_callout", fallback: "Believe in what we’re doing and want to show your support?") }
   /// Description of the Patron plan. Do not translate "Patron".
-  internal static var patronDescription: String { return L10n.tr("Localizable", "patron_description", fallback: "Become a Pocket Casts Patron and help us continue to deliver the best podcasting experience available.") }
+  internal static var patronDescription: String { return L10n.tr("Localizable", "patron_description", fallback: "Become a Burrow Patron and help us continue to deliver the best podcasting experience available.") }
   /// Description of a Patron feature that gives user early access to new features.
   internal static var patronFeatureEarlyAccess: String { return L10n.tr("Localizable", "patron_feature_early_access", fallback: "Early access to features") }
   /// Description of a Patron feature that gives user everything in Plus.
@@ -2112,9 +2112,9 @@ internal enum L10n {
   /// Description of a Patron feature that gives user a badge on their profile image.
   internal static var patronFeatureProfileBadge: String { return L10n.tr("Localizable", "patron_feature_profile_badge", fallback: "Supporters profile badge") }
   /// Description of a Patron feature that gives users special app icons.
-  internal static var patronFeatureProfileIcons: String { return L10n.tr("Localizable", "patron_feature_profile_icons", fallback: "Special Pocket Casts app icons") }
+  internal static var patronFeatureProfileIcons: String { return L10n.tr("Localizable", "patron_feature_profile_icons", fallback: "Special Burrow app icons") }
   /// The title of the purchase promo for Patron. Do not translate Patron.
-  internal static var patronPurchasePromoTitle: String { return L10n.tr("Localizable", "patron_purchase_promo_title", fallback: "Become a Patron member and unlock all Pocket Casts features") }
+  internal static var patronPurchasePromoTitle: String { return L10n.tr("Localizable", "patron_purchase_promo_title", fallback: "Become a Patron member and unlock all Burrow features") }
   /// Label of a button to subscribe to Patron. Do not translate "Patron".
   internal static var patronSubscribeTo: String { return L10n.tr("Localizable", "patron_subscribe_to", fallback: "Subscribe to Patron") }
   /// Title of a label that thanks the user for their purchase
@@ -2130,19 +2130,19 @@ internal enum L10n {
   /// A common string used throughout the app. Prompt to pause the playback.
   internal static var pause: String { return L10n.tr("Localizable", "pause", fallback: "Pause") }
   /// Paywall header for when the view is presented from the banner ad source
-  internal static var paywallDynamicHeadlineBannerAd: String { return L10n.tr("Localizable", "paywall_dynamic_headline_banner_ad", fallback: "Say goodbye to banner ads and more with Pocket Casts Plus") }
+  internal static var paywallDynamicHeadlineBannerAd: String { return L10n.tr("Localizable", "paywall_dynamic_headline_banner_ad", fallback: "Say goodbye to banner ads and more with Burrow Plus") }
   /// Paywall header for when the view is presented from the files source
-  internal static var paywallDynamicHeadlineFiles: String { return L10n.tr("Localizable", "paywall_dynamic_headline_files", fallback: "Upload your files with Pocket Casts Plus, and more") }
+  internal static var paywallDynamicHeadlineFiles: String { return L10n.tr("Localizable", "paywall_dynamic_headline_files", fallback: "Upload your files with Burrow Plus, and more") }
   /// Paywall header for when the view is presented from the folder source
-  internal static var paywallDynamicHeadlineFolder: String { return L10n.tr("Localizable", "paywall_dynamic_headline_folder", fallback: "Organize your podcasts with Pocket Casts Plus, and more") }
+  internal static var paywallDynamicHeadlineFolder: String { return L10n.tr("Localizable", "paywall_dynamic_headline_folder", fallback: "Organize your podcasts with Burrow Plus, and more") }
   /// Paywall header for when the view is presented from the icons source
-  internal static var paywallDynamicHeadlineIcons: String { return L10n.tr("Localizable", "paywall_dynamic_headline_icons", fallback: "Get exclusive app icons with Pocket Casts Plus, and more") }
+  internal static var paywallDynamicHeadlineIcons: String { return L10n.tr("Localizable", "paywall_dynamic_headline_icons", fallback: "Get exclusive app icons with Burrow Plus, and more") }
   /// Paywall header for when the view is presented from the themes source
-  internal static var paywallDynamicHeadlineThemes: String { return L10n.tr("Localizable", "paywall_dynamic_headline_themes", fallback: "Get exclusive themes with Pocket Casts Plus, and more") }
+  internal static var paywallDynamicHeadlineThemes: String { return L10n.tr("Localizable", "paywall_dynamic_headline_themes", fallback: "Get exclusive themes with Burrow Plus, and more") }
   /// Paywall header for when the view is presented from the Up Next Shuffle source
-  internal static var paywallDynamicHeadlineUpNextShuffle: String { return L10n.tr("Localizable", "paywall_dynamic_headline_up_next_shuffle", fallback: "Shuffle your episodes with Pocket Casts Plus, and more") }
+  internal static var paywallDynamicHeadlineUpNextShuffle: String { return L10n.tr("Localizable", "paywall_dynamic_headline_up_next_shuffle", fallback: "Shuffle your episodes with Burrow Plus, and more") }
   /// Paywall header for when the view is presented from the watch source
-  internal static var paywallDynamicHeadlineWatch: String { return L10n.tr("Localizable", "paywall_dynamic_headline_watch", fallback: "Listen from your watch with Pocket Casts Plus, and more") }
+  internal static var paywallDynamicHeadlineWatch: String { return L10n.tr("Localizable", "paywall_dynamic_headline_watch", fallback: "Listen from your watch with Burrow Plus, and more") }
   /// A common string used throughout the app. Used to reference the Phone as the playing source with in the Apple Watch App (Watch is the other option for this use case)
   internal static var phone: String { return L10n.tr("Localizable", "phone", fallback: "Phone") }
   /// A common string used throughout the app. Prompt to start playback.
@@ -2183,11 +2183,11 @@ internal enum L10n {
   internal static func playback2024LongestEpisodeTitle(_ p1: Any) -> String {
     return L10n.tr("Localizable", "playback_2024_longest_episode_title", String(describing: p1), fallback: "The longest episode you listened to was %1$@")
   }
-  /// A title shown in the button on the upsell screen to check out Pocket Casts Plus
-  internal static var playback2024PlusUpsellButtonTitle: String { return L10n.tr("Localizable", "playback_2024_plus_upsell_button_title", fallback: "Check out Pocket Casts Plus") }
-  /// A description shown in the upsell screen for Pocket Casts Plus subscription
-  internal static var playback2024PlusUpsellDescription: String { return L10n.tr("Localizable", "playback_2024_plus_upsell_description", fallback: "Support Pocket Casts subscribing to Plus and get more stats, plus Premium features like bookmarks, folders or preselect chapters!") }
-  /// A title shown in the upsell screen for Pocket Casts Plus subscription
+  /// A title shown in the button on the upsell screen to check out Burrow Plus
+  internal static var playback2024PlusUpsellButtonTitle: String { return L10n.tr("Localizable", "playback_2024_plus_upsell_button_title", fallback: "Check out Burrow Plus") }
+  /// A description shown in the upsell screen for Burrow Plus subscription
+  internal static var playback2024PlusUpsellDescription: String { return L10n.tr("Localizable", "playback_2024_plus_upsell_description", fallback: "Support Burrow subscribing to Plus and get more stats, plus Premium features like bookmarks, folders or preselect chapters!") }
+  /// A title shown in the upsell screen for Burrow Plus subscription
   internal static var playback2024PlusUpsellTitle: String { return L10n.tr("Localizable", "playback_2024_plus_upsell_title", fallback: "There's more!") }
   /// A description shown in Playback 2024 when the user has only made ratings of 1-3/5 for Podcasts
   internal static var playback2024RatingsDescription1To3: String { return L10n.tr("Localizable", "playback_2024_ratings_description_1_to_3", fallback: "Thanks for sharing your feedback with the creator community") }
@@ -2254,7 +2254,7 @@ internal enum L10n {
   /// Playback 2025: Description for the last story
   internal static var playback2025EndStoryDescription: String { return L10n.tr("Localizable", "playback_2025_end_story_description", fallback: "Share your Playback with friends and show some love to the podcasters who kept you company all year") }
   /// Playback 2025: Title for the last story
-  internal static var playback2025EndStoryTitle: String { return L10n.tr("Localizable", "playback_2025_end_story_title", fallback: "Thanks for spending your year with Pocket Casts") }
+  internal static var playback2025EndStoryTitle: String { return L10n.tr("Localizable", "playback_2025_end_story_title", fallback: "Thanks for spending your year with Burrow") }
   /// Message to shown when playback 2025 failed to load
   internal static var playback2025FailedToLoad: String { return L10n.tr("Localizable", "playback_2025_failed_to_load", fallback: "Sorry, we couldn’t load Playback") }
   /// See your listening stats, top podcasts, and more.
@@ -2279,17 +2279,17 @@ internal enum L10n {
   internal static func playback2025LongestEpisodeTitle(_ p1: Any) -> String {
     return L10n.tr("Localizable", "playback_2025_longest_episode_title", String(describing: p1), fallback: "Your marathon listen: %1$@")
   }
-  /// A description shown in the Playback thanks screen for Pocket Casts Plus subscribers. %1$@ argument is your subscription Tier. Ex:  Your Plus perks unlock extra stats and power features"
+  /// A description shown in the Playback thanks screen for Burrow Plus subscribers. %1$@ argument is your subscription Tier. Ex:  Your Plus perks unlock extra stats and power features"
   internal static func playback2025PlusThanksDescription(_ p1: Any) -> String {
     return L10n.tr("Localizable", "playback_2025_plus_thanks_description", String(describing: p1), fallback: "Your %1$@ perks unlock extra stats and power features")
   }
-  /// A title shown in the Playback thanks screen for Pocket Casts Plus subscription
-  internal static var playback2025PlusThanksTitle: String { return L10n.tr("Localizable", "playback_2025_plus_thanks_title", fallback: "Thanks for supporting Pocket Casts!") }
-  /// A title shown in the button on the upsell screen to get  Pocket Casts Plus
-  internal static var playback2025PlusUpsellButtonTitle: String { return L10n.tr("Localizable", "playback_2025_plus_upsell_button_title", fallback: "Get Pocket Casts Plus") }
-  /// A description shown in the upsell screen for Pocket Casts Plus subscription
-  internal static var playback2025PlusUpsellDescription: String { return L10n.tr("Localizable", "playback_2025_plus_upsell_description", fallback: "Subscribe to Pocket Casts Plus for extended stats, bookmarks, folders, chapter selection, and more ways to dig into your listening habits") }
-  /// A title shown in the upsell screen for Pocket Casts Plus subscription
+  /// A title shown in the Playback thanks screen for Burrow Plus subscription
+  internal static var playback2025PlusThanksTitle: String { return L10n.tr("Localizable", "playback_2025_plus_thanks_title", fallback: "Thanks for supporting Burrow!") }
+  /// A title shown in the button on the upsell screen to get  Burrow Plus
+  internal static var playback2025PlusUpsellButtonTitle: String { return L10n.tr("Localizable", "playback_2025_plus_upsell_button_title", fallback: "Get Burrow Plus") }
+  /// A description shown in the upsell screen for Burrow Plus subscription
+  internal static var playback2025PlusUpsellDescription: String { return L10n.tr("Localizable", "playback_2025_plus_upsell_description", fallback: "Subscribe to Burrow Plus for extended stats, bookmarks, folders, chapter selection, and more ways to dig into your listening habits") }
+  /// A title shown in the upsell screen for Burrow Plus subscription
   internal static var playback2025PlusUpsellTitle: String { return L10n.tr("Localizable", "playback_2025_plus_upsell_title", fallback: "Want the deep dive?") }
   /// Reviews help great shows get found
   internal static var playback2025RatingsDescription1To3: String { return L10n.tr("Localizable", "playback_2025_ratings_description_1_to_3", fallback: "Reviews help great shows get found") }
@@ -2609,28 +2609,28 @@ internal enum L10n {
   internal static var pleaseTryAgain: String { return L10n.tr("Localizable", "please_try_again", fallback: "Please try again") }
   /// A common string used throughout the app. Catch all prompt to suggest to the user to try the task again later.
   internal static var pleaseTryAgainLater: String { return L10n.tr("Localizable", "please_try_again_later", fallback: "Please try again later.") }
-  /// Prompt informing the user that an account is required in order to sign up for Pocket Casts Plus
-  internal static var plusAccountRequiredPrompt: String { return L10n.tr("Localizable", "plus_account_required_prompt", fallback: "A Pocket Casts account is required for Pocket Casts Plus. This ensures seamless listening across all your devices.") }
-  /// Details prompt informing the user that an account is required in order to sign up for Pocket Casts Plus
-  internal static var plusAccountRequiredPromptDetails: String { return L10n.tr("Localizable", "plus_account_required_prompt_details", fallback: "Create an account or sign in to redeem your access to Pocket Casts Plus.") }
+  /// Prompt informing the user that an account is required in order to sign up for Burrow Plus
+  internal static var plusAccountRequiredPrompt: String { return L10n.tr("Localizable", "plus_account_required_prompt", fallback: "A Burrow account is required for Burrow Plus. This ensures seamless listening across all your devices.") }
+  /// Details prompt informing the user that an account is required in order to sign up for Burrow Plus
+  internal static var plusAccountRequiredPromptDetails: String { return L10n.tr("Localizable", "plus_account_required_prompt_details", fallback: "Create an account or sign in to redeem your access to Burrow Plus.") }
   /// Details message informing the user that they'll return to a free account at the end of their trial
   internal static var plusAccountTrialDetails: String { return L10n.tr("Localizable", "plus_account_trial_details", fallback: "When your trial is over you’ll still have all the great benefits of your regular account. Happy podcasting!") }
   /// Title of the button that informs the user they can unlock all the features in plus
   internal static var plusButtonTitleUnlockAll: String { return L10n.tr("Localizable", "plus_button_title_unlock_all", fallback: "Unlock All Features") }
   /// Title of a label informing the user they can cancel their subscription at any time
   internal static var plusCancelTerms: String { return L10n.tr("Localizable", "plus_cancel_terms", fallback: "Can be canceled at any time") }
-  /// Account detail message informing the user that they have been granted a lifetime membership, don't translate "Pocket Casts Champion"
-  internal static var plusChampion: String { return L10n.tr("Localizable", "plus_champion", fallback: "Pocket Casts Champion") }
-  /// Message displayed when teh user tap "Pocket Casts Champion" button
-  internal static var plusChampionMessage: String { return L10n.tr("Localizable", "plus_champion_message", fallback: "Thanks for being with Pocket Casts from the start. You're a real champion!") }
-  /// The available cloud storage limit available to Pocket Casts Plus Subscribers. '%1$@' is a placeholder for the available storage.
+  /// Account detail message informing the user that they have been granted a lifetime membership, don't translate "Burrow Champion"
+  internal static var plusChampion: String { return L10n.tr("Localizable", "plus_champion", fallback: "Burrow Champion") }
+  /// Message displayed when teh user tap "Burrow Champion" button
+  internal static var plusChampionMessage: String { return L10n.tr("Localizable", "plus_champion_message", fallback: "Thanks for being with Burrow from the start. You're a real champion!") }
+  /// The available cloud storage limit available to Burrow Plus Subscribers. '%1$@' is a placeholder for the available storage.
   internal static func plusCloudStorageLimitFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_cloud_storage_limit_format", String(describing: p1), fallback: "%1$@ GB Cloud Storage")
   }
   /// Account detail message informing the user that they have been granted 50% discount.
   internal static var plusDiscountYearlyMembership: String { return L10n.tr("Localizable", "plus_discount_yearly_membership", fallback: "50%% off your first year") }
   /// Error message informing the user that they have already signed up for plus with this account.
-  internal static var plusErrorAlreadyRegistered: String { return L10n.tr("Localizable", "plus_error_already_registered", fallback: "You already have a Pocket Casts Plus account") }
+  internal static var plusErrorAlreadyRegistered: String { return L10n.tr("Localizable", "plus_error_already_registered", fallback: "You already have a Burrow Plus account") }
   /// Error message details informing the user that they have already signed up for plus with this account so they can't take advantage of the entered promotion.
   internal static var plusErrorAlreadyRegisteredDetails: String { return L10n.tr("Localizable", "plus_error_already_registered_details", fallback: "Thanks for your support, but unfortunately this means you can’t take part in this promotion.") }
   /// Account detail message informing the user when their Plus account will expire. '%1$@' is a placeholder for when the account will expire.
@@ -2666,58 +2666,58 @@ internal enum L10n {
   /// Upgrade Experiment - Features Variation: Wear OS feature card title
   internal static var plusFeatureCardTitleWearOs: String { return L10n.tr("Localizable", "plus_feature_card_title_wear_os", fallback: "Apple Watch and Wear OS playback") }
   /// Message about our gratitude when an user subscribe to Plus
-  internal static var plusFeatureGratitude: String { return L10n.tr("Localizable", "plus_feature_gratitude", fallback: "The undying gratitude of everyone here at Pocket Casts") }
+  internal static var plusFeatureGratitude: String { return L10n.tr("Localizable", "plus_feature_gratitude", fallback: "The undying gratitude of everyone here at Burrow") }
   /// Message about the exclusive content from Libro.fm. Don't translate Libro.fm
   internal static var plusFeatureLibrofm: String { return L10n.tr("Localizable", "plus_feature_librofm", fallback: "Free audiobook from Libro.fm") }
   /// Message about the exclusive content from Slumber Studios. Please don't translate "Slumber Studios".
   internal static var plusFeatureSlumber: String { return L10n.tr("Localizable", "plus_feature_slumber", fallback: "1 year of exclusive content from Slumber Studios") }
   /// Message about the exclusive content from Slumber Studios. This is used with our Paywall Experiment. Please don't translate "Slumber Studios".
   internal static var plusFeatureSlumberNew: String { return L10n.tr("Localizable", "plus_feature_slumber_new", fallback: "Dream with Slumber Studios content") }
-  /// Feature of Pocket Casts plus, Themes and icons. Themes for changing the way the app looks, icons to change the icon shown on your home screen
+  /// Feature of Burrow plus, Themes and icons. Themes for changing the way the app looks, icons to change the icon shown on your home screen
   internal static var plusFeatureThemesIcons: String { return L10n.tr("Localizable", "plus_feature_themes_icons", fallback: "Extra themes & icons") }
-  /// A common string used throughout the app. often used as a section header to divide settings related to Pocket Casts Plus vs free features. 'PLUS' refers to Pocket Casts Plus.
+  /// A common string used throughout the app. often used as a section header to divide settings related to Burrow Plus vs free features. 'PLUS' refers to Burrow Plus.
   internal static var plusFeatures: String { return L10n.tr("Localizable", "plus_features", fallback: "PLUS FEATURES") }
   /// Account detail message informing the user that they have been granted a limited free membership. '%1$@' is a placeholder for a localized string for the free time period.
   internal static func plusFreeMembershipFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_free_membership_format", String(describing: p1), fallback: "%1$@ Free Trial")
   }
-  /// Pocket Casts Plus marketing page, title of the Bookmarks feature
+  /// Burrow Plus marketing page, title of the Bookmarks feature
   internal static var plusMarketingBookmarksTitle: String { return L10n.tr("Localizable", "plus_marketing_bookmarks_title", fallback: "Bookmarks") }
-  /// Pocket Casts Plus marketing page, title of the Desktop and web apps feature
+  /// Burrow Plus marketing page, title of the Desktop and web apps feature
   internal static var plusMarketingDesktopAppsTitle: String { return L10n.tr("Localizable", "plus_marketing_desktop_apps_title", fallback: "Desktop & web apps") }
-  /// Pocket Casts Plus marketing page, title of the Folders and Bookmarks feature
+  /// Burrow Plus marketing page, title of the Folders and Bookmarks feature
   internal static var plusMarketingFoldersAndBookmarksTitle: String { return L10n.tr("Localizable", "plus_marketing_folders_and_bookmarks_title", fallback: "Folders & Bookmarks") }
-  /// Pocket Casts Plus marketing page, description of the Folders feature
+  /// Burrow Plus marketing page, description of the Folders feature
   internal static var plusMarketingFoldersDescription: String { return L10n.tr("Localizable", "plus_marketing_folders_description", fallback: "Create folders to organise your podcast collection.") }
-  /// Pocket Casts Plus marketing page, title of the Folders feature
+  /// Burrow Plus marketing page, title of the Folders feature
   internal static var plusMarketingFoldersTitle: String { return L10n.tr("Localizable", "plus_marketing_folders_title", fallback: "Folders") }
-  /// Pocket Casts Plus marketing page, description of generated transcriptsg
+  /// Burrow Plus marketing page, description of generated transcriptsg
   internal static var plusMarketingGeneratedTranscripts: String { return L10n.tr("Localizable", "plus_marketing_generated_transcripts", fallback: "Generated Transcripts") }
-  /// Pocket Casts Plus marketing page, description of the hide ads feature
+  /// Burrow Plus marketing page, description of the hide ads feature
   internal static var plusMarketingHideAdsDescription: String { return L10n.tr("Localizable", "plus_marketing_hide_ads_description", fallback: "Ad-free experience which gives you more of what you love and less of what you don't") }
-  /// Pocket Casts Plus marketing page, title of the hide ads feature
+  /// Burrow Plus marketing page, title of the hide ads feature
   internal static var plusMarketingHideAdsTitle: String { return L10n.tr("Localizable", "plus_marketing_hide_ads_title", fallback: "Hide Ads") }
-  /// Pocket Casts Plus marketing page, learn more button. Note that Pocket Casts is a proper noun and shouldn't be translated
-  internal static var plusMarketingLearnMoreButton: String { return L10n.tr("Localizable", "plus_marketing_learn_more_button", fallback: "Learn more about Pocket Casts Plus") }
-  /// Pocket Casts Plus marketing page, the main description of Pocket Casts Plus
+  /// Burrow Plus marketing page, learn more button. Note that Burrow is a proper noun and shouldn't be translated
+  internal static var plusMarketingLearnMoreButton: String { return L10n.tr("Localizable", "plus_marketing_learn_more_button", fallback: "Learn more about Burrow Plus") }
+  /// Burrow Plus marketing page, the main description of Burrow Plus
   internal static var plusMarketingMainDescription: String { return L10n.tr("Localizable", "plus_marketing_main_description", fallback: "Get personal, and get distributed, all at once. Upload your personal audio files to our cloud servers, access your account via our web player, and make the app yours.") }
-  /// Pocket Casts Plus marketing page, description of removing banner ads
+  /// Burrow Plus marketing page, description of removing banner ads
   internal static var plusMarketingNoBannerAds: String { return L10n.tr("Localizable", "plus_marketing_no_banner_ads", fallback: "No Banner Ads") }
   /// Subtitle of the plus marketing view
   internal static var plusMarketingSubtitle: String { return L10n.tr("Localizable", "plus_marketing_subtitle", fallback: "Get access to exclusive features and customisation options") }
-  /// Pocket Casts Plus marketing page, title of the Themes & Icons feature
+  /// Burrow Plus marketing page, title of the Themes & Icons feature
   internal static var plusMarketingThemesIconsTitle: String { return L10n.tr("Localizable", "plus_marketing_themes_icons_title", fallback: "Themes & Icons") }
   /// Title of the plus marketing view
-  internal static var plusMarketingTitle: String { return L10n.tr("Localizable", "plus_marketing_title", fallback: "Everything you love about Pocket Casts, plus more") }
-  /// Pocket Casts Plus marketing page, description of the Up Next Shuffle feature
+  internal static var plusMarketingTitle: String { return L10n.tr("Localizable", "plus_marketing_title", fallback: "Everything you love about Burrow, plus more") }
+  /// Burrow Plus marketing page, description of the Up Next Shuffle feature
   internal static var plusMarketingUpNextShuffle: String { return L10n.tr("Localizable", "plus_marketing_up_next_shuffle", fallback: "Up Next Shuffle") }
-  /// Pocket Casts Plus marketing page, description of the Cloud Storage feature
+  /// Burrow Plus marketing page, description of the Cloud Storage feature
   internal static var plusMarketingUpdatedCloudStorageDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_cloud_storage_description", fallback: "Upload your files to cloud storage and have it available everywhere") }
-  /// Pocket Casts Plus marketing page, description of the Desktop Apps feature
+  /// Burrow Plus marketing page, description of the Desktop Apps feature
   internal static var plusMarketingUpdatedDesktopAppsDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_desktop_apps_description", fallback: "Listen in more places with our Windows, macOS and Web apps") }
-  /// Pocket Casts Plus marketing page, description of the Folders feature
+  /// Burrow Plus marketing page, description of the Folders feature
   internal static var plusMarketingUpdatedFoldersDescription: String { return L10n.tr("Localizable", "plus_marketing_updated_folders_description", fallback: "Organise your podcasts in folders, and keep them in sync across all your devices.") }
-  /// Pocket Casts Plus marketing page, title of the Apple Watch & Wear OS apps feature
+  /// Burrow Plus marketing page, title of the Apple Watch & Wear OS apps feature
   internal static var plusMarketingWatchPlaybackTitle: String { return L10n.tr("Localizable", "plus_marketing_watch_playback_title", fallback: "Apple Watch & Wear OS apps") }
   /// Monthly pricing format, %1$@ is the price
   internal static func plusMonthlyFrequencyPricingFormat(_ p1: Any) -> String {
@@ -2727,26 +2727,26 @@ internal enum L10n {
   internal static var plusPaymentCanceled: String { return L10n.tr("Localizable", "plus_payment_canceled", fallback: "Payment Cancelled") }
   /// Label that goes along with the yearly subscription used to indicate that the yearly plan is the best overall value.
   internal static var plusPaymentFrequencyBestValue: String { return L10n.tr("Localizable", "plus_payment_frequency_best_value", fallback: "Best Value") }
-  /// Informational label that's below the monthly price of Pocket Casts Plus. This label sits below a localized price.
+  /// Informational label that's below the monthly price of Burrow Plus. This label sits below a localized price.
   internal static var plusPerMonth: String { return L10n.tr("Localizable", "plus_per_month", fallback: "per month") }
-  /// The price of Pocket Casts Plus per month. '%1$@' is a localized monthly price.
+  /// The price of Burrow Plus per month. '%1$@' is a localized monthly price.
   internal static func plusPricePerMonth(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_price_per_month", String(describing: p1), fallback: "%1$@ / monthly")
   }
-  /// Promotional information for Pocket Casts Plus. Please note that "Pocket Casts Plus" should not be translated because it's a product name
-  internal static var plusPromoParagraph: String { return L10n.tr("Localizable", "plus_promo_paragraph", fallback: "Get Pocket Casts Plus to unlock this feature, plus lots more!") }
+  /// Promotional information for Burrow Plus. Please note that "Burrow Plus" should not be translated because it's a product name
+  internal static var plusPromoParagraph: String { return L10n.tr("Localizable", "plus_promo_paragraph", fallback: "Get Burrow Plus to unlock this feature, plus lots more!") }
   /// Error message informing the user the promotion code has expired
   internal static var plusPromotionExpired: String { return L10n.tr("Localizable", "plus_promotion_expired", fallback: "Promotion Expired or Invalid") }
   /// A nudge to ask the user to continue the sign up process even though they encountered an error.
-  internal static var plusPromotionExpiredNudge: String { return L10n.tr("Localizable", "plus_promotion_expired_nudge", fallback: "You’re welcome to sign up for Pocket Casts Plus anyway, create a regular account, or just dive right in.") }
+  internal static var plusPromotionExpiredNudge: String { return L10n.tr("Localizable", "plus_promotion_expired_nudge", fallback: "You’re welcome to sign up for Burrow Plus anyway, create a regular account, or just dive right in.") }
   /// Error message informing the user the promotion code has already been used
   internal static var plusPromotionUsed: String { return L10n.tr("Localizable", "plus_promotion_used", fallback: "Code already used") }
   /// Payment failed error message
   internal static var plusPurchaseFailed: String { return L10n.tr("Localizable", "plus_purchase_failed", fallback: "It looks like there was a problem processing your payment. Please try again.") }
   /// The title of the purchase promo
-  internal static var plusPurchasePromoTitle: String { return L10n.tr("Localizable", "plus_purchase_promo_title", fallback: "Become a Plus member and unlock all Pocket Casts features") }
-  /// Heading for things that require Pocket Casts Plus to work. Please note that "Pocket Casts Plus" should not be translated because it's a product name
-  internal static var plusRequiredFeature: String { return L10n.tr("Localizable", "plus_required_feature", fallback: "This feature requires Pocket Casts Plus") }
+  internal static var plusPurchasePromoTitle: String { return L10n.tr("Localizable", "plus_purchase_promo_title", fallback: "Become a Plus member and unlock all Burrow features") }
+  /// Heading for things that require Burrow Plus to work. Please note that "Burrow Plus" should not be translated because it's a product name
+  internal static var plusRequiredFeature: String { return L10n.tr("Localizable", "plus_required_feature", fallback: "This feature requires Burrow Plus") }
   /// Title for the screen to allow the user to choose between a monthly or yearly subscription.
   internal static var plusSelectPaymentFrequency: String { return L10n.tr("Localizable", "plus_select_payment_frequency", fallback: "Select Payment Frequency") }
   /// Label of a button to skip subscring to any plan
@@ -2759,21 +2759,21 @@ internal enum L10n {
   }
   /// Label of a button to subscribe to Patron. Do not translate "Plus".
   internal static var plusSubscribeTo: String { return L10n.tr("Localizable", "plus_subscribe_to", fallback: "Subscribe to Plus") }
-  /// Message informing the user that their Pocket Casts Plus subscription is managed by Apple's system and needs to be managed there.
+  /// Message informing the user that their Burrow Plus subscription is managed by Apple's system and needs to be managed there.
   internal static var plusSubscriptionApple: String { return L10n.tr("Localizable", "plus_subscription_apple", fallback: "Your subscription is managed by the Apple App Store") }
-  /// Message informing the user where to manage their Pocket Casts Plus subscription managed by Apple.
+  /// Message informing the user where to manage their Burrow Plus subscription managed by Apple.
   internal static var plusSubscriptionAppleDetails: String { return L10n.tr("Localizable", "plus_subscription_apple_details", fallback: "To cancel your subscription, you’ll need to cancel via Settings.") }
-  /// Message informing the user when their Pocket Casts Plus subscription will expire. %1$@ is a placeholder for the expiration date.
+  /// Message informing the user when their Burrow Plus subscription will expire. %1$@ is a placeholder for the expiration date.
   internal static func plusSubscriptionExpiration(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_subscription_expiration", String(describing: p1), fallback: "PLUS EXPIRES IN %1$@")
   }
-  /// Message informing the user that their Pocket Casts Plus subscription is managed by Google's system and needs to be managed there.
-  internal static var plusSubscriptionGoogle: String { return L10n.tr("Localizable", "plus_subscription_google", fallback: "It looks like you subscribed to Pocket Casts Plus from an Android device") }
-  /// Message informing the user where to manage their Pocket Casts Plus subscription managed by Google.
+  /// Message informing the user that their Burrow Plus subscription is managed by Google's system and needs to be managed there.
+  internal static var plusSubscriptionGoogle: String { return L10n.tr("Localizable", "plus_subscription_google", fallback: "It looks like you subscribed to Burrow Plus from an Android device") }
+  /// Message informing the user where to manage their Burrow Plus subscription managed by Google.
   internal static var plusSubscriptionGoogleDetails: String { return L10n.tr("Localizable", "plus_subscription_google_details", fallback: "To cancel your subscription, you’ll need to cancel via Settings.") }
-  /// Message informing the user that their Pocket Casts Plus subscription is managed by Web's system and needs to be managed there.
-  internal static var plusSubscriptionWeb: String { return L10n.tr("Localizable", "plus_subscription_web", fallback: "It looks like you subscribed to Pocket Casts Plus from the web") }
-  /// Message informing the user where to manage their Pocket Casts Plus subscription managed by Web.
+  /// Message informing the user that their Burrow Plus subscription is managed by Web's system and needs to be managed there.
+  internal static var plusSubscriptionWeb: String { return L10n.tr("Localizable", "plus_subscription_web", fallback: "It looks like you subscribed to Burrow Plus from the web") }
+  /// Message informing the user where to manage their Burrow Plus subscription managed by Web.
   internal static var plusSubscriptionWebDetails: String { return L10n.tr("Localizable", "plus_subscription_web_details", fallback: "To cancel your subscription, you’ll need to cancel via Pocketcasts.com.") }
   /// Body of a message informing the user they need an internet connect to upgrade to plus
   internal static var plusUpgradeNoInternetMessage: String { return L10n.tr("Localizable", "plus_upgrade_no_internet_message", fallback: "Please check your internet connection and try again.") }
@@ -2783,17 +2783,17 @@ internal enum L10n {
   internal static func plusYearlyFrequencyPricingFormat(_ p1: Any) -> String {
     return L10n.tr("Localizable", "plus_yearly_frequency_pricing_format", String(describing: p1), fallback: "%1$@ per year")
   }
-  /// A Voice Over label for element which represents the Pocket Casts Logo
-  internal static var pocketCastsLogo: String { return L10n.tr("Localizable", "pocket_casts_logo", fallback: "Pocket Casts logo") }
-  /// The heading shown for the Pocket Casts Newsletter
-  internal static var pocketCastsNewsletter: String { return L10n.tr("Localizable", "pocket_casts_newsletter", fallback: "Pocket Casts Newsletter") }
-  /// The description for the Pocket Casts Newsletter
+  /// A Voice Over label for element which represents the Burrow Logo
+  internal static var pocketCastsLogo: String { return L10n.tr("Localizable", "pocket_casts_logo", fallback: "Burrow logo") }
+  /// The heading shown for the Burrow Newsletter
+  internal static var pocketCastsNewsletter: String { return L10n.tr("Localizable", "pocket_casts_newsletter", fallback: "Burrow Newsletter") }
+  /// The description for the Burrow Newsletter
   internal static var pocketCastsNewsletterDescription: String { return L10n.tr("Localizable", "pocket_casts_newsletter_description", fallback: "Receive news, app updates, themed playlists, interviews, and more.") }
-  /// A common string used throughout the app. Refers to the subscription program Pocket Casts Plus subscription. 'Pocket Casts' as a proper noun should not be localized.
-  internal static var pocketCastsPlus: String { return L10n.tr("Localizable", "pocket_casts_plus", fallback: "Pocket Casts Plus") }
-  /// A shortened version of the common string used throughout the app. Refers to the subscription program Pocket Casts Plus subscription.
+  /// A common string used throughout the app. Refers to the subscription program Burrow Plus subscription. 'Burrow' as a proper noun should not be localized.
+  internal static var pocketCastsPlus: String { return L10n.tr("Localizable", "pocket_casts_plus", fallback: "Burrow Plus") }
+  /// A shortened version of the common string used throughout the app. Refers to the subscription program Burrow Plus subscription.
   internal static var pocketCastsPlusShort: String { return L10n.tr("Localizable", "pocket_casts_plus_short", fallback: "Plus") }
-  /// The heading shown for the Pocket Casts Newsletter
+  /// The heading shown for the Burrow Newsletter
   internal static var pocketCastsWelcomeNewsletterTitle: String { return L10n.tr("Localizable", "pocket_casts_welcome_newsletter_title", fallback: "Get the Newsletter") }
   /// Indicates that the access to the podcast has ended on the specified date. '%1$@' is a placeholder for date that the access expired.
   internal static func podcastAccessEnded(_ p1: Any) -> String {
@@ -3066,7 +3066,7 @@ internal enum L10n {
   /// A common string used throughout the app. Refers to the Profile tab.
   internal static var profile: String { return L10n.tr("Localizable", "profile", fallback: "Profile") }
   /// Body of Plus promotional section
-  internal static var profileHelpSupport: String { return L10n.tr("Localizable", "profile_help_support", fallback: "Help support Pocket Casts by upgrading your account") }
+  internal static var profileHelpSupport: String { return L10n.tr("Localizable", "profile_help_support", fallback: "Help support Burrow by upgrading your account") }
   /// Informational label indicating the last time the app was refreshed. '%1$@' is a placeholder for a date string indicating when the last refresh occurred.
   internal static func profileLastAppRefresh(_ p1: Any) -> String {
     return L10n.tr("Localizable", "profile_last_app_refresh", String(describing: p1), fallback: "App last refreshed %1$@")
@@ -3128,7 +3128,7 @@ internal enum L10n {
   /// Title of a button that takes the user to a screen to rate a podcast
   internal static var rate: String { return L10n.tr("Localizable", "rate", fallback: "Rate") }
   /// Title of a button that allows the user to rate the app
-  internal static var ratePocketCasts: String { return L10n.tr("Localizable", "rate_pocket_casts", fallback: "Rate Pocket Casts") }
+  internal static var ratePocketCasts: String { return L10n.tr("Localizable", "rate_pocket_casts", fallback: "Rate Burrow") }
   /// Error message when a user rating for a podcast couldn't be submitted
   internal static var ratingError: String { return L10n.tr("Localizable", "rating_error", fallback: "Ops! There was an error.") }
   /// Message displayed when an user want to rate a podcast but hasn't listened enough to it
@@ -3184,24 +3184,24 @@ internal enum L10n {
   /// Referrals - Share Guest Pass button title
   internal static var referralsShareGuestPass: String { return L10n.tr("Localizable", "referrals_share_guest_pass", fallback: "Share Guest Pass") }
   /// Referrals - Share Guest Pass no more passes message
-  internal static var referralsShareNoGuestPassMessage: String { return L10n.tr("Localizable", "referrals_share_no_guest_pass_message", fallback: "Thanks for sharing Pocket Casts! We'll let you know when you have more passes to give.") }
+  internal static var referralsShareNoGuestPassMessage: String { return L10n.tr("Localizable", "referrals_share_no_guest_pass_message", fallback: "Thanks for sharing Burrow! We'll let you know when you have more passes to give.") }
   /// Referrals - Share Guest Pass no more passes title
   internal static var referralsShareNoGuestPassTitle: String { return L10n.tr("Localizable", "referrals_share_no_guest_pass_title", fallback: "You've shared all yours guest passes!") }
   /// Referrals - Share Pass message. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
   internal static func referralsSharePassLongMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_share_pass_long_message", String(describing: p1), fallback: "Hi there!\n\nHere is a %1$@ guest pass for Pocket Casts Plus - my favorite podcast player. It's packed with unique features like bookmarks, folders, and more that you won't find anywhere else. I think you'll love it too!\n")
+    return L10n.tr("Localizable", "referrals_share_pass_long_message", String(describing: p1), fallback: "Hi there!\n\nHere is a %1$@ guest pass for Burrow Plus - my favorite podcast player. It's packed with unique features like bookmarks, folders, and more that you won't find anywhere else. I think you'll love it too!\n")
   }
   /// Referrals - Share Pass message. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
   internal static func referralsSharePassMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_share_pass_message", String(describing: p1), fallback: "Hey! Use the link below to claim your %1$@ guest pass for Pocket Casts Plus and enjoy podcasts across all your devices!")
+    return L10n.tr("Localizable", "referrals_share_pass_message", String(describing: p1), fallback: "Hey! Use the link below to claim your %1$@ guest pass for Burrow Plus and enjoy podcasts across all your devices!")
   }
   /// Referrals - Share Pass subject title for sharing to email. `%1$@' is a placeholder for the duration of free period offered on the Plus subscription
   internal static func referralsSharePassSubject(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_share_pass_subject", String(describing: p1), fallback: "%1$@ Guest Pass for Pocket Casts Plus!")
+    return L10n.tr("Localizable", "referrals_share_pass_subject", String(describing: p1), fallback: "%1$@ Guest Pass for Burrow Plus!")
   }
   /// Referrals - Tip Message '%1$@' is a placeholder for the duration of free period on the Plus subscription
   internal static func referralsTipMessage(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "referrals_tip_message", String(describing: p1), fallback: "Gift %1$@ of Pocket Casts Plus!")
+    return L10n.tr("Localizable", "referrals_tip_message", String(describing: p1), fallback: "Gift %1$@ of Burrow Plus!")
   }
   /// Referrals - Tip Title. '%1$@' is a placeholder for the number of referrals passes available to share
   internal static func referralsTipTitle(_ p1: Any) -> String {
@@ -3368,7 +3368,7 @@ internal enum L10n {
   /// Server error message for when the server failed to create the account fro the user.
   internal static var serverErrorLoginUserRegisterFailed: String { return L10n.tr("Localizable", "server_error_login_user_register_failed", fallback: "Unable to create account, please try again later") }
   /// Server error message for when the user tries to redeem a promo when they are already a plus subscriber.
-  internal static var serverErrorPromoAlreadyPlus: String { return L10n.tr("Localizable", "server_error_promo_already_plus", fallback: "You are already a Pocket Casts Plus subscriber, there's no need to redeem any codes.") }
+  internal static var serverErrorPromoAlreadyPlus: String { return L10n.tr("Localizable", "server_error_promo_already_plus", fallback: "You are already a Burrow Plus subscriber, there's no need to redeem any codes.") }
   /// Server error message for when the user tries to redeem a promo code that has already been used.
   internal static var serverErrorPromoAlreadyRedeemed: String { return L10n.tr("Localizable", "server_error_promo_already_redeemed", fallback: "You have already claimed this promo code. It was worth a shot though!") }
   /// Server error message for when the user attempts to redeem a promo code that is no longer active.
@@ -3500,7 +3500,7 @@ internal enum L10n {
   /// A message accompanying the toggle to enable auto archive settings that are specific to the selected podcast.
   internal static var settingsCustomAutoArchiveMsg: String { return L10n.tr("Localizable", "settings_custom_auto_archive_msg", fallback: "Need more fine grained control? Enable auto-archive settings for this podcast") }
   /// A message accompanying the toggle to set custom settings for a particular podcast.
-  internal static var settingsCustomMsg: String { return L10n.tr("Localizable", "settings_custom_msg", fallback: "Pocket Casts will remember your last playback effects and use them on all podcasts. You can enable this if you want to create custom ones for just this podcast.") }
+  internal static var settingsCustomMsg: String { return L10n.tr("Localizable", "settings_custom_msg", fallback: "Burrow will remember your last playback effects and use them on all podcasts. You can enable this if you want to create custom ones for just this podcast.") }
   /// Provides a prompt for the user to configure the settings related to episode limits. This controls how many episodes will be preserved before auto archiving them.
   internal static var settingsEpisodeLimit: String { return L10n.tr("Localizable", "settings_episode_limit", fallback: "Episode Limit") }
   /// Informs the user of max episode count for the up next queue. This value is configurable. '%1$@' is a placeholder for the current value as set by the user.
@@ -3521,9 +3521,9 @@ internal enum L10n {
   internal static var settingsExportErrorMsg: String { return L10n.tr("Localizable", "settings_export_error_msg", fallback: "Unable to export OPML, please try again later.") }
   /// Alert title informing the user that the OPML export is processing. 'OPML' refers to the file type that will be exported.
   internal static var settingsExportOpml: String { return L10n.tr("Localizable", "settings_export_opml", fallback: "Exporting OPML") }
-  /// Informs the user that Pocket Casts has dedicated an issue with this podcasts feed.
+  /// Informs the user that Burrow has dedicated an issue with this podcasts feed.
   internal static var settingsFeedError: String { return L10n.tr("Localizable", "settings_feed_error", fallback: "Feed Error") }
-  /// Informs the user that Pocket Casts has stopped updating this feed due to too many errors. Provides a prompt to tap the refresh button that is presented above this message box.
+  /// Informs the user that Burrow has stopped updating this feed due to too many errors. Provides a prompt to tap the refresh button that is presented above this message box.
   internal static var settingsFeedErrorMsg: String { return L10n.tr("Localizable", "settings_feed_error_msg", fallback: "The feed for this podcast stopped updating because it had too many errors. Tap above to fix this.") }
   /// Title used in a dialog box. Prompt user to try refreshing the feed after encountering an error.
   internal static var settingsFeedFixRefresh: String { return L10n.tr("Localizable", "settings_feed_fix_refresh", fallback: "Try To Update It") }
@@ -3535,9 +3535,9 @@ internal enum L10n {
   internal static var settingsFeedFixRefreshSuccessMsg: String { return L10n.tr("Localizable", "settings_feed_fix_refresh_success_msg", fallback: "We've queued an update for this podcast. Our server will re-check it and if it works you should have new episodes soon. Please check back in about an hour.") }
   /// The title for a dialog box used to inform the user that the an update to the feed has been queued.
   internal static var settingsFeedFixRefreshSuccessTitle: String { return L10n.tr("Localizable", "settings_feed_fix_refresh_success_title", fallback: "Update Queued") }
-  /// Informs the user that Pocket Casts has dedicated an issue with this podcasts feed.
+  /// Informs the user that Burrow has dedicated an issue with this podcasts feed.
   internal static var settingsFeedIssue: String { return L10n.tr("Localizable", "settings_feed_issue", fallback: "Feed Issue") }
-  /// Informs the user that Pocket Casts has stopped updating this feed due to too many errors.
+  /// Informs the user that Burrow has stopped updating this feed due to too many errors.
   internal static var settingsFeedIssueMsg: String { return L10n.tr("Localizable", "settings_feed_issue_msg", fallback: "The feed for this podcast stopped updating because it had too many errors.") }
   /// Prompt to navigate the user to the files setting screen.
   internal static var settingsFiles: String { return L10n.tr("Localizable", "settings_files", fallback: "Files Settings") }
@@ -3590,7 +3590,7 @@ internal enum L10n {
   /// Setting toggle to modify which bluetooth protocol to use.
   internal static var settingsGeneralLegacyBluetooth: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth", fallback: "Legacy Bluetooth Support") }
   /// Subtitle explaining the toggle to modify which bluetooth protocol to use.
-  internal static var settingsGeneralLegacyBluetoothSubtitle: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth_subtitle", fallback: "If you have a Bluetooth Device or Car Stereo that seems to be pausing Pocket Casts while it's playing, or resetting the playback position to 0, try turning this setting on to fix it.") }
+  internal static var settingsGeneralLegacyBluetoothSubtitle: String { return L10n.tr("Localizable", "settings_general_legacy_bluetooth_subtitle", fallback: "If you have a Bluetooth Device or Car Stereo that seems to be pausing Burrow while it's playing, or resetting the playback position to 0, try turning this setting on to fix it.") }
   /// Setting toggle to enable the feature that disables the lock screen scrubber.
   internal static var settingsGeneralLockScreenDisabled: String { return L10n.tr("Localizable", "settings_general_lock_screen_disabled", fallback: "Enable Lock Screen Scrubbing") }
   /// Setting toggle to enable the gesture for multi-select.
@@ -3628,7 +3628,7 @@ internal enum L10n {
   /// Setting toggle to enable the feature that adjusts the playback position when resuming.
   internal static var settingsGeneralSmartPlayback: String { return L10n.tr("Localizable", "settings_general_smart_playback", fallback: "Intelligent Playback Resumption") }
   /// Subtitle explaining the feature that adjusts the playback position when resuming.
-  internal static var settingsGeneralSmartPlaybackSubtitle: String { return L10n.tr("Localizable", "settings_general_smart_playback_subtitle", fallback: "If on, Pocket Casts will go back a little in episodes you resume so you can catch up more comfortably.") }
+  internal static var settingsGeneralSmartPlaybackSubtitle: String { return L10n.tr("Localizable", "settings_general_smart_playback_subtitle", fallback: "If on, Burrow will go back a little in episodes you resume so you can catch up more comfortably.") }
   /// Setting option to choose how to handle swiping to add something to the queue.
   internal static var settingsGeneralUpNextSwipe: String { return L10n.tr("Localizable", "settings_general_up_next_swipe", fallback: "Up Next Swipe") }
   /// Setting toggle to modify how a tap is handled in the up next queue.
@@ -3685,7 +3685,7 @@ internal enum L10n {
   internal static var settingsOpml: String { return L10n.tr("Localizable", "settings_opml", fallback: "Import/Export OPML") }
   /// Provides a prompt for the user to configure the playback speed options.
   internal static var settingsPlaySpeed: String { return L10n.tr("Localizable", "settings_play_speed", fallback: "Play Speed") }
-  /// Informational label breaking down the pricing structure for Pocket Casts Plus. '%1$@' is a placeholder for the localized price if paid per month, '%2$@' is a placeholder for the localized price if paid per year
+  /// Informational label breaking down the pricing structure for Burrow Plus. '%1$@' is a placeholder for the localized price if paid per month, '%2$@' is a placeholder for the localized price if paid per year
   internal static func settingsPlusPricingFormat(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "settings_plus_pricing_format", String(describing: p1), String(describing: p2), fallback: "%1$@ per month / %2$@ per year")
   }
@@ -3760,9 +3760,9 @@ internal enum L10n {
   /// Title for the service being checked, in this case, a podcast host URL.
   internal static var settingsStatusHost: String { return L10n.tr("Localizable", "settings_status_host", fallback: "Common Podcast Hosts") }
   /// Description for the podcast host check.
-  internal static var settingsStatusHostDescription: String { return L10n.tr("Localizable", "settings_status_host_description", fallback: "Podcast authors host episode files in various hosting providers not managed by Pocket Casts.") }
+  internal static var settingsStatusHostDescription: String { return L10n.tr("Localizable", "settings_status_host_description", fallback: "Podcast authors host episode files in various hosting providers not managed by Burrow.") }
   /// Failure message for the podcast host check.
-  internal static var settingsStatusHostFailureMessage: String { return L10n.tr("Localizable", "settings_status_host_failure_message", fallback: "The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock this domain to download podcasts. Please note Pocket Casts doesn’t host or choose where podcasts are hosted, that’s up to the author of the show and is out of our control.") }
+  internal static var settingsStatusHostFailureMessage: String { return L10n.tr("Localizable", "settings_status_host_failure_message", fallback: "The most common cause is that you have an ad-blocker configured on your phone or network. You’ll need to unblock this domain to download podcasts. Please note Burrow doesn’t host or choose where podcasts are hosted, that’s up to the author of the show and is out of our control.") }
   /// Title for the service being checked, in this case, the Internet connection.
   internal static var settingsStatusInternet: String { return L10n.tr("Localizable", "settings_status_internet", fallback: "Internet") }
   /// Description for the Internet check.
@@ -3814,7 +3814,7 @@ internal enum L10n {
   /// Prompt for the toggle that enables auto downloads for the Apple Watch app.
   internal static var settingsWatchAutoDownload: String { return L10n.tr("Localizable", "settings_watch_auto_download", fallback: "Auto Download Up Next") }
   /// Subtitle for the toggle that explains the behavior for the auto download feature for the Apple Watch app.
-  internal static var settingsWatchAutoDownloadOffSubtitle: String { return L10n.tr("Localizable", "settings_watch_auto_download_off_subtitle", fallback: "Set the number of episodes from your Up Next queue Pocket Casts will download to your watch for offline playback.") }
+  internal static var settingsWatchAutoDownloadOffSubtitle: String { return L10n.tr("Localizable", "settings_watch_auto_download_off_subtitle", fallback: "Set the number of episodes from your Up Next queue Burrow will download to your watch for offline playback.") }
   /// Prompt for the toggle that enables the feature to delete auto downloads that fall outside episode limit for the Apple Watch app.
   internal static var settingsWatchDeleteDownloads: String { return L10n.tr("Localizable", "settings_watch_delete_downloads", fallback: "Delete Downloads Outside Limit") }
   /// Subtitle explaining the behavior of the app for when the toggle to delete auto downloads is turned off.
@@ -3825,7 +3825,7 @@ internal enum L10n {
   internal static var settingsWatchEpisodeLimit: String { return L10n.tr("Localizable", "settings_watch_episode_limit", fallback: "Number of Episodes") }
   /// Subtitle explaining for the option to select the number of episodes to auto downloads for the Apple Watch app. '%1$@' is a placeholder for the number of items to download.
   internal static func settingsWatchEpisodeLimitSubtitle(_ p1: Any) -> String {
-    return L10n.tr("Localizable", "settings_watch_episode_limit_subtitle", String(describing: p1), fallback: "Pocket Casts will download the top %1$@ episodes of your Up Next queue to your watch for offline playback.")
+    return L10n.tr("Localizable", "settings_watch_episode_limit_subtitle", String(describing: p1), fallback: "Burrow will download the top %1$@ episodes of your Up Next queue to your watch for offline playback.")
   }
   /// Prompt for the option format to select the number of episodes to auto downloads for the Apple Watch app. '%1$@' is a placeholder for the number of items to download
   internal static func settingsWatchEpisodeNumberOptionFormat(_ p1: Any) -> String {
@@ -3975,10 +3975,10 @@ internal enum L10n {
   internal static var skipBack: String { return L10n.tr("Localizable", "skip_back", fallback: "Skip Back") }
   /// Label that toggles the option for the user to choose which chapters of the podcast they want to skip (to not be played)
   internal static var skipChapters: String { return L10n.tr("Localizable", "skip_chapters", fallback: "Preselect chapters") }
-  /// Prompt for Plus mentioning Pre selecting Chapters, don't translate Pocket Casts Patron
-  internal static var skipChaptersPatronPrompt: String { return L10n.tr("Localizable", "skip_chapters_patron_prompt", fallback: "Preselect chapters and more with Pocket Casts Patron") }
-  /// Prompt for Plus mentioning Pre selecting Chapters, don't translate Pocket Casts Plus
-  internal static var skipChaptersPlusPrompt: String { return L10n.tr("Localizable", "skip_chapters_plus_prompt", fallback: "Preselect chapters and more with Pocket Casts Plus") }
+  /// Prompt for Plus mentioning Pre selecting Chapters, don't translate Burrow Patron
+  internal static var skipChaptersPatronPrompt: String { return L10n.tr("Localizable", "skip_chapters_patron_prompt", fallback: "Preselect chapters and more with Burrow Patron") }
+  /// Prompt for Plus mentioning Pre selecting Chapters, don't translate Burrow Plus
+  internal static var skipChaptersPlusPrompt: String { return L10n.tr("Localizable", "skip_chapters_plus_prompt", fallback: "Preselect chapters and more with Burrow Plus") }
   /// A common string used throughout the app. Prompt to fast-forward the playback by a configurable amount.
   internal static var skipForward: String { return L10n.tr("Localizable", "skip_forward", fallback: "Skip Forward") }
   /// The Sleep Timer feature.
@@ -4024,15 +4024,15 @@ internal enum L10n {
   /// Notice indicating that the app is attempting to make a connection to a Sonos device. 'Sonos' refers the the speaker manufacturer.
   internal static var sonosConnecting: String { return L10n.tr("Localizable", "sonos_connecting", fallback: "CONNECTING...") }
   /// Notice indicating that the app failed to make a connection to a Sonos device because the accounts weren't successfully linked. 'Sonos' refers the the speaker manufacturer.
-  internal static var sonosConnectionFailedAccountLink: String { return L10n.tr("Localizable", "sonos_connection_failed_account_link", fallback: "Unable to link Pocket Casts account at this time. Please try again later.") }
+  internal static var sonosConnectionFailedAccountLink: String { return L10n.tr("Localizable", "sonos_connection_failed_account_link", fallback: "Unable to link Burrow account at this time. Please try again later.") }
   /// Notice indicating that the app failed to make a connection to a Sonos device because because it couldn't detect the Sonos App. 'Sonos' refers the the speaker manufacturer.
   internal static var sonosConnectionFailedAppMissing: String { return L10n.tr("Localizable", "sonos_connection_failed_app_missing", fallback: "Unable to open Sonos app to complete linking process.") }
   /// Notice indicating that the app failed to make a connection to a Sonos device. 'Sonos' refers the the speaker manufacturer.
   internal static var sonosConnectionFailedTitle: String { return L10n.tr("Localizable", "sonos_connection_failed_title", fallback: "Linking Failed") }
   /// Notice informing the users about what data will be provided to the Sonos speaker upon connection. 'Sonos' refers the the speaker manufacturer.
   internal static var sonosConnectionPrivacyNotice: String { return L10n.tr("Localizable", "sonos_connection_privacy_notice", fallback: "Connecting to Sonos will allow the Sonos app to access your episode information.\n\nYour email address, password and other sensitive items are never shared.") }
-  /// Notice informing the users they need Pocket Casts account and need to sign in before connecting to the Sonos speaker. 'Sonos' refers the the speaker manufacturer.
-  internal static var sonosConnectionSignInPrompt: String { return L10n.tr("Localizable", "sonos_connection_sign_in_prompt", fallback: "You need to have a Pocket Casts account before you can connect with Sonos.") }
+  /// Notice informing the users they need Burrow account and need to sign in before connecting to the Sonos speaker. 'Sonos' refers the the speaker manufacturer.
+  internal static var sonosConnectionSignInPrompt: String { return L10n.tr("Localizable", "sonos_connection_sign_in_prompt", fallback: "You need to have a Burrow account before you can connect with Sonos.") }
   /// A common string used throughout the app. Prompt for the sort option menus.
   internal static var sortBy: String { return L10n.tr("Localizable", "sort_by", fallback: "Sort By") }
   /// A common string used throughout the app. Title accompanying the sort option setting.
@@ -4047,7 +4047,7 @@ internal enum L10n {
   internal static var starEpisodeShort: String { return L10n.tr("Localizable", "star_episode_short", fallback: "Star") }
   /// A button title that prompts the user upgrade to redeem a free trial
   internal static var startFreeTrial: String { return L10n.tr("Localizable", "start_free_trial", fallback: "Start Free Trial") }
-  /// Accessibility message for the cell displaying the time for how long they've listened to Pocket Casts. '%1$@' is a placeholder for how long they've listened and '%2$@' is a placeholder for a localized funny stat related to their listening history.
+  /// Accessibility message for the cell displaying the time for how long they've listened to Burrow. '%1$@' is a placeholder for how long they've listened and '%2$@' is a placeholder for a localized funny stat related to their listening history.
   internal static func statsAccessibilityListenHistoryFormat(_ p1: Any, _ p2: Any) -> String {
     return L10n.tr("Localizable", "stats_accessibility_listen_history_format", String(describing: p1), String(describing: p2), fallback: "You've listened for %1$@. %2$@")
   }
@@ -4061,7 +4061,7 @@ internal enum L10n {
   }
   /// Loading message displayed while stats are being pulled.
   internal static var statsListenHistoryLoading: String { return L10n.tr("Localizable", "stats_listen_history_loading", fallback: "You’ve listened for") }
-  /// Header for the cell displaying the time for how long they've listened to Pocket Casts.
+  /// Header for the cell displaying the time for how long they've listened to Burrow.
   internal static var statsListenHistoryNoDate: String { return L10n.tr("Localizable", "stats_listen_history_no_date", fallback: "You’ve listened for") }
   /// VoiceOver label for the listening activity heatmap. '%1$@' is a placeholder for the number of days with listening activity out of the last 365.
   internal static func statsListeningActivityAccessibilityLabel(_ p1: Any) -> String {
@@ -4145,7 +4145,7 @@ internal enum L10n {
   }
   /// Subscription Yearly
   internal static var subscriptionPlanYear: String { return L10n.tr("Localizable", "subscription_plan_year", fallback: "Yearly Plan") }
-  /// A common string used throughout the app. Thanks the user for their support. Used for paid feeds and Pocket Casts Plus.
+  /// A common string used throughout the app. Thanks the user for their support. Used for paid feeds and Burrow Plus.
   internal static var subscriptionsThankYou: String { return L10n.tr("Localizable", "subscriptions_thank_you", fallback: "Thanks for your support!") }
   /// Suggested Folders button title to create a custom folder
   internal static var suggestedFoldersCreateCustomFolder: String { return L10n.tr("Localizable", "suggested_folders_create_custom_folder", fallback: "Create custom folder") }
@@ -4164,7 +4164,7 @@ internal enum L10n {
   /// Suggested Folders button title to accept suggested folders
   internal static var suggestedFoldersUseSuggestedFolders: String { return L10n.tr("Localizable", "suggested_folders_use_suggested_folders", fallback: "Use these folders") }
   /// Description of an alert shown to the user
-  internal static var supportWatchHelpMessage: String { return L10n.tr("Localizable", "support_watch_help_message", fallback: "If you're having issues with the Pocket Casts Watch app we can send your wearable logs to better assist you. In order to do so, please open Pocket Casts on your Watch.") }
+  internal static var supportWatchHelpMessage: String { return L10n.tr("Localizable", "support_watch_help_message", fallback: "If you're having issues with the Burrow Watch app we can send your wearable logs to better assist you. In order to do so, please open Burrow on your Watch.") }
   /// Button that the user can press if they opened the Watch app
   internal static var supportWatchHelpOpenedApp: String { return L10n.tr("Localizable", "support_watch_help_opened_app", fallback: "I've opened the Watch app") }
   /// Button that the user can press if they want to request help without the Apple Watch logs
@@ -4374,7 +4374,7 @@ internal enum L10n {
   /// tv welcome subtitle
   internal static var tvWelcomeSubtitle: String { return L10n.tr("Localizable", "tv_welcome_subtitle", fallback: "Your podcasts. On the big screen. Obviously.") }
   /// tv welcome title
-  internal static var tvWelcomeTitle: String { return L10n.tr("Localizable", "tv_welcome_title", fallback: "Welcome to Pocket Casts TV") }
+  internal static var tvWelcomeTitle: String { return L10n.tr("Localizable", "tv_welcome_title", fallback: "Welcome to Burrow TV") }
   /// A common string used throughout the app. Prompt to restore the selected item(s) from an archived state.
   internal static var unarchive: String { return L10n.tr("Localizable", "unarchive", fallback: "Unarchive") }
   /// Label indicating that the user is currently following to the selected podcast.
@@ -4426,7 +4426,7 @@ internal enum L10n {
     return L10n.tr("Localizable", "upgrade_experiment_free_membership_format", String(describing: p1), fallback: "Free %1$@ Plus trial")
   }
   /// Upgrade Experiment Paywall button title
-  internal static var upgradeExperimentPaywallButton: String { return L10n.tr("Localizable", "upgrade_experiment_paywall_button", fallback: "Get Pocket Casts Plus") }
+  internal static var upgradeExperimentPaywallButton: String { return L10n.tr("Localizable", "upgrade_experiment_paywall_button", fallback: "Get Burrow Plus") }
   /// Upgrade Experiment - Reviews Variation: Title for the button that redirects the user to the AppStore page
   internal static var upgradeExperimentReviewsAppStoreButton: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_app_store_button", fallback: "See all reviews in the App Store") }
   /// Upgrade Experiment - Reviews Variation: the text that represents the avg stars rating and the number of reviews. The %1$@ placeholder indicates the avg rating, like 4.3. The %2$@ placeholder indicates the abbreviated number of reviews, like 5.7K.
@@ -4438,7 +4438,7 @@ internal enum L10n {
   /// Upgrade Experiment - Reviews Variation: text for Review card 1
   internal static var upgradeExperimentReviewsReviewText1: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_1", fallback: "8 years of excellence and continuous improvement") }
   /// Upgrade Experiment - Reviews Variation: text for Review card 2
-  internal static var upgradeExperimentReviewsReviewText2: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_2", fallback: "I've been a Pocket Casts user since 2017.\n\nThis is hands down the best app to listen to podcasts. It's feature rich and actively developed. There have been some complaints about the Ul change but I haven't really noticed it too much.\n\nThis app can be as simple or difficult to use as you'd like it to be. So either let it be a plug and play or set up skip outro and intro timers and any other little feature you want to enable.") }
+  internal static var upgradeExperimentReviewsReviewText2: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_2", fallback: "I've been a Burrow user since 2017.\n\nThis is hands down the best app to listen to podcasts. It's feature rich and actively developed. There have been some complaints about the Ul change but I haven't really noticed it too much.\n\nThis app can be as simple or difficult to use as you'd like it to be. So either let it be a plug and play or set up skip outro and intro timers and any other little feature you want to enable.") }
   /// Upgrade Experiment - Reviews Variation: text for Review card 3
   internal static var upgradeExperimentReviewsReviewText3: String { return L10n.tr("Localizable", "upgrade_experiment_reviews_review_text_3", fallback: "The sync function is magic. Don't know what special magic this app has going on but it's better than any other app l've used.") }
   /// Upgrade Experiment - Reviews Variation: text for Review card 4
@@ -4482,7 +4482,7 @@ internal enum L10n {
   /// A subtitle shown for the user satisfaction survey to ask whether a user enjoys the app
   internal static var userSatisfactionSurveySubtitle: String { return L10n.tr("Localizable", "user_satisfaction_survey_subtitle", fallback: "Hi there! We'd love to know if you're enjoying our app.") }
   /// A title shown for the user satisfaction survey to ask whether a user enjoys the app
-  internal static var userSatisfactionSurveyTitle: String { return L10n.tr("Localizable", "user_satisfaction_survey_title", fallback: "Enjoying Pocket Casts?") }
+  internal static var userSatisfactionSurveyTitle: String { return L10n.tr("Localizable", "user_satisfaction_survey_title", fallback: "Enjoying Burrow?") }
   /// An option to say "yes" when when asked if the user enjoys the app.
   internal static var userSatisfactionSurveyYesResponse: String { return L10n.tr("Localizable", "user_satisfaction_survey_yes_response", fallback: "Yes!") }
   /// Title of the Transcript excerpt in Episode detail
@@ -4527,12 +4527,12 @@ internal enum L10n {
   internal static var watchPlaySource: String { return L10n.tr("Localizable", "watch_play_source", fallback: "Play Source") }
   /// Message detailing where the audio will play from when selecting the source on the Apple Watch
   internal static var watchSourceMsg: String { return L10n.tr("Localizable", "watch_source_msg", fallback: "Podcasts will play from the speaker that the chosen device is connected to") }
-  /// Information label providing a brief explanation of Pocket Casts Plus.
-  internal static var watchSourcePlusInfo: String { return L10n.tr("Localizable", "watch_source_plus_info", fallback: "Download direct to your watch and listen without your phone. Check out Pocket Casts Plus on your phone app, or on the web.") }
+  /// Information label providing a brief explanation of Burrow Plus.
+  internal static var watchSourcePlusInfo: String { return L10n.tr("Localizable", "watch_source_plus_info", fallback: "Download direct to your watch and listen without your phone. Check out Burrow Plus on your phone app, or on the web.") }
   /// Button that allows the user to manually trigger a refresh of their profile from the watch app.
   internal static var watchSourceRefreshAccount: String { return L10n.tr("Localizable", "watch_source_refresh_account", fallback: "Refresh Account") }
   /// Information label accompanying the Refresh Account button.
-  internal static var watchSourceRefreshAccountInfo: String { return L10n.tr("Localizable", "watch_source_refresh_account_info", fallback: "If you have a Pocket Casts Plus account, refresh account to attempt to enable it") }
+  internal static var watchSourceRefreshAccountInfo: String { return L10n.tr("Localizable", "watch_source_refresh_account_info", fallback: "If you have a Burrow Plus account, refresh account to attempt to enable it") }
   /// Button that allows the user to manually trigger a refresh of their data from the watch app.
   internal static var watchSourceRefreshData: String { return L10n.tr("Localizable", "watch_source_refresh_data", fallback: "Refresh Data") }
   /// Information label informing users if they want to sign in to the Watch app they need to do that from the phone app.
@@ -4572,7 +4572,7 @@ internal enum L10n {
   /// What's new for 7.20 description for page one. Please leave the "\
   /// \
   /// " part in there, these are new line indicator.
-  internal static var whatsNewPageOne720: String { return L10n.tr("Localizable", "whats_new_page_one_7_20", fallback: "If you love podcasts half as much as we do, you probably have a lot of them. If you're a Pocket Casts Plus subscriber, you can now sort these into folders and file them into neat groups.\n\nThanks to your support, your Home Screen has never looked better!") }
+  internal static var whatsNewPageOne720: String { return L10n.tr("Localizable", "whats_new_page_one_7_20", fallback: "If you love podcasts half as much as we do, you probably have a lot of them. If you're a Burrow Plus subscriber, you can now sort these into folders and file them into neat groups.\n\nThanks to your support, your Home Screen has never looked better!") }
   /// Title for page one of the 7.20 what's new dialog.
   internal static var whatsNewPageOneTitle720: String { return L10n.tr("Localizable", "whats_new_page_one_title_7_20", fallback: "Folders") }
   /// What's new for 7.20 description for page two. Please leave the "\
@@ -4582,7 +4582,7 @@ internal enum L10n {
   /// Title for page two of the 7.20 what's new dialog.
   internal static var whatsNewPageTwoTitle720: String { return L10n.tr("Localizable", "whats_new_page_two_title_7_20", fallback: "Home Grid Syncing") }
   /// Description of a widget to launch the app
-  internal static var widgetsAppIconDescription: String { return L10n.tr("Localizable", "widgets_app_icon_description", fallback: "Quickly Launch Pocket Casts") }
+  internal static var widgetsAppIconDescription: String { return L10n.tr("Localizable", "widgets_app_icon_description", fallback: "Quickly Launch Burrow") }
   /// Title of a widget that displays the app icon
   internal static var widgetsAppIconName: String { return L10n.tr("Localizable", "widgets_app_icon_name", fallback: "Icon") }
   /// Widget prompt message to direct the user to the discover tab to add new podcasts to their queue

@@ -33,7 +33,7 @@
                                 <constraint firstAttribute="width" constant="104" id="68l-Kb-vP0"/>
                             </constraints>
                         </imageView>
-                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Pocket Casts Plus Trial Finished" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wQF-k0-QCv" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
+                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Burrow Plus Trial Finished" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wQF-k0-QCv" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                             <rect key="frame" x="24" y="168" width="366" height="26.333333333333343"/>
                             <fontDescription key="fontDescription" type="boldSystem" pointSize="22"/>
                             <nil key="textColor"/>
@@ -65,7 +65,7 @@
                                                         <constraint firstAttribute="height" constant="24" id="OaT-Ad-Rjo"/>
                                                     </constraints>
                                                 </imageView>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Access to Pocket Casts Plus features will be locked" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Xsx-MB-uFW" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Access to Burrow Plus features will be locked" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Xsx-MB-uFW" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                                                     <rect key="frame" x="40" y="0.0" width="286" height="33.666666666666664"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <nil key="textColor"/>
@@ -84,7 +84,7 @@
                                                         <constraint firstAttribute="height" constant="24" id="87h-R9-FeZ"/>
                                                     </constraints>
                                                 </imageView>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="All files uploaded to your Pocket Casts account will be removed after a week" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DMT-Mn-8o4" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="All files uploaded to your Burrow account will be removed after a week" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DMT-Mn-8o4" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                                                     <rect key="frame" x="40" y="0.0" width="286" height="33.666666666666664"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <nil key="textColor"/>
@@ -103,7 +103,7 @@
                                                         <constraint firstAttribute="height" constant="24" id="p5D-Cb-Vbb"/>
                                                     </constraints>
                                                 </imageView>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Upgrade your account anytime to continue using Pocket Casts Plus" lineBreakMode="clip" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3ao-tS-yjT" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Upgrade your account anytime to continue using Burrow Plus" lineBreakMode="clip" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3ao-tS-yjT" customClass="ThemeableLabel" customModule="podcasts" customModuleProvider="target">
                                                     <rect key="frame" x="40" y="0.0" width="286" height="33.666666666666664"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <nil key="textColor"/>
@@ -169,7 +169,7 @@
                                 <constraint firstAttribute="height" constant="56" id="ABe-hw-xQs"/>
                             </constraints>
                             <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="18"/>
-                            <state key="normal" title="Upgrade to Pocket Casts Plus"/>
+                            <state key="normal" title="Upgrade to Burrow Plus"/>
                             <connections>
                                 <action selector="upgradeTapped:" destination="-1" eventType="touchUpInside" id="1qa-eY-sWj"/>
                             </connections>

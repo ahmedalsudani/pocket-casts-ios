@@ -334,7 +334,7 @@ class PlaylistViewController: PCViewController, TitleButtonDelegate {
                 }
 
                 if !Settings.mobileDataAllowed() {
-                    warningMessage = L10n.downloadDataWarningWithSettingsLink("pktc://settings/storage-and-data") + "\n" + warningMessage
+                    warningMessage = L10n.downloadDataWarningWithSettingsLink("burrow://settings/storage-and-data") + "\n" + warningMessage
                 }
 
                 confirmPicker.addAttributedDescriptiveActions(title: L10n.notOnWifi, message: warningMessage, icon: "option-alert", actions: [downloadAction, queueAction])
