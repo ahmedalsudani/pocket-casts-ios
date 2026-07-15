@@ -12,6 +12,7 @@ GoogleService-Info.plist
 
 # Ruby tooling
 vendor
+.gems
 
 # SPM
 vendor/spm

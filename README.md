@@ -21,11 +21,31 @@
 
 ## Setup
 
-If you don't already have it, you need to install Bundler:
+First make sure you have the Ruby version pinned in [`.ruby-version`](./.ruby-version) (3.2.x). If you use MacPorts:
 
-`gem install bundler`
+```
+sudo port install ruby32
+```
 
-Next you'll need to install all the dependencies needed for [_fastlane_](https://docs.fastlane.tools/) using this script:
+Next you need Bundler at the version pinned in `Gemfile.lock` (2.6.8). To avoid touching the system-wide gem directory (which needs `sudo`), install it into a project-local `.gems` folder:
+
+```
+gem install --install-dir "$PWD/.gems" bundler:2.6.8
+```
+
+Then point your shell at that folder before running Bundler (`.gems` is gitignored). Source the matching env script from the repo root:
+
+```fish
+# fish
+source env.fish
+```
+
+```bash
+# bash / zsh
+source env.sh
+```
+
+Finally, install all the dependencies needed for [_fastlane_](https://docs.fastlane.tools/) using this script:
 
 `make install_dependencies`
 
