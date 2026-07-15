@@ -264,7 +264,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Remote-Config-driven flag overrides used to live here. With no
         // remote config, every flag falls back to its compiled default.
         _ = forceReload
-        }
     }
 
     private func updateEndOfYearRemoteValue() {

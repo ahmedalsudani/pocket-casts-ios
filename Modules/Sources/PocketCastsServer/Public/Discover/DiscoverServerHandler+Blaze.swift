@@ -24,55 +24,9 @@ public struct BlazePromotion: Decodable {
     }
 }
 
-private struct BlazePromotions: Decodable {
-    let promotions: [BlazePromotion]
-}
-
 extension DiscoverServerHandler {
-    func fetchBlazePromotion(for location: BlazePromotion.Location) async -> (promotion: BlazePromotion, useCache: Bool)? {
-        let path = ServerConstants.Urls.discover() + "blaze/promotions.json"
-        let fetchResult: (BlazePromotion, Bool)? = await withCheckedContinuation { continuation in
-            discoverRequest(path: path, type: BlazePromotions.self, authenticated: false) { promotions, useCache in
-                if let promotions,
-                   let promotion = promotions.promotions.first(where: { $0.location == location }) {
-                    continuation.resume(returning: (promotion, useCache))
-                } else {
-                    continuation.resume(returning: nil)
-                }
-            }
-        }
-
-        return fetchResult
-    }
-
-    func cachedBlazePromotion(for location: BlazePromotion.Location) -> BlazePromotion? {
-        let path = ServerConstants.Urls.discover() + "blaze/promotions.json"
-        guard let response = cachedResponse(for: path) else { return nil }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        do {
-            let decoded = try decoder.decode(BlazePromotions.self, from: response.data)
-            return decoded.promotions.first(where: { $0.location == location })
-        } catch {
-            FileLog.shared.addMessage("DiscoverServerHandler: Could not decode cached Blaze promotions: \(error)")
-            return nil
-        }
-    }
-
-    public func blazePromotion(for location: BlazePromotion.Location, completion: @escaping (BlazePromotion, Bool) -> Void) {
-        if let cachedPromotion = cachedBlazePromotion(for: location) {
-            completion(cachedPromotion, false)
-            return
-        }
-
-        Task {
-            if let result = await fetchBlazePromotion(for: location) {
-                await MainActor.run {
-                    completion(result.promotion, !result.useCache)
-                }
-            }
-        }
-    }
+    /// Blaze promotions were served by the Pocket Casts server (`blaze/promotions.json`).
+    /// With the server gone there are no promotions to fetch, so this never calls
+    /// completion and no banner ad is ever shown.
+    public func blazePromotion(for location: BlazePromotion.Location, completion: @escaping (BlazePromotion, Bool) -> Void) {}
 }

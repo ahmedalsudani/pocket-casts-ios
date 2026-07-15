@@ -165,8 +165,9 @@ open class SubscriptionHelper: NSObject {
     }
 
     public class func subscriptionType() -> SubscriptionType {
-        // Locally, treat every user as having the highest subscription tier.
-        .patron
+        // Locally, treat every user as a paid member. `.patron` lives on
+        // SubscriptionTier (see activeTier); the matching type here is .plus.
+        .plus
     }
 
     public class func setSubscriptionPodcasts(_ value: [PodcastSubscription]) {
