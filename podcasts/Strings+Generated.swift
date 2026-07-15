@@ -666,6 +666,12 @@ internal enum L10n {
   internal static var daysListened: String { return L10n.tr("Localizable", "days_listened", fallback: "Days listened") }
   /// Label shown for days saved when it's singular, eg: 2 days saved.
   internal static var daysSaved: String { return L10n.tr("Localizable", "days_saved", fallback: "Days saved") }
+  /// Name of the option to set a default sleep timer that starts automatically with playback
+  internal static var defaultSleepTimer: String { return L10n.tr("Localizable", "default_sleep_timer", fallback: "Default Sleep Timer") }
+  /// Description for the Default Sleep Timer setting
+  internal static var defaultSleepTimerDescription: String { return L10n.tr("Localizable", "default_sleep_timer_description", fallback: "Automatically start a sleep timer of this length whenever playback begins.") }
+  /// Off / disabled value for the Default Sleep Timer setting
+  internal static var defaultSleepTimerOff: String { return L10n.tr("Localizable", "default_sleep_timer_off", fallback: "Off") }
   /// A common string used throughout the app. Prompt to delete the selected item(s).
   internal static var delete: String { return L10n.tr("Localizable", "delete", fallback: "Delete") }
   /// A prompt to delete the downloaded file
@@ -690,12 +696,6 @@ internal enum L10n {
   internal static var deselectAllAbove: String { return L10n.tr("Localizable", "deselect_all_above", fallback: "Deselect all above") }
   /// A common string used throughout the app. Prompt to deselect all items below the currently selected item.
   internal static var deselectAllBelow: String { return L10n.tr("Localizable", "deselect_all_below", fallback: "Deselect all below") }
-  /// Name of the option to set a default sleep timer that starts automatically with playback
-  internal static var defaultSleepTimer: String { return L10n.tr("Localizable", "default_sleep_timer", fallback: "Default Sleep Timer") }
-  /// Description for the Default Sleep Timer setting
-  internal static var defaultSleepTimerDescription: String { return L10n.tr("Localizable", "default_sleep_timer_description", fallback: "Automatically start a sleep timer of this length whenever playback begins.") }
-  /// Off / disabled value for the Default Sleep Timer setting
-  internal static var defaultSleepTimerOff: String { return L10n.tr("Localizable", "default_sleep_timer_off", fallback: "Off") }
   /// Message explaining why the sleep timer was restarted after the user shook the device
   internal static var deviceShakeSleepTimer: String { return L10n.tr("Localizable", "device_shake_sleep_timer", fallback: "Sleep timer restarted due to device shake") }
   /// A common string used throughout the app. Refers to the Discover tab.
@@ -4273,7 +4273,7 @@ internal enum L10n {
   internal static var tvPlayerPlaybackEffects: String { return L10n.tr("Localizable", "tv_player_playback_effects", fallback: "Playback effects") }
   /// tv player playback speed menu title
   internal static var tvPlayerPlaybackSpeed: String { return L10n.tr("Localizable", "tv_player_playback_speed", fallback: "Playback speed") }
-  /// tv player toast shown when playback speed changes. '%1$@' is a placeholder for the speed value like 1.5x.
+  /// tv player toast shown when playback speed changes. %1$@ is the speed value like 1.5x
   internal static func tvPlayerPlaybackSpeedSet(_ p1: Any) -> String {
     return L10n.tr("Localizable", "tv_player_playback_speed_set", String(describing: p1), fallback: "Playback speed set to %1$@")
   }
@@ -4287,7 +4287,7 @@ internal enum L10n {
   internal static var tvPlayerTrimSilenceMild: String { return L10n.tr("Localizable", "tv_player_trim_silence_mild", fallback: "Mild") }
   /// tv player trim silence off option
   internal static var tvPlayerTrimSilenceOff: String { return L10n.tr("Localizable", "tv_player_trim_silence_off", fallback: "Off") }
-  /// tv player toast shown when trim silence setting changes. '%1$@' is a placeholder for the selected option name.
+  /// tv player toast shown when trim silence setting changes. %1$@ is the selected option name
   internal static func tvPlayerTrimSilenceSet(_ p1: Any) -> String {
     return L10n.tr("Localizable", "tv_player_trim_silence_set", String(describing: p1), fallback: "Trim silence: %1$@")
   }
