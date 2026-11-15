@@ -38,7 +38,6 @@ class SiriSettingsViewController: PCViewController, UITableViewDelegate, UITable
         suggestedShortcuts = SiriShortcutsManager.shared.defaultSuggestions()
         enabledShortcuts = [INVoiceShortcut]()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: tableView)
-        Analytics.track(.settingsSiriShown)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -249,8 +248,6 @@ class SiriSettingsViewController: PCViewController, UITableViewDelegate, UITable
         controller.dismiss(animated: true, completion: nil)
 
         reloadData()
-
-        Analytics.track(.settingsSiriShortcutAdded)
     }
 
     func addVoiceShortcutViewControllerDidCancel(_ controller: INUIAddVoiceShortcutViewController) {
@@ -273,8 +270,6 @@ class SiriSettingsViewController: PCViewController, UITableViewDelegate, UITable
         }
         navigationController?.popToViewController(self, animated: false)
         controller.dismiss(animated: true, completion: nil)
-
-        Analytics.track(.settingsSiriShortcutRemoved)
     }
 
     func editVoiceShortcutViewControllerDidCancel(_ controller: INUIEditVoiceShortcutViewController) {

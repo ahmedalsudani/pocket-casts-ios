@@ -22,9 +22,8 @@ class FilesListViewModel: ObservableObject {
         episodes = []
         sortOrder = playSource.userEpisodeSortOrder
 
-        Publishers.Merge3(
+        Publishers.Merge(
             Publishers.Notification.userEpisodeDeleted,
-            Publishers.Notification.userEpisodesRefreshed,
             Publishers.Notification.dataUpdated
         )
         .receive(on: RunLoop.main)

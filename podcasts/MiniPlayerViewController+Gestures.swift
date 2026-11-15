@@ -58,16 +58,10 @@ extension MiniPlayerViewController: UIGestureRecognizerDelegate {
     }
 
     private func showLongPressMenu(_ touchPoint: CGPoint) {
-        Analytics.track(.miniPlayerLongPressMenuShown)
-
         let optionsPicker = OptionsPicker(title: nil)
         for action in longPressMenuActions() {
             optionsPicker.addAction(action: action)
         }
-        optionsPicker.setNoActionCallback {
-            Analytics.track(.miniPlayerLongPressMenuDismissed)
-        }
-
         optionsPicker.present()
     }
 
@@ -76,22 +70,18 @@ extension MiniPlayerViewController: UIGestureRecognizerDelegate {
     }
 
     /// Shared action list used by both the legacy `OptionsPicker` long-press
-    /// menu and the Liquid Glass `UIContextMenuInteraction`. Each action's
-    /// closure includes its own analytics event so both menu styles produce
-    /// the same telemetry.
+    /// menu and the Liquid Glass `UIContextMenuInteraction`, so both menu
+    /// styles offer the same actions.
     fileprivate func longPressMenuActions() -> [OptionAction] {
         let markAsPlayed = OptionAction(label: L10n.markPlayedShort, icon: "episode-markasplayed") { [weak self] in
             guard let self else { return }
-            Analytics.track(.miniPlayerLongPressMenuOptionTapped, properties: ["option": "mark_played"])
             if let episode = PlaybackManager.shared.currentEpisode {
-                AnalyticsEpisodeHelper.shared.currentSource = self.analyticsSource
                 EpisodeManager.markAsPlayed(episode: episode, fireNotification: true)
             }
         }
 
         let close = OptionAction(label: L10n.miniPlayerClose, icon: "close") { [weak self] in
             guard let self else { return }
-            Analytics.track(.miniPlayerLongPressMenuOptionTapped, properties: ["option": "close_and_clear_up_next"])
             FileLog.shared.addMessage("Close and Clear Up Next pressed from the mini player")
             let queueCount = PlaybackManager.shared.queue.upNextCount()
             guard queueCount > 0 else {
@@ -118,8 +108,6 @@ extension MiniPlayerViewController: UIGestureRecognizerDelegate {
 
 extension MiniPlayerViewController: UIContextMenuInteractionDelegate {
     func contextMenuInteraction(_ interaction: UIContextMenuInteraction, configurationForMenuAtLocation location: CGPoint) -> UIContextMenuConfiguration? {
-        Analytics.track(.miniPlayerLongPressMenuShown)
-        longPressContextMenuActionSelected = false
         let actions = longPressMenuActions()
 
         return UIContextMenuConfiguration(
@@ -128,24 +116,17 @@ extension MiniPlayerViewController: UIContextMenuInteractionDelegate {
                 guard let episode = PlaybackManager.shared.currentEpisode, let window = self?.view.window else { return nil }
                 return MiniPlayerLongPressPreviewViewController(episode: episode, availableWidth: window.bounds.width)
             },
-            actionProvider: { [weak self] _ in
+            actionProvider: { _ in
                 UIMenu(children: actions.map { action in
                     UIAction(
                         title: action.label,
                         image: action.icon.flatMap { UIImage(named: $0) },
                         attributes: action.destructive ? .destructive : []
                     ) { _ in
-                        self?.longPressContextMenuActionSelected = true
                         action.action()
                     }
                 })
             }
         )
-    }
-
-    func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willEndFor configuration: UIContextMenuConfiguration, animator: (any UIContextMenuInteractionAnimating)?) {
-        if !longPressContextMenuActionSelected {
-            Analytics.track(.miniPlayerLongPressMenuDismissed)
-        }
     }
 }

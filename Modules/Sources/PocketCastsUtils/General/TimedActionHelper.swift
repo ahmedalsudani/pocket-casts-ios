@@ -12,17 +12,6 @@ public class TimedActionHelper {
         performStartTimer(for: time)
     }
 
-    public func cancelTimer() {
-        performCancelTimer()
-    }
-
-    public func isTimerValid() -> Bool {
-        guard let timer else {
-            return false
-        }
-        return timer.isValid
-    }
-
     private func performStartTimer(for time: TimeInterval) {
         performCancelTimer()
 

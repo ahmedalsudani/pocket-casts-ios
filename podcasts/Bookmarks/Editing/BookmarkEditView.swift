@@ -22,9 +22,6 @@ struct BookmarkEditView: View {
                 .navigationDestination(isPresented: $isEditingTranscript) {
                     transcriptEditor
                 }
-                .onChange(of: isEditingTranscript) { _, isEditing in
-                    isEditing ? viewModel.passageEditorShown() : viewModel.passageEditorDismissed()
-                }
         }
     }
 
@@ -233,7 +230,7 @@ struct BookmarkEditView: View {
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .buttonize {
-                viewModel.suggestionTapped(suggestion)
+                viewModel.applySuggestion(suggestion)
             }
             .accessibilityLabel(L10n.bookmarkSuggestedTitle(suggestion))
             .transition(.opacity.combined(with: .move(edge: .top)))

@@ -15,7 +15,6 @@ class BookmarksPlayerTabController: PlayerItemViewController {
 
     init(bookmarkManager: BookmarkManager, playbackManager: PlaybackManager) {
         let viewModel = BookmarkEpisodeListViewModel(bookmarkManager: bookmarkManager, sortOption: Settings.playerBookmarksSort)
-        viewModel.analyticsSource = .player
 
         self.playbackManager = playbackManager
         self.bookmarkManager = bookmarkManager
@@ -55,7 +54,7 @@ class BookmarksPlayerTabController: PlayerItemViewController {
             .receive(on: RunLoop.main)
             // A bookmark made from a transcript selection is titled by the transcript itself
             .filter { [weak self] event in
-                self?.viewModel.episode?.uuid == event.episode && event.source != .transcript
+                self?.viewModel.episode?.uuid == event.episode && !event.isFromTranscript
             }
             .map { [weak self] event in
                 (event.isDuplicate, self?.bookmarkManager.bookmark(for: event.uuid))
@@ -90,7 +89,7 @@ class BookmarksPlayerTabController: PlayerItemViewController {
     }
 
     private func showBookmarkEdit(isNew: Bool, bookmark: Bookmark) {
-        let controller = BookmarkEditTitleViewController(manager: bookmarkManager, bookmark: bookmark, state: isNew ? .adding : .updating, source: viewModel.analyticsSource, onDismiss: { [weak self] outcome in
+        let controller = BookmarkEditTitleViewController(manager: bookmarkManager, bookmark: bookmark, state: isNew ? .adding : .updating, onDismiss: { [weak self] outcome in
             self?.handleEditDismissed(bookmark: bookmark, isNew: isNew, outcome: outcome)
         })
 
@@ -135,7 +134,7 @@ extension BookmarksPlayerTabController: BookmarkListRouter {
     var opensBookmarkEpisode: Bool { false }
 
     func bookmarkPlay(_ bookmark: Bookmark) async throws {
-        try await playbackManager.playBookmark(bookmark, source: .player)
+        try await playbackManager.playBookmark(bookmark)
     }
 
     func bookmarkEdit(_ bookmark: Bookmark) {
@@ -146,7 +145,6 @@ extension BookmarksPlayerTabController: BookmarkListRouter {
         guard let episode = viewModel.episode as? Episode else {
             return
         }
-        Analytics.track(.bookmarkShareTapped, source: viewModel.analyticsSource, properties: ["podcast_uuid": episode.podcastUuid, "episode_uuid": bookmark.episodeUuid])
-        SharingModal.show(option: .bookmark(episode, bookmark.time), from: .player, in: self)
+        SharingModal.show(option: .bookmark(episode, bookmark.time), in: self)
     }
 }

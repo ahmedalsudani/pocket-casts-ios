@@ -1,4 +1,3 @@
-import Combine
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
@@ -69,38 +68,15 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         }
     }
 
-    @IBOutlet var plusInfoView: PlusLockedInfoView! {
-        didSet {
-            plusInfoView.isHidden = Settings.plusInfoDismissedOnProfile || SubscriptionHelper.hasActiveSubscription()
-            plusInfoView.delegate = self
-        }
-    }
-
-    var promoCode: String? {
-        didSet {
-            showPromotionViewController(promoCode: promoCode)
-        }
-    }
-
-    var promoRedeemedMessage: String?
     private let settingsCellId = "SettingsCell"
     private let endOfYearPromptCell = "EndOfYearPromptCell"
 
-    enum TableRow { case informationalBanner, kidsProfile, referralsClaim, allStats, downloaded, starred, listeningHistory, help, uploadedFiles, endOfYearPrompt, bookmarks, playback2026Banner }
-
-    private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
-        let viewModel = InformationalBannerViewModel(bannerType: .profile)
-        return InformationalBannerViewCoordinator(viewModel: viewModel)
-    }()
+    enum TableRow { case allStats, downloaded, starred, listeningHistory, uploadedFiles, endOfYearPrompt, bookmarks }
 
     @IBOutlet var profileTable: UITableView! {
         didSet {
             profileTable.register(UINib(nibName: "TopLevelSettingsCell", bundle: nil), forCellReuseIdentifier: settingsCellId)
             profileTable.register(EndOfYearPromptCell.self, forCellReuseIdentifier: endOfYearPromptCell)
-            profileTable.register(Playback2026BannerCell.self, forCellReuseIdentifier: Playback2026BannerCell.identifier)
-            profileTable.register(KidsProfileBannerTableCell.self, forCellReuseIdentifier: KidsProfileBannerTableCell.identifier)
-            profileTable.register(ReferralsClaimBannerTableCell.self, forCellReuseIdentifier: ReferralsClaimBannerTableCell.identifier)
-            profileTable.register(InformationalProfileBannerCell.self, forCellReuseIdentifier: InformationalProfileBannerCell.identifier)
         }
     }
 
@@ -125,25 +101,12 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         return view
     }()
 
-    private var cancellables = Set<AnyCancellable>()
-
-    private lazy var whatsNewButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(image: UIImage(named: "whatsnew_inbox"), style: .plain, target: self, action: #selector(whatsNewTapped))
-        button.accessibilityLabel = L10n.whatsNew
-        button.accessibilityIdentifier = "What's New"
-        return button
-    }()
-
     // MARK: - View Events
 
     override func viewDidLoad() {
         customRightBtn = UIBarButtonItem(image: UIImage(named: "profile-settings"), style: .plain, target: self, action: #selector(settingsTapped))
         customRightBtn?.accessibilityLabel = L10n.accessibilityProfileSettings
         customRightBtn?.accessibilityIdentifier = "Settings"
-        if FeatureFlag.whatsNewFeed.enabled {
-            extraRightButtons = [whatsNewButton]
-            updateWhatsNewButton()
-        }
 
         super.viewDidLoad()
 
@@ -161,16 +124,12 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         updateFooterFrame()
         setupRefreshControl()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: profileTable)
-        observeWhatsNewFeed()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
         updateDisplayedData()
-        updateWhatsNewButton()
-
-        Analytics.track(.profileShown)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -181,36 +140,12 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         addCustomObserver(Constants.Notifications.podcastDeleted, selector: #selector(handleDataChangedNotification))
         addCustomObserver(ServerNotifications.podcastRefreshFailed, selector: #selector(refreshComplete))
         addCustomObserver(ServerNotifications.podcastRefreshThrottled, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.syncFailed, selector: #selector(refreshComplete))
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(.userLoginDidChange, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(.serverUserWillBeSignedOut, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(.whatsNewDismissed, selector: #selector(whatsNewDismissed))
         addCustomObserver(EndOfYear.eoyEligibilityDidChange, selector: #selector(handleDataChangedNotification))
-        addCustomObserver(ServerNotifications.iapProductsUpdated, selector: #selector(refreshReferrals))
-        addCustomObserver(.referralURLChanged, selector: #selector(refreshReferrals))
 
         addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
-        if promoRedeemedMessage != nil {
-            updateDisplayedData()
-            showPromotionRedeemedAcknowledgement()
-            promoRedeemedMessage = nil
-        }
 
         if EndOfYear.isEligible {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.profileSeen)
-        }
-
-        whatsNewDismissed()
-        markWhatsNewFeedAsSeenIfOnScreen()
-
-        if FeatureFlag.cancelSubscriptionSurvey.enabled,
-           SyncManager.isUserLoggedIn(),
-           SubscriptionHelper.hasCancelledSubscription,
-           !Settings.subscriptionCancelledSurveyShown {
-            let controller = CancelSubscriptionSurveyViewModel.make()
-            present(controller, animated: true)
         }
     }
 
@@ -221,7 +156,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     override func handleThemeChanged() {
         updateRefreshFooterColors()
-        updateWhatsNewButton()
     }
 
     private func updateRefreshFooterColors() {
@@ -237,20 +171,11 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
     }
 
     @objc private func settingsTapped() {
-        Analytics.track(.profileSettingsButtonTapped)
-
         let settingsController = SettingsViewController()
         navigationController?.pushViewController(settingsController, animated: true)
     }
 
-    @objc private func whatsNewTapped() {
-        let feedViewController = WhatsNewFeedViewController(viewModel: WhatsNewFeedViewModel())
-        navigationController?.pushViewController(feedViewController, animated: true)
-    }
-
     private func refreshTapped() {
-        Analytics.track(.profileRefreshButtonTapped)
-
         isRefreshAnimating = true
         lastRefreshTime.text = L10n.refreshing
         RefreshManager.shared.refreshPodcasts()
@@ -280,20 +205,13 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         headerViewModel.update()
 
         updateLastRefreshDetails()
-        plusInfoView.isHidden = Settings.plusInfoDismissedOnProfile || SubscriptionHelper.hasActiveSubscription()
         updateFooterFrame()
         refreshTableData()
     }
 
     private func updateLastRefreshDetails() {
-        if ReferralsCoordinator.shared.areReferralsAvailableToSend {
-            navigationItem.leftBarButtonItem = referralsButton
-        } else {
-            navigationItem.leftBarButtonItem = nil
-        }
-
-        if !ServerSettings.lastRefreshSucceeded() || !ServerSettings.lastSyncSucceeded() {
-            lastRefreshTime.text = !ServerSettings.lastRefreshSucceeded() ? L10n.refreshFailed : L10n.syncFailed
+        if !ServerSettings.lastRefreshSucceeded() {
+            lastRefreshTime.text = L10n.refreshFailed
             refreshButtonTitle = L10n.tryAgain
             alertIcon.isHidden = false
         } else if let lastUpdateTime = ServerSettings.lastRefreshEndTime() {
@@ -329,42 +247,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
             return tableView.dequeueReusableCell(withIdentifier: endOfYearPromptCell, for: indexPath) as! EndOfYearPromptCell
         }
 
-        guard row != .playback2026Banner else {
-            return tableView.dequeueReusableCell(withIdentifier: Playback2026BannerCell.identifier, for: indexPath) as! Playback2026BannerCell
-        }
-
-        if row == .informationalBanner {
-            let cell = tableView.dequeueReusableCell(withIdentifier: InformationalProfileBannerCell.identifier, for: indexPath) as! InformationalProfileBannerCell
-            cell.onCloseBannerTap = { [weak self] cell in
-                if let cell, let indexPath = tableView.indexPath(for: cell) {
-                    self?.tableData[indexPath.section].remove(at: indexPath.row)
-                    tableView.deleteRows(at: [indexPath], with: .fade)
-                }
-            }
-            return cell
-        }
-
-        if row == .kidsProfile {
-            let cell = tableView.dequeueReusableCell(withIdentifier: KidsProfileBannerTableCell.identifier, for: indexPath) as! KidsProfileBannerTableCell
-            cell.onCloseButtonTap = { [weak self] cell in
-                if let cell, let indexPath = tableView.indexPath(for: cell) {
-                    self?.tableData[indexPath.section].remove(at: indexPath.row)
-                    tableView.deleteRows(at: [indexPath], with: .fade)
-                }
-            }
-            cell.onRequestEarlyAccessTap = { [weak self] _ in
-                let viewModel = KidsProfileSheetViewModel()
-                let hostViewController = KidsProfileSheetHost(viewModel: viewModel)
-                self?.present(hostViewController, animated: true)
-            }
-            return cell
-        }
-
-        if row == .referralsClaim {
-            let cell = tableView.dequeueReusableCell(withIdentifier: ReferralsClaimBannerTableCell.identifier, for: indexPath) as! ReferralsClaimBannerTableCell
-            return cell
-        }
-
         let cell = tableView.dequeueReusableCell(withIdentifier: settingsCellId, for: indexPath) as! TopLevelSettingsCell
 
         cell.settingsImage.tintColor = ThemeColor.primaryIcon01()
@@ -372,14 +254,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         cell.separatorInset = .zero
 
         switch row {
-        case .informationalBanner:
-            return InformationalProfileBannerCell()
-        case .playback2026Banner:
-            return Playback2026BannerCell()
-        case .kidsProfile:
-            return KidsProfileBannerTableCell()
-        case .referralsClaim:
-            return ReferralsClaimBannerTableCell()
         case .allStats:
             cell.settingsImage.image = UIImage(named: "profile-stats")
             cell.settingsLabel.text = L10n.settingsStats
@@ -395,9 +269,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .listeningHistory:
             cell.settingsImage.image = UIImage(named: "profile-history")
             cell.settingsLabel.text = L10n.listeningHistory
-        case .help:
-            cell.settingsImage.image = UIImage(named: "profile-help")
-            cell.settingsLabel.text = L10n.settingsHelp
         case .endOfYearPrompt:
             return EndOfYearPromptCell()
         case .bookmarks:
@@ -408,35 +279,8 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         return cell
     }
 
-    func tableView(_ tableView: UITableView, shouldHighlightRowAt indexPath: IndexPath) -> Bool {
-        let row = tableData[indexPath.section][indexPath.row]
-        return row != .kidsProfile && row != .informationalBanner
-    }
-
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        let row = tableData[indexPath.section][indexPath.row]
-        if row == .kidsProfile {
-            Analytics.track(.kidsProfileBannerSeen)
-        }
-        if row == .referralsClaim {
-            Analytics.track(.referralPassBannerShown)
-        }
-        if row == .endOfYearPrompt {
-            Analytics.track(.endOfYearProfileCardShown, properties: ["current_year": EndOfYear.currentYear.literalValue])
-        }
-        if row == .playback2026Banner {
-            Playback2026Analytics.track(.endOfYearProfileCardShown)
-        }
-    }
-
     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        let row = tableData[indexPath.section][indexPath.row]
-        switch row {
-        case .informationalBanner:
-            return 160
-        default:
-            return 70
-        }
+        70
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -452,13 +296,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     func navigateToRow(_ row: TableRow) {
         switch row {
-        case .kidsProfile, .informationalBanner:
-            break
-        case .referralsClaim:
-            dismiss(animated: true)
-            ReferralsCoordinator.shared.startClaimFlow(from: self) { [weak self] in
-                self?.profileTable.reloadData()
-            }
         case .allStats:
             let statsViewController = StatsViewController()
             navigationController?.pushViewController(statsViewController, animated: true)
@@ -474,15 +311,10 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .listeningHistory:
             let historyController = ListeningHistoryViewController()
             navigationController?.pushViewController(historyController, animated: true)
-        case .help:
-            dismiss(animated: true)
-            let navController = SJUIUtils.navController(for: OnlineSupportController(), themeOverride: .light)
-            present(navController, animated: true, completion: nil)
         case .endOfYearPrompt:
             dismiss(animated: true)
-            Analytics.track(.endOfYearProfileCardTapped, properties: ["current_year": EndOfYear.currentYear.literalValue])
             if let endOfYear = (tabBarController as? MainTabBarController)?.endOfYear {
-                endOfYear.showStories(in: self, from: .profile)
+                endOfYear.showStories(in: self)
             } else {
                 //Show warning that playback is not available
                 let alert = UIAlertController(title: L10n.playbackNotAvailable, message: L10n.pleaseTryAgainLater, preferredStyle: .alert)
@@ -491,9 +323,6 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         case .bookmarks:
             let bookmarksController = BookmarksProfileListController()
             navigationController?.pushViewController(bookmarksController, animated: true)
-        case .playback2026Banner:
-            Playback2026Analytics.track(.endOfYearProfileCardTapped)
-            Playback2026.start(from: self, source: .profile)
         }
     }
 
@@ -513,26 +342,10 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
 
     private func refreshTableData() {
         var data: [[ProfileViewController.TableRow]]
-        data = [[.allStats, .downloaded, .uploadedFiles, .starred, .bookmarks, .listeningHistory, .help]]
+        data = [[.allStats, .downloaded, .uploadedFiles, .starred, .bookmarks, .listeningHistory]]
 
         if EndOfYear.isEndOfYearActive, EndOfYear.isEligible {
             data[0].insert(.endOfYearPrompt, at: 0)
-        }
-
-        if FeatureFlag.kidsProfile.enabled && !Settings.shouldHideBanner {
-            data[0].insert(.kidsProfile, at: 0)
-        }
-
-        if ReferralsCoordinator.shared.isReferralAvailableToClaim {
-            data[0].insert(.referralsClaim, at: 0)
-        }
-
-        if informationalBannerCoordinator.shouldShowBanner() {
-            data[0].insert(.informationalBanner, at: 0)
-        }
-
-        if Playback2026.isAvailable {
-            data[0].insert(.playback2026Banner, at: 0)
         }
 
         tableData = data
@@ -549,143 +362,13 @@ class ProfileViewController: PCViewController, UITableViewDataSource, UITableVie
         footerView.frame = CGRect(x: footerView.frame.minX, y: footerView.frame.minY, width: footerView.frame.width, height: height)
         profileTable.tableFooterView = footerView
     }
-
-    // MARK: - What's New Autoplay flow
-
-    @objc private func whatsNewDismissed() {
-        showGeneralSettingsIfNeeded()
-        showHeadphoneControlsFromWhatsNew()
-    }
-
-    private func showGeneralSettingsIfNeeded() {
-        if AnnouncementFlow.current == .autoPlay {
-            let generalSettingsViewController = GeneralSettingsViewController()
-            navigationController?.pushViewController(generalSettingsViewController, animated: true)
-        }
-    }
-
-    // Pushes to the headphone controls if shown from the what's new
-    private func showHeadphoneControlsFromWhatsNew() {
-        guard AnnouncementFlow.current == .bookmarksProfile else { return }
-
-        let controller = HeadphoneSettingsViewController()
-        navigationController?.pushViewController(controller, animated: true)
-        AnnouncementFlow.current = .none
-    }
-
-    // MARK: - Referrals
-    @objc func refreshReferrals() {
-        updateDisplayedData()
-    }
-
-    private lazy var referralsButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(image: UIImage(named: ReferralsConstants.giftIcon), style: .plain, target: self, action: #selector(referralsTapped))
-        return button
-    }()
-
-    @objc private func referralsTapped() {
-        guard let referralsOfferInfo = ReferralsCoordinator.shared.referralsOfferInfo else {
-            return
-        }
-        let viewModel = ReferralSendPassModel(offerInfo: referralsOfferInfo,
-                                              onShareGuestPassTap: { [weak self] in
-            self?.dismiss(animated: true)
-        }, onCloseTap: { [weak self] in
-            self?.dismiss(animated: true)
-        })
-        let vc = ReferralSendPassVC(viewModel: viewModel)
-        present(vc, animated: true)
-    }
-
-    private enum ReferralsConstants {
-        static let giftIcon = "gift"
-    }
-}
-
-// MARK: - PlusLockedInfoDelegate
-
-extension ProfileViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        Settings.plusInfoDismissedOnProfile = true
-        plusInfoView.isHidden = true
-        updateFooterFrame()
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .profile
-    }
-}
-
-// MARK: - What's New
-
-private extension ProfileViewController {
-    /// Keeps the dot on the What's New button in step with the feed, and the dot on the tab off, while
-    /// Profile is on screen.
-    func observeWhatsNewFeed() {
-        guard FeatureFlag.whatsNewFeed.enabled else { return }
-
-        let manager = WhatsNewManager.shared
-        Publishers.Merge3(
-            manager.$catalog.dropFirst().map { _ in },
-            manager.$readState.dropFirst().map { _ in },
-            NotificationCenter.default.publisher(for: ServerNotifications.showWhatsNewDotChanged).map { _ in }
-        )
-        .receive(on: DispatchQueue.main)
-        .sink { [weak self] _ in
-            self?.updateWhatsNewButton()
-            self?.markWhatsNewFeedAsSeenIfOnScreen()
-        }
-        .store(in: &cancellables)
-    }
-
-    func markWhatsNewFeedAsSeenIfOnScreen() {
-        guard FeatureFlag.whatsNewFeed.enabled, view.window != nil else { return }
-        WhatsNewManager.shared.markFeedAsSeen()
-    }
-
-    func updateWhatsNewButton() {
-        guard FeatureFlag.whatsNewFeed.enabled else { return }
-
-        let showsDot = WhatsNewManager.shared.showsDotOnWhatsNewButton()
-        let tintColor: UIColor? = LiquidGlass.isEnabled ? .label : nil
-        let inbox = UIImage(named: "whatsnew_inbox")
-        if showsDot {
-            // The dot image bakes the colour in, so resolve `.label` against the active theme rather than
-            // the system appearance: the window's interface style follows the theme, and may not have
-            // changed yet when a theme change lands here.
-            let traits = UITraitCollection(userInterfaceStyle: Theme.isDarkTheme ? .dark : .light)
-            let iconColor = (tintColor ?? AppTheme.navBarIconsColor()).resolvedColor(with: traits)
-            whatsNewButton.image = inbox?.withUnreadDot(color: ThemeColor.support05(), iconColor: iconColor)
-        } else {
-            whatsNewButton.image = inbox
-        }
-        whatsNewButton.tintColor = tintColor
-        whatsNewButton.accessibilityValue = showsDot ? L10n.badgeNew : nil
-    }
-}
-
-private extension UIImage {
-    /// Draws the template image in `iconColor` with a dot of `color` over its top-right corner, as a
-    /// fixed-colour image, since the inbox has no `.badge` symbol variant the way the bell did.
-    func withUnreadDot(color: UIColor, iconColor: UIColor, diameter: CGFloat = 8) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { context in
-            withTintColor(iconColor).draw(in: CGRect(origin: .zero, size: size))
-            color.setFill()
-            context.cgContext.fillEllipse(in: CGRect(x: size.width - diameter, y: 0, width: diameter, height: diameter))
-        }.withRenderingMode(.alwaysOriginal)
-    }
 }
 
 // MARK: - Refresh Control
 
 extension ProfileViewController {
     private func setupRefreshControl() {
-        let controller = FullSyncRefreshController(source: .profile)
+        let controller = FullSyncRefreshController()
         refreshController = controller
         profileTable.refreshControl = controller.refreshControl
     }

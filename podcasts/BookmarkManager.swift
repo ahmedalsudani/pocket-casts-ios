@@ -28,7 +28,6 @@ class BookmarkManager {
     let dataManager: BookmarkDataManager
     private let generalManager: DataManager
     private let playbackManager: PlaybackManager
-    private let cacheServerHandler: CacheServerHandler
 
     /// Called when a bookmark is created
     let onBookmarkCreated = PassthroughSubject<Event.Created, Never>()
@@ -41,12 +40,10 @@ class BookmarkManager {
 
     init(dataManager: BookmarkDataManager = DataManager.shared.bookmarks,
          generalManager: DataManager = .shared,
-         playbackManager: PlaybackManager = .shared,
-         cacheServerHandler: CacheServerHandler = .shared) {
+         playbackManager: PlaybackManager = .shared) {
         self.dataManager = dataManager
         self.generalManager = generalManager
         self.playbackManager = playbackManager
-        self.cacheServerHandler = cacheServerHandler
     }
 
     /// Plays the "bookmark created" tone
@@ -76,18 +73,19 @@ class BookmarkManager {
     ///     from one the user picked out. Left nil, the passage is captured afterwards from
     ///     the transcript around `time`.
     ///   - referenceTime: `time` on the transcript's reference timeline, when it's already known.
+    ///   - fromTranscript: Whether the bookmark comes from a transcript selection, which titles it itself.
     @discardableResult
     func add(to episode: BaseEpisode,
              at time: TimeInterval,
              title: String = L10n.bookmarkDefaultTitle,
              passage: BookmarkUpdateParameters.Passage? = nil,
              referenceTime: TimeInterval? = nil,
-             source: BookmarkAnalyticsSource = .unknown) -> Bookmark? {
+             fromTranscript: Bool = false) -> Bookmark? {
         // If the episode has a podcast attached, also save that
         let podcastUuid: String? = (episode as? Episode)?.podcastUuid
 
         if let existing = dataManager.existingBookmark(forEpisode: episode.uuid, time: time) {
-            onBookmarkCreated.send(.init(uuid: existing.uuid, episode: episode.uuid, podcast: podcastUuid, source: source, isDuplicate: true))
+            onBookmarkCreated.send(.init(uuid: existing.uuid, episode: episode.uuid, podcast: podcastUuid, isFromTranscript: fromTranscript, isDuplicate: true))
             return existing
         }
 
@@ -106,7 +104,7 @@ class BookmarkManager {
             FileLog.shared.addMessage("[Bookmarks] Added bookmark for \(episode.displayableTitle()) at \(time)")
 
             // Inform the subscribers a bookmark was added
-            onBookmarkCreated.send(.init(uuid: $0, episode: episode.uuid, podcast: podcastUuid, source: source))
+            onBookmarkCreated.send(.init(uuid: $0, episode: episode.uuid, podcast: podcastUuid, isFromTranscript: fromTranscript))
 
             return dataManager.bookmark(for: $0)
         }
@@ -184,49 +182,28 @@ class BookmarkManager {
 #endif
     }
 
-    func generateTitle(transcriptSnippet: String, podcastTitle: String? = nil, episodeTitle: String? = nil) async throws -> TitleGeneration {
+    func generateTitle(transcriptSnippet: String, podcastTitle: String? = nil, episodeTitle: String? = nil) async throws -> String {
 #if os(iOS)
         if #available(iOS 26.0, *), BookmarkFoundationModelEnricher.isAvailable,
            let enricher = foundationModelEnricher as? BookmarkFoundationModelEnricher {
             do {
-                let title = try await enricher.generateTitle(transcriptSnippet: transcriptSnippet, podcastTitle: podcastTitle, episodeTitle: episodeTitle)
-                return TitleGeneration(title: title, generator: "on_device")
-            } catch is CancellationError {
-                throw TitleGenerationError(reason: "cancelled", generator: "on_device")
+                return try await enricher.generateTitle(transcriptSnippet: transcriptSnippet, podcastTitle: podcastTitle, episodeTitle: episodeTitle)
             } catch {
-                FileLog.shared.addMessage("[Bookmarks] On-device title generation failed, falling back to the server: \(error)")
+                if !(error is CancellationError) {
+                    FileLog.shared.addMessage("[Bookmarks] On-device title generation failed: \(error)")
+                }
+                throw error
             }
         }
 #endif
 
-        let response: CacheServerHandler.BookmarkEnrichResponse
-        do {
-            response = try await cacheServerHandler.enrichBookmark(transcriptSnippet: transcriptSnippet)
-        } catch is CancellationError {
-            throw TitleGenerationError(reason: "cancelled", generator: "server")
-        } catch {
-            throw TitleGenerationError(reason: "server_error", generator: "server")
-        }
-
-        guard let title = response.title, !title.isEmpty else {
-            FileLog.shared.addMessage("[Bookmarks] Server title generation returned no title\(response.error.map { ": \($0)" } ?? "")")
-            throw TitleGenerationError(reason: "server_empty_title", generator: "server")
-        }
-        return TitleGeneration(title: title, generator: "server")
+        // Titles are only written by the on-device model, so without it there is none to offer
+        throw TitleGenerationError.unavailable
     }
 
-    /// A generated title, and which model wrote it.
-    struct TitleGeneration {
-        let title: String
-
-        /// `on_device` or `server`, as reported to analytics
-        let generator: String
-    }
-
-    /// Carries enough about a failure to describe it in analytics.
-    struct TitleGenerationError: Error {
-        let reason: String
-        let generator: String
+    enum TitleGenerationError: Error {
+        /// The on-device model isn't available on this device
+        case unavailable
     }
 
     // MARK: - Named Events
@@ -242,9 +219,9 @@ class BookmarkManager {
             /// The uuid of the podcast the bookmark was added to, if available
             let podcast: String?
 
-            /// Where the bookmark was created from, carried so the work that happens after
-            /// creation — the toast, generating a title — can attribute itself to it
-            var source: BookmarkAnalyticsSource = .unknown
+            /// Whether the bookmark was made from a transcript selection, which titles the
+            /// bookmark itself instead of leaving it to the player's sheet or the toast
+            var isFromTranscript: Bool = false
 
             /// Whether the bookmark that is being created already existed for the current time
             var isDuplicate: Bool = false

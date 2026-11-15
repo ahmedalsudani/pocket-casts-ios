@@ -36,11 +36,6 @@ class ListeningHistoryViewController: PCViewController {
     private let episodesDataManager = EpisodesDataManager()
     private var searchController: PCSearchBarController?
 
-    private lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
-        let viewModel = InformationalBannerViewModel(bannerType: .listeningHistory)
-        return InformationalBannerViewCoordinator(viewModel: viewModel)
-    }()
-
     @IBOutlet var listeningHistoryTable: ThemeableTable! {
         didSet {
             registerCells()
@@ -62,7 +57,6 @@ class ListeningHistoryViewController: PCViewController {
             listeningHistoryTable.endUpdates()
             insetAdjuster.isMultiSelectEnabled = isMultiSelectEnabled
             if isMultiSelectEnabled {
-                Analytics.track(.listeningHistoryMultiSelectEntered)
                 multiSelectFooter.setSelectedCount(count: selectedEpisodes.count)
                 multiSelectFooterBottomConstraint.constant = Constants.effectiveFooterViewPadding
                 if let selectedIndexPath = longPressMultiSelectIndexPath {
@@ -70,7 +64,6 @@ class ListeningHistoryViewController: PCViewController {
                     longPressMultiSelectIndexPath = nil
                 }
             } else {
-                Analytics.track(.listeningHistoryMultiSelectExited)
                 selectedEpisodes.removeAll()
             }
         }
@@ -106,12 +99,6 @@ class ListeningHistoryViewController: PCViewController {
 
         setupNavBar()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: listeningHistoryTable)
-        Analytics.track(.listeningHistoryShown)
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        setupInformationalBanner()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -125,17 +112,10 @@ class ListeningHistoryViewController: PCViewController {
         addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshEpisodesFromNotification))
         addCustomObserver(Constants.Notifications.listeningHistoryChanged, selector: #selector(refreshEpisodesFromNotification))
-        addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(refreshEpisodesFromBackgroundNotification))
     }
 
     @objc private func refreshEpisodesFromNotification() {
         refreshEpisodes(animated: true)
-    }
-
-    @objc private func refreshEpisodesFromBackgroundNotification() {
-        DispatchQueue.main.async { [weak self] in
-            self?.refreshEpisodes(animated: true)
-        }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -211,16 +191,12 @@ class ListeningHistoryViewController: PCViewController {
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel) { _ in
-            Analytics.track(.listeningHistoryClearConfirmationDismissed)
         })
         alert.addAction(UIAlertAction(title: L10n.historyClearAll, style: .destructive) { [weak self] _ in
-            Analytics.track(.listeningHistoryCleared)
             DataManager.shared.clearAllEpisodePlayInteractions()
-            if SyncManager.isUserLoggedIn() { ServerSettings.setLastClearHistoryDate(Date()) }
             self?.refreshEpisodes(animated: true)
         })
         present(alert, animated: true)
-        Analytics.track(.listeningHistoryClearConfirmationShown)
     }
 
     func setupNavBar() {
@@ -232,38 +208,19 @@ class ListeningHistoryViewController: PCViewController {
     }
 
     @objc private func menuTapped(_ sender: UIBarButtonItem) {
-        Analytics.track(.listeningHistoryOptionsButtonTapped)
-
         let optionsPicker = OptionsPicker(title: nil)
 
         let MultiSelectAction = OptionAction(label: L10n.selectEpisodes, icon: "option-multiselect") { [weak self] in
-            Analytics.track(.listeningHistoryOptionsModalOptionTapped, properties: ["option": "select_episodes"])
             self?.isMultiSelectEnabled = true
         }
         optionsPicker.addAction(action: MultiSelectAction)
 
         let clearAction = OptionAction(label: L10n.historyClearAllDetails, icon: "option-cleanup") { [weak self] in
-            Analytics.track(.listeningHistoryOptionsModalOptionTapped, properties: ["option": "clear_history"])
             self?.clearTapped()
         }
         optionsPicker.addAction(action: clearAction)
 
         optionsPicker.present(from: self)
-    }
-
-    private func setupInformationalBanner() {
-        if !informationalBannerCoordinator.shouldShowBanner() {
-            listeningHistoryTable.tableHeaderView = nil
-            return
-        }
-        if listeningHistoryTable.tableHeaderView != nil {
-            return
-        }
-        listeningHistoryTable.tableHeaderView = informationalBannerCoordinator.tableHeaderView(size: CGSize(width: listeningHistoryTable.bounds.width, height: 138)) { [weak self] in
-            UIView.animate(withDuration: 0.5) { [weak self] in
-                self?.listeningHistoryTable.tableHeaderView = nil
-            }
-        }
     }
 
     private func refreshContentUnavailable() {
@@ -302,7 +259,6 @@ class ListeningHistoryViewController: PCViewController {
                 icon: { Image("options-history").renderingMode(.template) },
                 actions: [
                     .init(title: L10n.goToDiscover, action: {
-                        Analytics.track(.listeningHistoryDiscoverButtonTapped)
                         NavigationManager.shared.navigateTo(NavigationManager.discoverPageKey)
                     })
                 ]
@@ -342,15 +298,7 @@ enum ListeningHistoryContentState: Equatable {
     }
 }
 
-// MARK: - Analytics
-
-extension ListeningHistoryViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .listeningHistory
-    }
-}
-
-// MARK: - Analytics
+// MARK: - PCSearchBarDelegate
 
 extension ListeningHistoryViewController: PCSearchBarDelegate {
     func searchDidBegin() { }
@@ -360,16 +308,12 @@ extension ListeningHistoryViewController: PCSearchBarDelegate {
     }
 
     func searchWasCleared() {
-        Analytics.track(.searchCleared, source: analyticsSource)
-
         endSearch()
     }
 
     func searchTermChanged(_ searchTerm: String) { }
 
     func performSearch(searchTerm: String, triggeredByTimer: Bool, completion: @escaping (() -> Void)) {
-        Analytics.track(.searchPerformed, source: analyticsSource)
-
         self.searchTerm = searchTerm
         refreshEpisodes(animated: false, completion: completion)
     }

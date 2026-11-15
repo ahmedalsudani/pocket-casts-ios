@@ -64,13 +64,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
 
     private var firstTimeLoading = true
 
-    lazy var informationalBannerCoordinator: InformationalBannerViewCoordinator = {
-        let invertedColor: Bool? = true
-        let bannerType: InformationalBannerType = .playlists
-        let viewModel = InformationalBannerViewModel(bannerType: bannerType, invertedColor: invertedColor)
-        return InformationalBannerViewCoordinator(viewModel: viewModel)
-    }()
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -130,8 +123,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
         addCustomObserver(Constants.Notifications.playlistChanged, selector: #selector(filtersUpdated))
         addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
 
-        Analytics.track(.filterListShown, properties: ["filter_count": listPlaylistItems.count])
-
         showPlaylistsTipIfNeeded()
         showOnboardingScreenIfNeeded()
 
@@ -162,7 +153,6 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
     }
 
     @IBAction func addNewFilter() {
-        Analytics.track(.filterCreateButtonTapped)
         presentFilterPreview()
     }
 
@@ -250,9 +240,8 @@ class PlaylistsViewController: PCViewController, FilterCreatedDelegate {
     }
 
     private func showOnboardingScreenIfNeeded() {
-        let userIsLoggedIn = SyncManager.isUserLoggedIn()
         let appInstallStateUpdated = (UIApplication.shared.delegate as? AppDelegate)?.appInstallState == .updated
-        let shouldDisplayOnboarding = appInstallStateUpdated && Settings.shouldShowPlaylistsOnboarding && userIsLoggedIn
+        let shouldDisplayOnboarding = appInstallStateUpdated && Settings.shouldShowPlaylistsOnboarding
         guard shouldDisplayOnboarding else { return }
         let vc = ThemedHostingController(
             rootView: PlaylistsOnboardingView(

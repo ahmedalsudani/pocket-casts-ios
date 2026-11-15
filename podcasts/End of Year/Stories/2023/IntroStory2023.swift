@@ -23,7 +23,6 @@ struct IntroStory2023: ShareableStory {
                         .position(x: geometry.size.width * 0.13, y: geometry.size.height * 0.71)
                         .modifier(TwentyThreeParallaxModifier(rollMultiplier: 6, pitchMultiplier: 60))
 
-
                     Image("0")
                         .resizable()
                         .scaledToFit()
@@ -71,10 +70,6 @@ struct IntroStory2023: ShareableStory {
         }
         .background(.black)
         .enableProportionalValueScaling()
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
     }
 
     func sharingAssets() -> [Any] {

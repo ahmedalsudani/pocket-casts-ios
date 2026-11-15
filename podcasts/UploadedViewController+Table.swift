@@ -17,10 +17,6 @@ extension UploadedViewController: UITableViewDataSource, UITableViewDelegate {
         uploadedEpisodes.count
     }
 
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return headerView
-    }
-
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "EpisodeCell", for: indexPath) as! EpisodeCell
         cell.hidesArtwork = false

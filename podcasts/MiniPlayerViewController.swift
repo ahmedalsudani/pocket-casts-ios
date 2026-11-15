@@ -45,18 +45,11 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     var panUpRecognizer: UIPanGestureRecognizer!
     var longPressRecognizer: UILongPressGestureRecognizer!
 
-    /// Tracks whether the user tapped an action from the long-press context
-    /// menu (Liquid Glass path). Used to decide whether to fire the
-    /// "menu dismissed" analytics event when the menu closes.
-    var longPressContextMenuActionSelected = false
-
     var heightConstraint: NSLayoutConstraint?
 
     weak var hostTabBarController: UITabBarController?
 
     var upNextViewController: UpNextViewController?
-
-    private let analyticsPlaybackHelper = AnalyticsPlaybackHelper.shared
 
     private var episodeTitleLabel: MiniPlayerScrollingTitleView?
     private var timeLeftModel: MiniPlayerTimeLeftModel?
@@ -549,13 +542,7 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     }
 
     @objc private func bookmarkTapped() {
-        let action = PlayerAction.addBookmark
-        guard action.isUnlocked else {
-            action.paidFeature?.presentUpgradeController(from: self, source: .bookmarksShelfAction)
-            return
-        }
-
-        PlaybackManager.shared.bookmark(source: .miniPlayer)
+        PlaybackManager.shared.bookmark()
     }
 
     @objc private func transcriptAvailabilityDidChange(_ notification: Notification) {
@@ -590,17 +577,15 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     }
 
     @IBAction func playPauseTapped(_ sender: Any) {
-        analyticsPlaybackHelper.currentSource = analyticsSource
         HapticsHelper.triggerPlayPauseHaptic()
         PlaybackManager.shared.playPause()
     }
 
     @IBAction func upNextTapped(_ sender: Any) {
-        showUpNext(from: .miniPlayer)
+        showUpNext()
     }
 
     @IBAction func skipBackTapped(_ sender: Any) {
-        analyticsPlaybackHelper.currentSource = analyticsSource
         HapticsHelper.triggerSkipBackHaptic()
         if let timeLeftModel {
             timeLeftModel.countsDown = false
@@ -611,7 +596,6 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
     }
 
     @IBAction func skipForwardTapped(_ sender: Any) {
-        analyticsPlaybackHelper.currentSource = analyticsSource
         HapticsHelper.triggerSkipForwardHaptic()
         if let timeLeftModel {
             timeLeftModel.countsDown = true
@@ -1004,19 +988,13 @@ class MiniPlayerViewController: SimpleNotificationsViewController {
         updateArtwork(for: episode, forceReload: true)
     }
 
-    func showUpNext(from source: UpNextViewSource) {
-        upNextViewController = UpNextViewController(source: source)
+    func showUpNext() {
+        upNextViewController = UpNextViewController()
         guard let upNextController = upNextViewController else { return }
 
         let navWrapper = SJUIUtils.navController(for: upNextController, iconStyle: .secondaryText01, themeOverride: upNextController.themeOverride)
         navWrapper.modalPresentationStyle = .formSheet
         rootViewController()?.present(navWrapper, animated: true, completion: nil)
-    }
-}
-
-extension MiniPlayerViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .miniplayer
     }
 }
 

@@ -2,16 +2,6 @@ import Foundation
 import UIKit
 
 extension UIScrollView {
-    func applyInsetForMiniPlayer(additionalBottomInset: CGFloat = 0) {
-        guard !LiquidGlass.isEnabled else {return }
-
-        let existingInset = contentInset
-        contentInset = UIEdgeInsets(top: existingInset.top, left: existingInset.left, bottom: existingInset.bottom + Constants.Values.miniPlayerOffset + additionalBottomInset, right: existingInset.right)
-
-        let existingScrollIndicatorInset = verticalScrollIndicatorInsets
-        verticalScrollIndicatorInsets = UIEdgeInsets(top: existingScrollIndicatorInset.top, left: existingScrollIndicatorInset.left, bottom: existingScrollIndicatorInset.bottom + Constants.Values.miniPlayerOffset + additionalBottomInset, right: existingScrollIndicatorInset.right)
-    }
-
     func updateContentInset(multiSelectEnabled: Bool, ignoreMiniPlayer: Bool = false) {
         if LiquidGlass.isEnabled {
             let multiSelectFooterOffset: CGFloat = multiSelectEnabled ? 60 : 0

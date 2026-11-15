@@ -127,10 +127,6 @@ class PodcastImageView: UIView {
         }
     }
 
-    func clearArtwork() {
-        imageView?.image = ImageManager.shared.placeHolderImage(.list)
-    }
-
     private func setupView() {
         backgroundColor = UIColor.clear
 

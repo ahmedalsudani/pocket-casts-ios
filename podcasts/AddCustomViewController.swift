@@ -48,12 +48,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @IBOutlet var lockView: PlusLockedInfoView! {
-        didSet {
-            lockView.delegate = self
-        }
-    }
-
     @IBOutlet var imageBackgroundView: UIView!
     @IBOutlet var fileImageView: UIImageView! {
         didSet {
@@ -62,7 +56,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    @IBOutlet var addCustomlock: UIImageView!
     @IBOutlet var addCustomImageButton: ThemeableRoundedButton! {
         didSet {
             addCustomImageButton.textStyle = .primaryInteractive01
@@ -103,17 +96,7 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     var name: String
     var destinationUrl: URL!
     var isVideo: Bool = false
-    var fileSize: Int = 0 {
-        didSet {
-            if fileSize > 0 {
-                let maxStorage = Int64(max(ServerSettings.customStorageUserLimit(), Constants.RemoteParams.customStorageLimitGBDefault.gigabytes))
-                let usedStorage = Int64(ServerSettings.customStorageUsed())
-                if usedStorage + Int64(fileSize) > maxStorage, Settings.userFilesAutoUpload() {
-                    showError(message: L10n.fileUploadError + "\n" + L10n.fileUploadErrorSubtitle)
-                }
-            }
-        }
-    }
+    var fileSize: Int = 0
 
     var artwork: UIImage? {
         didSet {
@@ -183,7 +166,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        Analytics.track(.userFileEditShown)
         if let mainView = view as? ThemeableView {
             mainView.style = .primaryUi04
         }
@@ -214,7 +196,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
 
             nameTextfield.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
             setupScrollViewOffset()
-            setupUserAccess()
         } else {
             guard FileTypeUtil.isSupportedUserFileType(fileName: fileUrl.absoluteString) else {
                 showError(message: L10n.fileUploadSupportError)
@@ -238,8 +219,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
                 showError(message: L10n.pleaseTryAgain) // TODO: update error meessage
             }
         }
-
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(setupUserAccess))
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -277,7 +256,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
                 self.selectedColorIndex = 0
                 self.colorPickerView.reloadData()
                 self.colorPickerView.selectItem(at: IndexPath(item: self.selectedColorIndex, section: 0), animated: false, scrollPosition: .left)
-                self.setupUserAccess()
             }
         })
 
@@ -290,38 +268,9 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
         }
     }
 
-    private lazy var lockedArtworkTapGesture = UITapGestureRecognizer(target: self, action: #selector(showSubscriptionRequired))
-
-    @objc private func setupUserAccess() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            if SubscriptionHelper.hasActiveSubscription() {
-                self.addCustomlock.isHidden = true
-                self.lockView.isHidden = true
-                self.addCustomImageButton.alpha = 1
-            } else {
-                self.addCustomImageButton.setTitle(L10n.fileUploadAddImage, for: .normal)
-                self.addCustomImageButton.isEnabled = true
-                self.addCustomlock.isHidden = false
-                self.lockView.isHidden = Settings.plusInfoDismissedOnFilesAdd
-
-                if self.embeddedImage == nil {
-                    self.customiseArtworkView.addGestureRecognizer(self.lockedArtworkTapGesture)
-                    self.customiseArtworkView.alpha = 0.3
-                } else {
-                    self.customiseArtworkView.removeGestureRecognizer(self.lockedArtworkTapGesture)
-                    self.customiseArtworkView.alpha = 1
-                    self.addCustomImageButton.alpha = 0.3
-                }
-            }
-        }
-    }
-
     // MARK: Actions
 
     @IBAction func cancelTapped() {
-        Analytics.track(.userFileEditDismissed)
         navigationController?.navigationBar.isHidden = false
         if episodeToEdit == nil {
             if let destinationUrl {
@@ -334,7 +283,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     }
 
     @objc func saveTapped() {
-        Analytics.track(.userFileEditSave)
         nameTextfield.resignFirstResponder()
         nameTextfield.isHidden = true
         imageSaveErrorLabel.isHidden = true
@@ -371,11 +319,6 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
     }
 
     @IBAction func addCustomImageClicked(_ sender: Any) {
-        guard SubscriptionHelper.hasActiveSubscription() else {
-            showSubscriptionRequired()
-            return
-        }
-
         if artwork == nil { // add image
             // Check permissions and add the actions
             switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -462,26 +405,5 @@ class AddCustomViewController: PCViewController, UITextFieldDelegate {
             nameLabel.text = L10n.fileUploadNameRequired
             nameLabel.style = .support05
         }
-    }
-
-    @objc func showSubscriptionRequired() {
-        NavigationManager.shared.showUpsellView(from: self, source: .files)
-    }
-}
-
-// MARK: Plus Locked Info Delegate
-
-extension AddCustomViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        lockView.isHidden = true
-        Settings.plusInfoDismissedOnFilesAdd = true
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .files
     }
 }

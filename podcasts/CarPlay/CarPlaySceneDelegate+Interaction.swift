@@ -32,8 +32,6 @@ extension CarPlaySceneDelegate {
     }
 
     func episodeTapped(_ episode: BaseEpisode, playlist: AutoplayHelper.Playlist? = nil) {
-        AnalyticsPlaybackHelper.shared.currentSource = .carPlay
-
         defer {
             interfaceController?.showNowPlaying()
         }
@@ -70,8 +68,6 @@ extension CarPlaySceneDelegate {
     }
 
     func chaptersTapped() {
-        AnalyticsPlaybackHelper.shared.currentSource = .carPlay
-
         let chapterCount = PlaybackManager.shared.chapterCount()
         guard chapterCount > 0 else { return }
 

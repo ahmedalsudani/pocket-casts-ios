@@ -40,8 +40,4 @@ extension AutoAddToUpNextViewController: PodcastSelectionDelegate {
         reloadDownloadedPodcasts()
         mainTable.reloadData()
     }
-
-    func didChangePodcasts(numberSelected: Int) {
-        Analytics.track(.settingsAutoAddUpNextPodcastsChanged, properties: ["number_selected": numberSelected])
-    }
 }

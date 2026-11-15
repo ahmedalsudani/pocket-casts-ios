@@ -6,25 +6,6 @@ import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
 
-/// A tappable part of the header's category and author line. `Text` carries a tap as a link, so each
-/// one is addressed by a URL the header intercepts and never opens.
-enum PodcastHeaderLink: String {
-    case category
-    case author
-
-    private static let scheme = "pocketcasts-podcast-header"
-
-    var url: URL {
-        URL(string: "\(Self.scheme)://\(rawValue)")!
-    }
-
-    init?(url: URL) {
-        guard url.scheme == Self.scheme, let host = url.host else { return nil }
-
-        self.init(rawValue: host)
-    }
-}
-
 class PodcastHeaderViewModel: NSObject, ObservableObject {
 
     @Published var podcast: Podcast
@@ -61,56 +42,16 @@ class PodcastHeaderViewModel: NSObject, ObservableObject {
         .store(in: &cancellables)
     }
 
-    lazy var podcastRatingViewModel: PodcastRatingViewModel = {
-        let podcastRatingViewModel = PodcastRatingViewModel()
-        podcastRatingViewModel.update(podcast: podcast)
-        podcastRatingViewModel.presentLogin = { [weak self] _ in
-            self?.delegate?.showLogin(message: L10n.ratingLoginRequired)
-        }
-        return podcastRatingViewModel
-    }()
-
     var folderImage: String {
-        let isSubscriptionAvailable = SubscriptionHelper.hasActiveSubscription() && SyncManager.isUserLoggedIn()
-        let folderImage = isSubscriptionAvailable ? (podcast.folderUuid?.isEmpty ?? true) ? "folder-empty" : "folder-check" : "folder-create"
-        return folderImage
+        (podcast.folderUuid?.isEmpty ?? true) ? "folder-empty" : "folder-check"
     }
 
-    var firstCategory: String {
-        guard let category = podcast.podcastCategory,
-              let substring = category.split(whereSeparator: \.isNewline).first
-        else {
-            return ""
-        }
-        return String(substring).lowercased()
-    }
-
-    /// The category and author line, both tappable. The author is drawn in `networkTint` when it
-    /// leads somewhere — the podcast's network — and left as plain text when it doesn't.
-    func displayCategoryAndAuthor(networkTint: Color) -> AttributedString {
+    /// The category and author line
+    var displayCategoryAndAuthor: String {
         let category = podcast.podcastCategory?.localized(seperatingWith: \.isNewline) ?? ""
-        var result = AttributedString(category)
-        result.link = PodcastHeaderLink.category.url
-        if let author = podcast.author {
-            var authorText = AttributedString(author)
-            if networkListId != nil {
-                authorText.link = PodcastHeaderLink.author.url
-                authorText.foregroundColor = networkTint
-            }
-            result += AttributedString(" · ") + authorText
-        }
-        return result
-    }
+        guard let author = podcast.author else { return category }
 
-    /// The network the podcast belongs to, while the app shows networks at all.
-    var networkListId: String? {
-        FeatureFlag.networkDiscovery.enabled ? podcast.networkListId : nil
-    }
-
-    func networkTapped() {
-        guard let networkListId else { return }
-
-        delegate?.networkTapped(listId: networkListId)
+        return category + " · " + author
     }
 
     var displayAuthor: String? {
@@ -161,30 +102,17 @@ class PodcastHeaderViewModel: NSObject, ObservableObject {
 
     func websiteLinkTapped() {
         guard let website = podcast.podcastUrl, let url = URL(string: website) else { return }
-        Analytics.track(.podcastScreenPodcastDetailsLinkTapped, properties: ["podcast_uuid": podcast.uuid])
         delegate?.open(url: url)
     }
 
     func toggleExpanded() {
         let willBeExpanded = !isExpanded
         delegate?.setSummaryExpanded(expanded: willBeExpanded)
-        Analytics.track(.podcastScreenToggleSummary, properties: ["is_expanded": willBeExpanded])
         isExpanded.toggle()
     }
 
     var htmlDescription: String {
         return podcast.podcastHTMLDescription ?? podcast.podcastDescription ?? ""
-    }
-
-    func headerLinkTapped(_ url: URL) {
-        switch PodcastHeaderLink(url: url) {
-        case .category:
-            delegate?.categoryTapped(firstCategory)
-        case .author:
-            networkTapped()
-        case nil:
-            delegate?.open(url: url)
-        }
     }
 
     func podcastArtworkTapped() {
@@ -196,7 +124,6 @@ extension PodcastHeaderViewModel: ExpandableLabelDelegate {
     // MARK: - ExpandableLabelDelegate
 
     func willExpandLabel(_ label: UIView) {
-        Analytics.track(.podcastScreenPodcastDescriptionTapped)
         delegate?.tableView().beginUpdates()
     }
 
@@ -205,7 +132,6 @@ extension PodcastHeaderViewModel: ExpandableLabelDelegate {
     }
 
     func willCollapseLabel(_ label: UIView) {
-        Analytics.track(.podcastScreenPodcastDescriptionTapped)
         delegate?.tableView().beginUpdates()
     }
 
@@ -214,9 +140,6 @@ extension PodcastHeaderViewModel: ExpandableLabelDelegate {
     }
 
     func linkTapped(url: URL) {
-        if let uuid = delegate?.displayedPodcast()?.uuid {
-            Analytics.track(.podcastScreenPodcastDescriptionLinkTapped, properties: ["podcast_uuid": uuid])
-        }
         delegate?.open(url: url)
     }
 }

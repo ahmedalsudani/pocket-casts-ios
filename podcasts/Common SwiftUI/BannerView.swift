@@ -9,8 +9,8 @@ class BannerModel: ObservableObject {
     let action: String?
     let iconName: String?
     let invertedColor: Bool
-    private(set) var onActionTap: (() -> ())?
-    private(set) var onCloseTap: (() -> ())?
+    let onActionTap: (() -> ())?
+    let onCloseTap: (() -> ())?
 
     init(title: String? = nil, message: String? = nil, action: String? = nil, iconName: String? = nil, invertedColor: Bool = false, onActionTap: (() -> ())? = nil, onCloseTap: (() -> ())? = nil) {
         self.title = title
@@ -18,11 +18,6 @@ class BannerModel: ObservableObject {
         self.action = action
         self.iconName = iconName
         self.invertedColor = invertedColor
-        self.onActionTap = onActionTap
-        self.onCloseTap = onCloseTap
-    }
-
-    func setupBinding(onActionTap: (() -> Void)? = nil, onCloseTap: (() -> Void)? = nil) {
         self.onActionTap = onActionTap
         self.onCloseTap = onCloseTap
     }

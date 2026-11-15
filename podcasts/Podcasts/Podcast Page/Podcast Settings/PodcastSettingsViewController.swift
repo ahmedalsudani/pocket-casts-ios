@@ -8,8 +8,6 @@ class PodcastSettingsViewController: PCViewController {
     var episodes = [ArraySection<String, ListItem>]()
     var onUnsubscribe: (() -> Void)?
 
-    let debounce = Debounce(delay: Constants.defaultDebounceTime)
-
     enum TableRow { case autoDownload, notifications, upNext, globalUpNext, upNextPosition, playbackEffects, skipFirst, skipLast, autoArchive, inFilters, siriShortcut, unsubscribe, feedError }
 
     var existingShortcut: Any?
@@ -57,29 +55,11 @@ class PodcastSettingsViewController: PCViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(colorsDidDownload))
         settingsTable.reloadData()
-    }
-
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
-
-        removeAllCustomObservers()
     }
 
     override func handleThemeChanged() {
         updateColors()
-    }
-
-    @objc private func colorsDidDownload(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
-
-        if podcast.uuid == uuidLoaded {
-            if let updatedPodcast = DataManager.shared.findPodcast(uuid: podcast.uuid) {
-                podcast = updatedPodcast
-                updateColors()
-            }
-        }
     }
 
     private func updateColors() {
@@ -130,7 +110,6 @@ class PodcastSettingsViewController: PCViewController {
         } else {
             navigationController?.popToRootViewController(animated: true)
         }
-        Analytics.track(.podcastUnsubscribed, properties: ["source": analyticsSource, "uuid": podcast.uuid])
     }
 
     @objc private func doneTapped() {
@@ -141,11 +120,5 @@ class PodcastSettingsViewController: PCViewController {
         guard let podcastUuid = notification.object as? String, podcastUuid == podcast.uuid, let updatedPodcast = DataManager.shared.findPodcast(uuid: podcastUuid) else { return }
 
         podcast = updatedPodcast
-    }
-}
-
-extension PodcastSettingsViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .podcastSettings
     }
 }

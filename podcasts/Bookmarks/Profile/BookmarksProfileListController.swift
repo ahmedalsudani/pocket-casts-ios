@@ -17,8 +17,6 @@ class BookmarksProfileListController: ThemedHostingController<BookmarksProfileLi
         let sortOption = Settings.profileBookmarksSort
         let viewModel = BookmarkPodcastListViewModel(podcast: nil, bookmarkManager: bookmarkManager, sortOption: sortOption)
 
-        viewModel.analyticsSource = .profile
-
         self.viewModel = viewModel
         super.init(rootView: .init(viewModel: viewModel))
 
@@ -27,7 +25,6 @@ class BookmarksProfileListController: ThemedHostingController<BookmarksProfileLi
 
     override public func viewDidLoad() {
         super.viewDidLoad()
-        Analytics.track(.profileBookmarksShow)
     }
 
     override public func viewWillAppear(_ animated: Bool) {
@@ -55,11 +52,11 @@ class BookmarksProfileListController: ThemedHostingController<BookmarksProfileLi
 
 extension BookmarksProfileListController: BookmarkListRouter {
     func bookmarkPlay(_ bookmark: Bookmark) async throws {
-        try await playbackManager.playBookmark(bookmark, source: viewModel.analyticsSource)
+        try await playbackManager.playBookmark(bookmark)
     }
 
     func bookmarkEdit(_ bookmark: Bookmark) {
-        let controller = BookmarkEditTitleViewController(manager: bookmarkManager, bookmark: bookmark, state: .updating, style: .themed, source: viewModel.analyticsSource)
+        let controller = BookmarkEditTitleViewController(manager: bookmarkManager, bookmark: bookmark, state: .updating, style: .themed)
 
         present(controller, animated: true)
     }
@@ -68,8 +65,7 @@ extension BookmarksProfileListController: BookmarkListRouter {
         guard let episode = bookmark.episode as? Episode else {
             return
         }
-        Analytics.track(.bookmarkShareTapped, source: viewModel.analyticsSource, properties: ["podcast_uuid": episode.podcastUuid, "episode_uuid": bookmark.episodeUuid])
-        SharingModal.show(option: .bookmark(episode, bookmark.time), from: .profile, in: self)
+        SharingModal.show(option: .bookmark(episode, bookmark.time), in: self)
     }
 
     func dismissBookmarksList() {

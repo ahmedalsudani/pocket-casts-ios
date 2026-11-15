@@ -76,10 +76,6 @@ struct BookmarkDetailsView: View {
     private var podcastTitle: some View {
         if let title = viewModel.podcastTitle {
             podcastTitleText(title)
-        } else if viewModel.isLoadingPodcastTitle {
-            podcastTitleText(Self.podcastTitlePlaceholder)
-                .redacted(reason: .placeholder)
-                .accessibilityHidden(true)
         }
     }
 
@@ -90,10 +86,6 @@ struct BookmarkDetailsView: View {
             .foregroundStyle(theme.primaryText02)
             .lineLimit(1)
     }
-
-    /// Stands in for the podcast title while it loads. The redaction blocks it out,
-    /// so it's never read, it only gives the placeholder the shape of a title.
-    private static let podcastTitlePlaceholder = "The Podcast Title"
 
     @ViewBuilder
     private var artwork: some View {

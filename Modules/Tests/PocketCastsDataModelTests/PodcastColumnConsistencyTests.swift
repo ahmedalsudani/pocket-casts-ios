@@ -48,6 +48,7 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
             XCTAssertEqual(loaded.podcastDescription, original.podcastDescription, "podcastDescription should match")
             XCTAssertEqual(loaded.podcastHTMLDescription, original.podcastHTMLDescription, "podcastHTMLDescription should match")
             XCTAssertEqual(loaded.podcastUrl, original.podcastUrl, "podcastUrl should match")
+            XCTAssertEqual(loaded.feedUrl, original.feedUrl, "feedUrl should match")
             XCTAssertEqual(loaded.imageURL, original.imageURL, "imageURL should match")
             XCTAssertEqual(loaded.mediaType, original.mediaType, "mediaType should match")
             XCTAssertEqual(loaded.subscribed, original.subscribed, "subscribed should match")
@@ -123,28 +124,6 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
 
             // cachedUnreadCount should be 0 (not persisted)
             XCTAssertEqual(loaded.cachedUnreadCount, 0, "cachedUnreadCount should NOT be persisted")
-        }
-    }
-
-    /// Verifies that forceRefreshEpisodeFrom is NOT persisted (excluded from CodingKeys)
-    func testForceRefreshEpisodeFromNotPersisted() throws {
-        try runWithDataManager { dataManager in
-            let podcast = Podcast()
-            podcast.uuid = UUID().uuidString.lowercased()
-            podcast.title = "Test Podcast"
-            podcast.addedDate = Date()
-            podcast.forceRefreshEpisodeFrom = "some-episode-uuid"  // Set ignored property
-
-            dataManager.save(podcast: podcast)
-
-            // Load it back - forceRefreshEpisodeFrom should be nil
-            guard let loaded = dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true) else {
-                XCTFail("Should find saved podcast")
-                return
-            }
-
-            // forceRefreshEpisodeFrom should be nil (not persisted)
-            XCTAssertNil(loaded.forceRefreshEpisodeFrom, "forceRefreshEpisodeFrom should NOT be persisted")
         }
     }
 
@@ -230,11 +209,10 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
     func testTransientPropertiesAreNotEncoded() throws {
         let podcast = createFullyPopulatedPodcast()
         podcast.cachedUnreadCount = 42
-        podcast.forceRefreshEpisodeFrom = "some-episode-uuid"
 
         let encoded = try podcast.databaseDictionary
 
-        for name in ["settings", "cachedUnreadCount", "forceRefreshEpisodeFrom"] {
+        for name in ["settings", "cachedUnreadCount"] {
             XCTAssertNil(encoded[name], "\(name) should not be encoded")
         }
     }
@@ -280,7 +258,8 @@ final class PodcastColumnConsistencyTests: DataManagerTestCase {
         podcast.author = "Test Author"
         podcast.podcastDescription = "A test podcast description"
         podcast.podcastHTMLDescription = "<p>A test podcast description</p>"
-        podcast.podcastUrl = "https://example.com/feed.xml"
+        podcast.podcastUrl = "https://example.com/podcast"
+        podcast.feedUrl = "https://example.com/feed.xml"
         podcast.imageURL = "https://example.com/image.jpg"
         podcast.mediaType = "audio"
         podcast.addedDate = Date(timeIntervalSince1970: 1690000000)

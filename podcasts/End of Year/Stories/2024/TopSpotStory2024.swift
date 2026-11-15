@@ -45,14 +45,6 @@ struct TopSpotStory2024: ShareableStory {
         .background(backgroundColor)
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
-    }
-
     func sharingAssets() -> [Any] {
         [
             StoryShareableProvider.new(AnyView(self)),
@@ -60,7 +52,6 @@ struct TopSpotStory2024: ShareableStory {
         ]
     }
 }
-
 
 fileprivate struct InwardSidesRectangle: Shape {
     let inwardAngle: Angle

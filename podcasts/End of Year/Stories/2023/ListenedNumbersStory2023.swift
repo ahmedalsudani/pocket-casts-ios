@@ -86,20 +86,12 @@ struct ListenedNumbersStory2023: ShareableStory {
         PodcastCover(podcastUuid: podcast.uuid)
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
     func onPause() {
         animationViewModel.pause()
     }
 
     func onResume() {
         animationViewModel.play()
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
     }
 
     func sharingAssets() -> [Any] {

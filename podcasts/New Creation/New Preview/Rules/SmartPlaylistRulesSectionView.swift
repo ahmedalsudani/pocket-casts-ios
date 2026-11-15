@@ -150,7 +150,7 @@ struct SmartPlaylistRulesSectionView: View {
             set: { newValue in
                 viewModel.newPlaylist.filterHours = newValue.rawValue
                 viewModel.newPlaylist.releaseDateSmartRuleApplied = true
-                viewModel.saveFilter(analyticsGroup: "release_date")
+                viewModel.saveFilter()
             }
         )) {
             ForEach(options, id: \.self) { option in
@@ -189,7 +189,7 @@ struct SmartPlaylistRulesSectionView: View {
                     filter.filterNotDownloaded = true
                 }
                 filter.downloadStatusSmartRuleApplied = true
-                viewModel.saveFilter(analyticsGroup: "download_status")
+                viewModel.saveFilter()
             }
         )) {
             Text(L10n.filterValueAll).tag(DownloadStatusOption.all)
@@ -209,7 +209,7 @@ struct SmartPlaylistRulesSectionView: View {
             set: { newValue in
                 viewModel.newPlaylist.filterAudioVideoType = newValue.rawValue
                 viewModel.newPlaylist.mediaTypeSmartRuleApplied = true
-                viewModel.saveFilter(analyticsGroup: "audio_video")
+                viewModel.saveFilter()
             }
         )) {
             ForEach(options, id: \.self) { option in
@@ -227,7 +227,7 @@ struct SmartPlaylistRulesSectionView: View {
             get: { viewModel.newPlaylist.filterStarred },
             set: { newValue in
                 viewModel.newPlaylist.filterStarred = newValue
-                viewModel.saveFilter(analyticsGroup: "starred")
+                viewModel.saveFilter()
             }
         )) {
             Text(L10n.on).tag(true)

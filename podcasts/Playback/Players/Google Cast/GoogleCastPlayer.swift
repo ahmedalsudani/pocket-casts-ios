@@ -115,9 +115,4 @@ class GoogleCastPlayer: PlaybackProtocol {
     func setVolume(_ volume: Float) {
         // not supported
     }
-
-    var currentAudioLevel: Float {
-        // not supported
-        return 0
-    }
 }

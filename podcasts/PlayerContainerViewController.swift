@@ -10,13 +10,6 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         }
     }
 
-    #if APPCLIP
-    @IBOutlet var upNextBtn: UIButton! {
-        didSet {
-            upNextBtn.accessibilityLabel = L10n.accessibilityUpNextList
-        }
-    }
-    #else
     @IBOutlet var upNextBtn: UpNextButton! {
         didSet {
             upNextBtn.accessibilityLabel = L10n.accessibilityUpNextList
@@ -24,7 +17,6 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
             upNextBtn.iconColor = AppTheme.colorForStyle(.playerContrast01)
         }
     }
-    #endif
 
     @IBOutlet var mainScrollView: RegionCancellingScrollView! {
         didSet {
@@ -35,10 +27,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
             mainScrollView.semanticContentAttribute = .forceLeftToRight
             mainScrollView.contentInsetAdjustmentBehavior = .never
 
-            // We don't need to handle the scroll view because it is not dismissable in App Clip
-            #if !APPCLIP
             mainScrollView.delegate = self
-            #endif
         }
     }
 
@@ -46,38 +35,21 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
 
     @IBOutlet weak var transcriptContainerView: UIView!
 
-    /// Whether the player paints the blurred artwork background and its items are transparent
-    /// over it, which is always, except in the App Clip.
-    let usesArtworkStyle = PlayerContainerViewController.isArtworkStyleAvailable
-
-    static var isArtworkStyleAvailable: Bool {
-        #if APPCLIP
-        return false
-        #else
-        return true
-        #endif
-    }
-
     /// Whether the player uses the large screen layout: Now Playing and the tabs side by side
     /// in a `UIArrangementViewController` when there's room.
     let usesLargeScreenLayout = PlayerContainerViewController.isLargeScreenLayoutAvailable
 
     static var isLargeScreenLayoutAvailable: Bool {
-        #if APPCLIP
-        return false
-        #else
         guard FeatureFlag.largeScreenNowPlaying.enabled else { return false }
         if #available(iOS 27.1, *) {
             return true
         }
         return false
-        #endif
     }
 
     /// The largest text size of the transcript and the chapters in the large screen layout.
     static let largeScreenMaximumContentSizeCategory = UIContentSizeCategory.accessibilityExtraLarge
 
-    #if !APPCLIP
     /// The `PlayerLargeScreenLayout` when `usesLargeScreenLayout` is on.
     var largeScreenLayoutStorage: AnyObject?
 
@@ -85,21 +57,19 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
     /// A copy of the background under the transcript that covers Now Playing.
     let transcriptBackground = PlayerArtworkBackgroundView()
     var transcriptBackgroundConstraints: [NSLayoutConstraint] = []
-    #endif
 
     lazy var nowPlayingItem: NowPlayingPlayerItemViewController = {
         let item = NowPlayingPlayerItemViewController()
         item.containerDelegate = self
-        item.usesLargeScreenStyle = usesArtworkStyle
+        item.usesLargeScreenStyle = true
         item.view.translatesAutoresizingMaskIntoConstraints = false
 
         return item
     }()
 
-    #if !APPCLIP
     lazy var showNotesItem: ShowNotesPlayerItemViewController = {
         let item = ShowNotesPlayerItemViewController()
-        item.usesLargeScreenStyle = usesArtworkStyle
+        item.usesLargeScreenStyle = true
         item.scrollViewHandler = self
         item.containerDelegate = self
         item.view.translatesAutoresizingMaskIntoConstraints = false
@@ -109,7 +79,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
 
     lazy var chaptersItem: ChaptersViewController = {
         let item = ChaptersViewController()
-        item.usesLargeScreenStyle = usesArtworkStyle
+        item.usesLargeScreenStyle = true
         item.scrollViewHandler = self
         item.containerDelegate = self
         item.view.translatesAutoresizingMaskIntoConstraints = false
@@ -136,7 +106,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         let item = TranscriptViewController(playbackManager: playbackManager)
 
         item.view.translatesAutoresizingMaskIntoConstraints = false
-        item.usesLargeScreenStyle = usesArtworkStyle
+        item.usesLargeScreenStyle = true
         if usesLargeScreenLayout {
             item.view.maximumContentSizeCategory = Self.largeScreenMaximumContentSizeCategory
         }
@@ -145,21 +115,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         return item
     }()
 
-    private lazy var generatedTranscriptsPremiumOverlay: GeneratedTranscriptsPremiumOverlay = {
-        let playbackManager = PlaybackManager.shared
-        let item = GeneratedTranscriptsPremiumOverlay(playbackManager: playbackManager)
-        item.view.translatesAutoresizingMaskIntoConstraints = false
-        item.dismissTranscript = { [weak self] in
-            self?.dismissGeneratedTranscriptsPremiumOverlay(dismissTranscript: true)
-        }
-        item.purchaseSuccessfull = { [weak self] in
-            self?.dismissGeneratedTranscriptsPremiumOverlay(dismissTranscript: false)
-        }
-        return item
-    }()
-
-    private lazy var upNextViewController = UpNextViewController(source: .player)
-    #endif
+    private lazy var upNextViewController = UpNextViewController()
 
     @IBOutlet var closeBtn: ThemeableUIButton! {
         didSet {
@@ -199,43 +155,31 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillBecomeActive), name: UIApplication.willEnterForegroundNotification, object: nil)
 
         // To avoid weird animations when apearing, we add the transcript view here
-        #if !APPCLIP
         configureTranscriptView()
-        #endif
     }
 
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-#if !APPCLIP
         showNotesItem.updateScrollSize()
-#endif
     }
 
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
 
-        #if !APPCLIP
-        if nowPlayingItem.displayTranscript {
-            transcriptsItem.didDisappear()
-            generatedTranscriptsPremiumOverlay.didDisappear()
-        }
         if #available(iOS 27.1, *) {
             largeScreenViewDidDisappear()
         }
-        #endif
     }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
         adjustHeaderConstraintIfNeeded()
-        #if !APPCLIP
         if #available(iOS 27.1, *) {
             updateLargeScreenLayoutIfNeeded()
         }
         updateTranscriptBackground()
-        #endif
         adjustPlayerNoSlidingRegion()
     }
 
@@ -244,20 +188,12 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
     }
 
     @IBAction func closeTapped(_ sender: Any) {
-        #if APPCLIP
-        // Close doesn't exist in the App Clip
-        #else
         appDelegate()?.miniPlayer()?.closeFullScreenPlayer()
-        #endif
     }
 
     @objc private func showUpNext() {
-        #if APPCLIP
-        //TODO: Show install banner
-        #else
         let navController = SJUIUtils.navController(for: upNextViewController, iconStyle: .secondaryText01, themeOverride: upNextViewController.themeOverride)
         present(navController, animated: true, completion: nil)
-        #endif
     }
 
     // MARK: - Orientation
@@ -279,9 +215,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
             return
         }
 
-        #if !APPCLIP
         chaptersItem.scrollToCurrentlyPlayingChapter(animated: false)
-        #endif
     }
 
     func scrollToNowPlaying() {
@@ -297,11 +231,7 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
             return
         }
 
-        #if APPCLIP
-        //TODO: Show install banner
-        #else
-        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast, NavigationManager.podcastSourceKey: PodcastScreenSource.player])
-        #endif
+        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
     }
 
     func dismissTranscript() {
@@ -331,7 +261,6 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
     }
 
     private func setupGestures() {
-        #if !APPCLIP
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(panGestureRecognizerHandler(_:)))
         panGesture.cancelsTouchesInView = false
         panGesture.delegate = self
@@ -340,18 +269,15 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         // fail, so a downward-diagonal swipe dismisses the player instead of being
         // captured by the tab scroll view.
         mainScrollView.panGestureRecognizer.require(toFail: panGesture)
-        #endif
     }
 
     @objc private func themeDidChange() {
         updateColors()
         tabsView.themeDidChange()
         nowPlayingItem.themeDidChange()
-        #if !APPCLIP
         chaptersItem.themeDidChange()
         showNotesItem.themeDidChange()
         transcriptsItem.themeDidChange()
-        #endif
     }
 
     @objc private func playbackFinished() {
@@ -361,21 +287,15 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
     }
 
     func closeNowPlaying() {
-        #if APPCLIP
-        //TODO: Show install banner
-        #else
         appDelegate()?.miniPlayer()?.closeFullScreenPlayer()
-        #endif
     }
 
     private func setupPlayer() {
-        #if !APPCLIP
         setUpArtworkBackground()
         if #available(iOS 27.1, *), usesLargeScreenLayout {
             setUpLargeScreenLayout()
             return
         }
-        #endif
 
         nowPlayingItem.willBeAddedToPlayer()
         mainScrollView.addSubview(nowPlayingItem.view)
@@ -408,11 +328,9 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
     /// Whether the Now Playing page is on screen: always next to the tabs in the large screen
     /// split, otherwise only while its tab is selected.
     var isNowPlayingVisible: Bool {
-        #if !APPCLIP
         if #available(iOS 27.1, *), isShowingLargeScreenSplit {
             return true
         }
-        #endif
         return tabsView.currentTab == 0
     }
 
@@ -441,19 +359,16 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
 
     func scrollView(isEnabled: Bool) {
         var isEnabled = isEnabled
-        #if !APPCLIP
         if #available(iOS 27.1, *), isShowingLargeScreenSplit {
             // The transcript only covers Now Playing, so the tabs next to it keep paging.
             isEnabled = true
         }
-        #endif
         mainScrollView.isScrollEnabled = isEnabled
         view.layoutIfNeeded()
     }
 
     // MARK: - Transcripts
 
-    #if !APPCLIP
     func showTranscript() {
         var transcriptParent: UIViewController = self
         if #available(iOS 27.1, *), let largeScreenTranscriptParent {
@@ -466,34 +381,8 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         updateTranscriptBackground()
         transcriptsItem.willBeAddedToPlayer()
         transcriptsItem.themeDidChange()
-        transcriptsItem.showGeneratedTranscriptsPremiumOverlay = { [weak self] in
-            UIView.animate(withDuration: 0.25) {
-                self?.showGeneratedTranscriptsPremiumOverlay()
-            }
-        }
         headerView.accessibilityElementsHidden = true
         nowPlayingItem.view.accessibilityElements = [nowPlayingItem.bottomControlsStackView, nowPlayingItem.errorContainer].compactMap { $0 }
-    }
-
-    private func showGeneratedTranscriptsPremiumOverlay() {
-        generatedTranscriptsPremiumOverlay.didAppear()
-        addChild(generatedTranscriptsPremiumOverlay)
-        view.addSubview(generatedTranscriptsPremiumOverlay.view)
-        generatedTranscriptsPremiumOverlay.view.anchorToAllSidesOf(view: view)
-        generatedTranscriptsPremiumOverlay.didMove(toParent: self)
-    }
-
-    private func dismissGeneratedTranscriptsPremiumOverlay(dismissTranscript: Bool) {
-        UIView.animate(withDuration: 0.25) { [weak self] in
-            self?.generatedTranscriptsPremiumOverlay.didDisappear()
-            self?.generatedTranscriptsPremiumOverlay.willMove(toParent: nil)
-            self?.generatedTranscriptsPremiumOverlay.removeFromParent()
-            self?.generatedTranscriptsPremiumOverlay.view.removeFromSuperview()
-        } completion: { [weak self] _ in
-            if dismissTranscript {
-                self?.dismissTranscript()
-            }
-        }
     }
 
     func hideTranscript() {
@@ -501,7 +390,6 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         transcriptsItem.willMove(toParent: nil)
         transcriptsItem.removeFromParent()
         transcriptsItem.view.removeFromSuperview()
-        transcriptsItem.didDisappear()
         headerView.accessibilityElementsHidden = false
         nowPlayingItem.view.accessibilityElements = nil
     }
@@ -559,7 +447,6 @@ class PlayerContainerViewController: SimpleNotificationsViewController, PlayerTa
         ]
         NSLayoutConstraint.activate(transcriptBackgroundConstraints)
     }
-    #endif
 }
 
 private extension PlayerContainerViewController {
@@ -578,22 +465,14 @@ private extension PlayerContainerViewController {
         if tabsView.currentTab != index {
             tabsView.currentTab = index
         }
-        #if !APPCLIP
         if #available(iOS 27.1, *) {
             rememberLargeScreenTab()
         }
-        #endif
 
         let offset = CGFloat(index) * mainScrollView.frame.width
 
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0, options: [.allowUserInteraction]) {
             self.mainScrollView.setContentOffset(.init(x: offset, y: 0), animated: false)
         }
-    }
-}
-
-extension PlayerContainerViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .player
     }
 }

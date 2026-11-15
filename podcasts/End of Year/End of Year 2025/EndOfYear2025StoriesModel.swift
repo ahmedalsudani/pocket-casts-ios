@@ -14,7 +14,7 @@ class EndOfYear2025StoriesModel: StoryModel {
             return .white
         }
         switch stories[storyNumber] {
-        case .plus, .top5Podcasts:
+        case .top5Podcasts:
             return .black
         default:
             return .white
@@ -46,12 +46,6 @@ class EndOfYear2025StoriesModel: StoryModel {
             data.listeningTime = listeningTime
         }
 
-        // Ratings
-        if let ratings = dataManager.summarizedRatings(in: Self.year) {
-            data.ratings = ratings
-        }
-        stories.append(.ratings) // Gets added regardless of the count since we have a fallback empty screen
-
         // Longest episode
         if let longestEpisode = dataManager.longestEpisode(in: Self.year),
            let podcast = longestEpisode.parentPodcast() {
@@ -68,8 +62,6 @@ class EndOfYear2025StoriesModel: StoryModel {
                 stories.append(.numberOfPodcastsAndEpisodesListened)
             }
         }
-
-        stories.append(.plus)
 
         // Year over year listening time
         let yearOverYearListeningTime = dataManager.yearOverYearListeningTime(in: Self.year)
@@ -99,38 +91,26 @@ class EndOfYear2025StoriesModel: StoryModel {
                 return TopSpotStory2025(topPodcast: data.topPodcasts.first!)
             case .top5Podcasts:
                 return Top5Podcasts2025Story(top5Podcasts: data.topPodcasts)
-            case .ratings:
-                return Ratings2025Story(ratings: data.ratings)
             case .listeningTime:
                 return ListeningTime2025Story(listeningTime: data.listeningTime)
             case .longestEpisode:
                 return LongestEpisode2025Story(episode: data.longestEpisode, podcast: data.longestEpisodePodcast)
             case .yearOverYearListeningTime:
-                return YearOverYearCompare2025Story(subscriptionTier: SubscriptionHelper.activeTier, listeningTime: data.yearOverYearListeningTime)
+                return YearOverYearCompare2025Story(listeningTime: data.yearOverYearListeningTime)
             case .completionRate:
-                return CompletionRate2025Story(subscriptionTier: SubscriptionHelper.activeTier, startedAndCompleted: data.episodesStartedAndCompleted)
+                return CompletionRate2025Story(startedAndCompleted: data.episodesStartedAndCompleted)
             case .epilogue:
                 return EpilogueStory2025()
-            case .plus:
-                return PaidStoryWallView2025(subscriptionTier: SubscriptionHelper.activeTier)
         }
     }
 
     func isInteractiveView(for storyNumber: Int) -> Bool {
         switch stories[storyNumber] {
-            case .epilogue, .plus, .top5Podcasts:
+            case .epilogue, .top5Podcasts:
                 return true
-            case .ratings:
-                return data.ratings.isEmpty
             default:
                 return false
         }
-    }
-
-    func shouldLoadData(in dataManager: DataManager) -> Bool {
-        // Load data if our `ratings` property is empty
-        // Other data is handled in `EndOfYearStoriesBuilder`
-        dataManager.ratings.ratings == nil
     }
 
     func isReady() -> Bool {
@@ -148,10 +128,6 @@ class EndOfYear2025StoriesModel: StoryModel {
 
     var numberOfStories: Int {
         stories.count
-    }
-
-    func paywallView() -> AnyView {
-        AnyView(PaidStoryWallView2025(subscriptionTier: SubscriptionHelper.activeTier))
     }
 
     func overlaidShareView() -> AnyView? {
@@ -212,5 +188,4 @@ class EndOfYear2025StoriesData {
 
     var yearOverYearListeningTime: YearOverYearListeningTime!
 
-    var ratings: [UInt32: Int] = [:]
 }

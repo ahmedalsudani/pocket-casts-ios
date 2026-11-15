@@ -1,14 +1,9 @@
 import Foundation
 
-enum SearchDisplayMode: String, AnalyticsDescribable, CaseIterable, Identifiable {
+enum SearchDisplayMode: String, CaseIterable, Identifiable {
     case allResults
     case podcasts
     case episodes
-    case networks
-
-    var analyticsDescription: String {
-        rawValue
-    }
 
     var id: String {
         rawValue
@@ -22,8 +17,6 @@ enum SearchDisplayMode: String, AnalyticsDescribable, CaseIterable, Identifiable
                 return L10n.podcastsPlural
             case .episodes:
                 return L10n.episodes
-            case .networks:
-                return L10n.searchFilterNetworks
         }
     }
 }

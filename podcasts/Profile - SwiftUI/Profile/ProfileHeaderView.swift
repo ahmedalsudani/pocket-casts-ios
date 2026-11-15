@@ -1,8 +1,7 @@
-import PocketCastsServer
 import PocketCastsUtils
 import SwiftUI
 
-/// A view that displays information about the user on the profile view
+/// A view that displays the listening stats on the profile view
 struct ProfileHeaderView: View {
     @EnvironmentObject var theme: Theme
     @ObservedObject var viewModel: ProfileHeaderViewModel
@@ -27,113 +26,12 @@ struct ProfileHeaderView: View {
     }
 
     var body: some View {
-        container { geometryProxy in
-            profileImage(geometryProxy)
-            profileInfo(isShowingVertically: isShowingVertically(width: geometryProxy.size.width))
+        container { _ in
             stats()
         }
     }
 
     // MARK: - Private: Views
-
-    /// Shows the profile image with subscription information
-    @ViewBuilder
-    private func profileImage(_ proxy: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
-            SubscriptionProfileImage(viewModel: viewModel)
-                .frame(width: Constants.imageSize, height: Constants.imageSize)
-
-            // Show the patron badge
-            if let subscription = viewModel.subscription {
-                if subscription.tier == .patron {
-                    SubscriptionBadge(tier: subscription.tier)
-                        .padding(.top, -10)
-                }
-
-                // Display the expiration date if needed
-                if subscription.expirationProgress < 1, let expirationDate = subscription.expirationDate {
-                    let time = TimeFormatter.shared.appleStyleTillString(date: expirationDate) ?? L10n.timeFormatNever
-                    let message = L10n.subscriptionExpiresIn(time)
-
-                    Text(message.localizedUppercase)
-                        .font(style: .caption, weight: .semibold)
-                        .foregroundColor(theme.red)
-                        .padding(.top, Constants.spacing)
-                }
-            }
-        }
-    }
-
-    /// Shows the display name, email, and account/share buttons
-    @ViewBuilder
-    private func profileInfo(isShowingVertically: Bool) -> some View {
-        let alignment: HorizontalAlignment = isShowingVertically ? .center : .leading
-
-        VStack(alignment: alignment, spacing: Constants.spacing) {
-            ProfileInfoLabels(profile: viewModel.profile, alignment: alignment, spacing: Constants.spacing)
-
-            if viewModel.profile.isLoggedIn {
-                if FeatureFlag.shareProfile.enabled {
-                    rowLayout(spacing: 12) {
-                        Button {
-                            viewModel.accountTapped()
-                        } label: {
-                            Label {
-                                Text(L10n.account)
-                            } icon: {
-                                Image("settings-avatar")
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 17, height: 17)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ProfileStrokeButtonStyle())
-
-                        Button {
-                            viewModel.shareTapped()
-                        } label: {
-                            Label {
-                                Text(L10n.share)
-                            } icon: {
-                                Image("podcast-share")
-                                    .renderingMode(.template)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 17, height: 17)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(ProfileStrokeButtonStyle())
-                    }
-                    .padding(.bottom, 8)
-                } else {
-                    Button(L10n.account) {
-                        viewModel.accountTapped()
-                    }
-                    .buttonStyle(ProfileStrokeButtonStyle())
-                }
-            } else {
-                Button(L10n.setupAccount) {
-                    viewModel.accountTapped()
-                }
-                .buttonStyle(ProfileStrokeButtonStyle())
-            }
-        }
-        // The top spacing appears too high when showing the badge or exp date for some reason so we'll offset it a bit to balance it out
-        .padding(.top, {
-            guard
-                let subscription = viewModel.subscription,
-                subscription.tier == .patron,
-                subscription.expirationDate != nil
-            else {
-                return 0
-            }
-
-            return -5
-        }())
-    }
 
     /// Renders the podcast, listening, and saved time stats
     private func stats() -> some View {
@@ -254,32 +152,12 @@ struct ProfileHeaderView: View {
         }
     }
 
-    // MARK: ProfileStrokeButtonStyle: Simple rounded border button for the profile view
-    private struct ProfileStrokeButtonStyle: ButtonStyle {
-        @EnvironmentObject var theme: Theme
-
-        func makeBody(configuration: Configuration) -> some View {
-            configuration.label
-                .font(style: .subheadline, weight: .medium)
-                .foregroundColor(theme.primaryText01)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: ViewConstants.buttonCornerRadius)
-                        .stroke(theme.primaryUi05, lineWidth: ViewConstants.buttonStrokeWidth)
-                )
-                .applyButtonEffect(isPressed: configuration.isPressed)
-                .contentShape(Rectangle())
-        }
-    }
-
     // MARK: - View Constants
     private enum Constants {
         static let spacing = 16.0
-        static let imageSize = 104.0
         static let paddingTop = 30.0
         static let paddingBottomAndSides = 20.0
-        static let minimumSize = CGSize(width: 300, height: Constants.imageSize + Constants.paddingTop + Constants.paddingBottomAndSides + Constants.spacing)
+        static let minimumSize = CGSize(width: 300, height: Constants.paddingTop + Constants.paddingBottomAndSides + 60)
     }
 }
 

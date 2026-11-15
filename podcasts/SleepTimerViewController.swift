@@ -3,13 +3,7 @@ import UIKit
 
 class SleepTimerViewController: SimpleNotificationsViewController {
 
-    @IBOutlet var settingsBtn: UIButton! {
-        didSet {
-#if APPCLIP
-            settingsBtn.isHidden = true
-#endif
-        }
-    }
+    @IBOutlet var settingsBtn: UIButton!
 
     @IBOutlet var plusFiveBtn: UIButton! {
         didSet {
@@ -308,10 +302,7 @@ class SleepTimerViewController: SimpleNotificationsViewController {
     // MARK: - Sleep Timer Actions
 
     @IBAction func settingsTapped(_ sender: Any) {
-        Analytics.track(.playerSleepTimerSettingsTapped)
-#if !APPCLIP
         NavigationManager.shared.navigateTo(NavigationManager.settingsGeneralKey, data: [NavigationManager.settingsGeneralRowKey: GeneralSettingsViewController.TableRow.autoRestartSleepTimer])
-#endif
     }
 
     @IBAction func fiveMinutesTapped(_ sender: Any) {
@@ -337,7 +328,6 @@ class SleepTimerViewController: SimpleNotificationsViewController {
     @IBAction func endOfEpisodeTapped(_ sender: Any) {
         let numberOfEpisodes = Settings.sleepTimerNumberOfEpisodes
         PlaybackManager.shared.numberOfEpisodesToSleepAfter = numberOfEpisodes
-        Analytics.track(.playerSleepTimerEnabled, properties: ["time": "end_of_episode", "number_of_episodes": numberOfEpisodes])
         dismiss(animated: true, completion: nil)
     }
 
@@ -347,7 +337,6 @@ class SleepTimerViewController: SimpleNotificationsViewController {
     }
 
     @IBAction func cancelTapped(_ sender: Any) {
-        Analytics.track(.playerSleepTimerCancelled)
         PlaybackManager.shared.cancelSleepTimer(userInitiated: true)
         dismiss(animated: true, completion: nil)
     }
@@ -356,11 +345,10 @@ class SleepTimerViewController: SimpleNotificationsViewController {
         let numberOfEpisodes = Settings.sleepTimerNumberOfEpisodes
         PlaybackManager.shared.numberOfEpisodesToSleepAfter = numberOfEpisodes
         updateDisplay()
-        Analytics.track(.playerSleepTimerExtended, source: AnalyticsSource.player, properties: ["amount": "end_of_episode", "number_of_episodes": numberOfEpisodes])
     }
 
     @IBAction func plusFiveTapped(_ sender: Any) {
-        PlaybackManager.shared.extendSleepTimer(by: 5.minutes, source: .player)
+        PlaybackManager.shared.extendSleepTimer(by: 5.minutes)
         updateSleepRemainingTime()
     }
 

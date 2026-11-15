@@ -69,15 +69,15 @@ enum SharingModal {
         }
     }
 
-    static func showModal(episode: Episode, from source: AnalyticsSource, in viewController: UIViewController) {
+    static func showModal(episode: Episode, in viewController: UIViewController) {
         guard let podcast = episode.parentPodcast() else {
             assertionFailure("Podcast should exist for episode")
             return
         }
-        showModal(podcast: podcast, episode: episode, from: source, in: viewController)
+        showModal(podcast: podcast, episode: episode, in: viewController)
     }
 
-    static func showModal(podcast: Podcast, episode: Episode?, from source: AnalyticsSource, in viewController: UIViewController) {
+    static func showModal(podcast: Podcast, episode: Episode?, in viewController: UIViewController) {
 
         if podcast.isPrivate {
             Toast.show(L10n.sharePodcastPrivateNotAvailable)
@@ -97,7 +97,7 @@ enum SharingModal {
 
         let actions: [OptionAction] = Option.allCases(episode: episode, podcast: podcast, currentTime: timeInterval).map { option in
                 .init(label: option.buttonTitle, action: {
-                    show(option: option, from: source, in: viewController)
+                    show(option: option, in: viewController)
             })
         }
         optionPicker.addActions(actions)
@@ -110,19 +110,18 @@ enum SharingModal {
         optionPicker.present(from: viewController)
     }
 
-    static func show(option: Option, from source: AnalyticsSource, in viewController: UIViewController) {
+    static func show(option: Option, in viewController: UIViewController) {
 
         if option.podcast.isPrivate {
             Toast.show(L10n.sharePodcastPrivateNotAvailable)
             return
         }
 
-        let sharingDestinations: [ShareDestination] = ShareDestination.displayedApps + [.copyLink, .systemSheet(vc: viewController)]
-        let sharingView = SharingView(destinations: sharingDestinations, selectedOption: option, source: source)
+        let sharingDestinations: [ShareDestination] = [.copyLink, .systemSheet(vc: viewController)]
+        let sharingView = SharingView(destinations: sharingDestinations, selectedOption: option)
         let modalView = ModalView {
             sharingView
         } dismissAction: {
-            Analytics.track(.shareScreenCloseButtonTapped)
             viewController.dismiss(animated: true)
         }
         .background(Color(PlayerColorHelper.playerBackgroundColor01()))
@@ -216,13 +215,7 @@ extension SharingModal.Option {
         case .clipShare(let episode, let clipTime, _):
             media = try await mediaData(imageInfo: info, style: style, episode: episode, clipTime: clipTime, destination: destination, clipUUID: clipUUID, scale: Constants.exportedAssetScale, progress: progress)
         default:
-            let size: CGSize
-            switch destination {
-            case .instagram:
-                size = CGSize(width: style.videoSize.width, height: style.videoSize.height)
-            default:
-                size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
-            }
+            let size = CGSize(width: style.previewSize.width, height: style.previewSize.height)
             media = ShareImageView(info: info, style: style, angle: .constant(0)).frame(width: size.width, height: size.height).snapshot(scale: Constants.exportedAssetScale)
         }
 
@@ -262,43 +255,37 @@ extension SharingModal.Option {
 
         progress.wrappedValue = nil
 
-        if destination == .instagram {
-            return try? Data(contentsOf: fileURL) // For some reason, I couldn't get this to work with just a URL
-        } else {
-            let components = [
-                episode.parentPodcast()?.title,
-                episode.title,
-                "\(clipTime.start.secondsFormatted())-\(clipTime.end.secondsFormatted())"
-            ].compactMap { $0 }
+        let components = [
+            episode.parentPodcast()?.title,
+            episode.title,
+            "\(clipTime.start.secondsFormatted())-\(clipTime.end.secondsFormatted())"
+        ].compactMap { $0 }
 
-            let fileName = components.joined(separator: " - ").appending(".\(fileURL.pathExtension)").sanitizedFileName()
-            var newURL = fileURL
-            newURL.deleteLastPathComponent()
-            newURL.appendPathComponent(fileName)
+        let fileName = components.joined(separator: " - ").appending(".\(fileURL.pathExtension)").sanitizedFileName()
+        var newURL = fileURL
+        newURL.deleteLastPathComponent()
+        newURL.appendPathComponent(fileName)
 
-            if FileManager.default.fileExistsAtURL(newURL) {
-                try FileManager.default.removeItem(at: newURL)
-            }
-            try FileManager.default.copyItem(at: fileURL, to: newURL)
-            return newURL as NSURL // Third party apps need URLs and won't accept Data
+        if FileManager.default.fileExistsAtURL(newURL) {
+            try FileManager.default.removeItem(at: newURL)
         }
+        try FileManager.default.copyItem(at: fileURL, to: newURL)
+        return newURL as NSURL // Third party apps need URLs and won't accept Data
     }
 
+    // Timestamp query parameters only meant something to the Pocket Casts web
+    // player; the feed/audio URLs shared now are used as-is.
     var shareURL: String {
-        let formatter = SignificantDigitsFormatStyle(significantDigits: 4)
         switch self {
         case .episode(let episode):
             return episode.shareURL
         case .podcast(let podcast):
             return podcast.shareURL
-        case .currentPosition(let episode, let timeInterval):
-            return episode.shareURL + "?t=\(round(timeInterval))"
-        case .bookmark(let episode, let timeInterval):
-            return episode.shareURL + "?t=\(round(timeInterval))"
-        case .clip(let episode, let timeInterval):
-            return episode.shareURL + "?t=\(round(timeInterval))"
-        case .clipShare(let episode, let clipTime, _):
-            return episode.shareURL + "?t=\(clipTime.start.formatted(formatter)),\(clipTime.end.formatted(formatter))"
+        case .currentPosition(let episode, _),
+             .bookmark(let episode, _),
+             .clip(let episode, _),
+             .clipShare(let episode, _, _):
+            return episode.shareURL
         }
     }
 }

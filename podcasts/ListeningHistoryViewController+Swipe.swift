@@ -28,10 +28,6 @@ extension ListeningHistoryViewController: SwipeTableViewCellDelegate, SwipeHandl
 
     // MARK: - SwipeActionsHandler
 
-    var swipeSource: String {
-        "listening_history"
-    }
-
     var swipeSourceType: SwipeSourceType {
         .listeningHistory
     }

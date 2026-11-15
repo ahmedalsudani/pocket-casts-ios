@@ -6,12 +6,10 @@ import UIKit
 extension PlayerContainerViewController {
     func updateColors() {
         view.backgroundColor = PlayerColorHelper.playerBackgroundColor01()
-        #if !APPCLIP
         updateArtworkBackground()
         if #available(iOS 27.1, *) {
             updateLargeScreenColors()
         }
-        #endif
     }
 
     @objc func update() {
@@ -26,7 +24,6 @@ extension PlayerContainerViewController {
     }
 
     private func updateAvailableTabs() {
-        #if !APPCLIP
         if #available(iOS 27.1, *), usesLargeScreenLayout {
             updateLargeScreenTabs(force: false)
             return
@@ -86,7 +83,6 @@ extension PlayerContainerViewController {
 
             addTab(bookmarksItem, previousTab: &previousTab)
         }
-        #endif
     }
 
     private func addTab(_ tab: PlayerItemViewController, previousTab: inout PlayerItemViewController) {

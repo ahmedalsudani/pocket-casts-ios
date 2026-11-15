@@ -160,33 +160,7 @@ final class FolderDataManagerTests: DataManagerTestCase {
 
     // MARK: - markAllFoldersSynced Tests
 
-    func testMarkAllFoldersSyncedSetsAllToZero() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestFolder(name: "Folder 1", syncModified: 100, dataManager: dataManager)
-            _ = self.createTestFolder(name: "Folder 2", syncModified: 200, dataManager: dataManager)
-            _ = self.createTestFolder(name: "Folder 3", syncModified: 300, dataManager: dataManager)
-
-            dataManager.markAllFoldersSynced()
-
-            let folders = dataManager.allFolders(includeDeleted: true)
-            XCTAssertTrue(folders.allSatisfy { $0.syncModified == 0 }, "All folders should have syncModified = 0")
-        }
-    }
-
     // MARK: - allUnsyncedFolders Tests
-
-    func testAllUnsyncedFoldersReturnsUnsyncedFolders() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestFolder(name: "Unsynced 1", syncModified: 100, dataManager: dataManager)
-            _ = self.createTestFolder(name: "Unsynced 2", syncModified: 200, dataManager: dataManager)
-            _ = self.createTestFolder(name: "Synced", syncModified: 0, dataManager: dataManager)
-
-            let unsynced = dataManager.allUnsyncedFolders()
-
-            XCTAssertEqual(unsynced.count, 2, "Should return 2 unsynced folders")
-            XCTAssertTrue(unsynced.allSatisfy { $0.syncModified != 0 }, "All should have non-zero syncModified")
-        }
-    }
 
     // MARK: - saveSortOrders Tests
 
@@ -228,42 +202,7 @@ final class FolderDataManagerTests: DataManagerTestCase {
 
     // MARK: - clearAllFolderInformation Tests
 
-    func testClearAllFolderInformationRemovesAllFolders() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestFolder(name: "Folder 1", dataManager: dataManager)
-            _ = self.createTestFolder(name: "Folder 2", dataManager: dataManager)
-            _ = self.createTestFolder(name: "Folder 3", dataManager: dataManager)
-
-            dataManager.clearAllFolderInformation()
-
-            let folders = dataManager.allFolders(includeDeleted: true)
-            XCTAssertEqual(folders.count, 0, "Should remove all folders")
-        }
-    }
-
-    func testClearAllFolderInformationOnEmptyTableDoesNotCrash() throws {
-        try runWithDataManager { dataManager in
-            dataManager.clearAllFolderInformation()
-
-            let folders = dataManager.allFolders(includeDeleted: true)
-            XCTAssertEqual(folders.count, 0, "Should not crash on empty table")
-        }
-    }
-
     // MARK: - deleteAllFoldersAndMarkSync Tests
-
-    func testDeleteAllFoldersAndMarkSyncMarksAllAsDeleted() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestFolder(name: "Folder 1", wasDeleted: false, dataManager: dataManager)
-            _ = self.createTestFolder(name: "Folder 2", wasDeleted: false, dataManager: dataManager)
-            _ = self.createTestFolder(name: "Folder 3", wasDeleted: false, dataManager: dataManager)
-
-            dataManager.deleteAllFoldersAndMarkSync()
-
-            let folders = dataManager.allFolders(includeDeleted: true)
-            XCTAssertTrue(folders.allSatisfy { $0.wasDeleted == true }, "All folders should be marked as deleted")
-        }
-    }
 
     // MARK: - save Tests (PersistableRecord API)
 

@@ -10,10 +10,6 @@ class SiriShortcutsManager: CustomObserver {
 
     private var podcastChangesCancellable: AnyCancellable?
 
-    var analyticsSource: AnalyticsSource {
-        .siri
-    }
-
     func setup() {
         addDefaultSuggestions()
         publishSubscribedPodcasts()
@@ -26,14 +22,7 @@ class SiriShortcutsManager: CustomObserver {
     }
 
     func defaultSuggestions() -> [INShortcut] {
-        var shortcuts = [resumeLastShortcut(), pauseShortcut(), playNextShortcut(), nextChapterShortcut(), previousChapterShortcut(), markAsPlayedShortcut(), sleepTimerShortcut(), extendSleepTimerShortcut()]
-
-        // only signed in users can use the play suggested shortcut
-        if SyncManager.isUserLoggedIn() {
-            shortcuts.insert(playSuggestedShortcut(), at: 2)
-        }
-
-        return shortcuts
+        [resumeLastShortcut(), pauseShortcut(), playSuggestedShortcut(), playNextShortcut(), nextChapterShortcut(), previousChapterShortcut(), markAsPlayedShortcut(), sleepTimerShortcut(), extendSleepTimerShortcut()]
     }
 
     func addDefaultSuggestions() {
@@ -353,9 +342,7 @@ class SiriShortcutsManager: CustomObserver {
     // MARK: - Functions that perform the shortcuts
 
     func resumePlayback() -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriResume()
         if PlaybackManager.shared.currentEpisode != nil {
-            AnalyticsPlaybackHelper.shared.currentSource = analyticsSource
             PlaybackManager.shared.play()
             return INPlayMediaIntentResponseCode.success
         }
@@ -363,24 +350,19 @@ class SiriShortcutsManager: CustomObserver {
     }
 
     func pausePlayback() -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriPause()
-        AnalyticsPlaybackHelper.shared.currentSource = analyticsSource
         PlaybackManager.shared.pause()
         return INPlayMediaIntentResponseCode.success
     }
 
     func markAsPlayed() -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriMarkAsPlayed()
         guard let currentEpisode = PlaybackManager.shared.currentEpisode else {
             return INPlayMediaIntentResponseCode.failureNoUnplayedContent
         }
-        AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
         EpisodeManager.markAsPlayed(episode: currentEpisode, fireNotification: true)
         return INPlayMediaIntentResponseCode.success
     }
 
     func playUpNext() -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriUpNext()
         // unlike when the user taps an episode in Up Next, their intention here is probably to remove the currently playing episode, and go to the next one if it exists
         guard let currentEpisode = PlaybackManager.shared.currentEpisode, PlaybackManager.shared.queue.upNextCount() > 0 else {
             return INPlayMediaIntentResponseCode.failureNoUnplayedContent
@@ -391,42 +373,28 @@ class SiriShortcutsManager: CustomObserver {
 
     @MainActor
     func playSuggested() async -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriSurpriseMe()
-        let recommendationHelper = RecommendationHelper()
-        guard let episodeInfo = await recommendationHelper.recommendEpisode() else {
+        // Surprise the listener with something they follow but haven't played yet
+        let query = "playingStatus = \(PlayingStatus.notPlayed.rawValue) AND archived = 0 AND wasDeleted = 0 ORDER BY RANDOM() LIMIT 1"
+        guard let episode = DataManager.shared.findEpisodeWhere(customWhere: query, arguments: nil) else {
             return INPlayMediaIntentResponseCode.failureRequiringAppLaunch
         }
 
-        if let episode = DataManager.shared.findEpisode(uuid: episodeInfo.uuid) {
-            AnalyticsPlaybackHelper.shared.currentSource = analyticsSource
-            PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
-        } else {
-            ServerPodcastManager.shared.addFromUuid(podcastUuid: episodeInfo.podcastUuid, subscribe: false, completion: { [weak self] success in
-                if let episode = DataManager.shared.findEpisode(uuid: episodeInfo.uuid), success {
-                    AnalyticsPlaybackHelper.shared.currentSource = self?.analyticsSource
-                    PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
-                }
-            })
-        }
+        PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
+
         return INPlayMediaIntentResponseCode.success
     }
 
     func skipToNextChapter() -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriChapterChanged()
-
         PlaybackManager.shared.skipToNextChapter(startPlaybackAfterSkip: true)
         return INPlayMediaIntentResponseCode.success
     }
 
     func skipToPreviousChapter() -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriChapterChanged()
-
         PlaybackManager.shared.skipToPreviousChapter(startPlaybackAfterSkip: true)
         return INPlayMediaIntentResponseCode.success
     }
 
     func setSleepTimer(duration: TimeInterval) -> Bool {
-        AnalyticsHelper.siriSleeptimer()
         guard let duration = SleepTimerIntentDuration.boundedValue(duration) else { return false }
         PlaybackManager.shared.setSleepTimerInterval(duration)
         return true
@@ -438,23 +406,20 @@ class SiriShortcutsManager: CustomObserver {
     }
 
     func extendSleepTimer(addTime: Int) -> Bool {
-        AnalyticsHelper.siriSleeptimer()
         guard let minutes = TimeInterval(exactly: addTime) else { return false }
         let sixtySeconds: TimeInterval = 1.minutes
         let addSeconds = sixtySeconds * minutes
-        PlaybackManager.shared.extendSleepTimer(by: addSeconds, source: .siri)
+        PlaybackManager.shared.extendSleepTimer(by: addSeconds)
         return true
     }
 
     func playFilter(uuid: String) -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriPlayTopFilter()
         guard let filter = DataManager.shared.findPlaylist(uuid: uuid) else {
             return INPlayMediaIntentResponseCode.failureUnknownMediaType
         }
 
         let query = PlaylistQueryBuilder.queryFor(filter: filter, episodeUuidToAdd: filter.episodeUuidToAddToQueries(), limit: 1)
         if let topEpisode = DataManager.shared.findEpisodesWhere(customWhere: query, arguments: nil).first {
-            AnalyticsPlaybackHelper.shared.currentSource = analyticsSource
             PlaybackManager.shared.load(episode: topEpisode, autoPlay: true, overrideUpNext: false)
             return INPlayMediaIntentResponseCode.success
         } else {
@@ -472,7 +437,6 @@ class SiriShortcutsManager: CustomObserver {
     }
 
     func playPodcast(uuid: String) -> INPlayMediaIntentResponseCode {
-        AnalyticsHelper.siriPlayPodcast()
         guard let podcast = DataManager.shared.findPodcast(uuid: uuid) else {
             return INPlayMediaIntentResponseCode.failureUnknownMediaType
         }
@@ -482,7 +446,6 @@ class SiriShortcutsManager: CustomObserver {
         let sortStr = PodcastEpisodeSortOrder.newestToOldest == episodeSortOrder ? "DESC" : "ASC"
         let query = "podcast_id = \(podcast.id) AND playingStatus <> \(PlayingStatus.completed.rawValue) AND archived = 0 ORDER BY publishedDate \(sortStr), addedDate \(sortStr) LIMIT 1"
         if let topEpisode = DataManager.shared.findEpisodesWhere(customWhere: query, arguments: nil).first {
-            AnalyticsPlaybackHelper.shared.currentSource = analyticsSource
             PlaybackManager.shared.load(episode: topEpisode, autoPlay: true, overrideUpNext: false)
             return INPlayMediaIntentResponseCode.success
         } else {

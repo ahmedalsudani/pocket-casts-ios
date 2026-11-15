@@ -14,32 +14,10 @@ enum HapticsHelper {
         triggerSuccessHaptic()
     }
 
-    static func triggerStarHaptic() {
-        triggerImpactOccurredHaptic(style: .light)
-    }
-
     static func triggerPlayPauseHaptic() {
         triggerImpactOccurredHaptic(style: .light)
     }
 
-    #if os(tvOS)
-    enum FeedbackStyle {
-        case heavy
-        case light
-        case medium
-    }
-    private static func triggerImpactOccurredHaptic(style: HapticsHelper.FeedbackStyle) {
-        //No op
-    }
-
-    private static func triggerSuccessHaptic() {
-        //No op
-    }
-
-    static func triggerErrorHaptic() {
-        //No op
-    }
-    #else
     private static func triggerImpactOccurredHaptic(style: UIImpactFeedbackGenerator.FeedbackStyle) {
         let feedbackGenerator = UIImpactFeedbackGenerator(style: style)
         feedbackGenerator.impactOccurred()
@@ -54,5 +32,4 @@ enum HapticsHelper {
         let feedbackGenerator = UINotificationFeedbackGenerator()
         feedbackGenerator.notificationOccurred(.error)
     }
-    #endif
 }

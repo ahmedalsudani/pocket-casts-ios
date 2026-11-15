@@ -47,16 +47,6 @@ public class DateFormatHelper: NSObject {
         return formatter
     }()
 
-    private lazy var singleDigitFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.unitsStyle = .full
-        formatter.maximumUnitCount = 1
-        formatter.allowsFractionalUnits = false
-        formatter.allowedUnits = [.year, .month, .day, .hour, .minute]
-
-        return formatter
-    }()
-
     // MARK: - 2 minutes, 30 seconds long elapsed time
 
     public func longElapsedTime(_ time: TimeInterval) -> String {
@@ -65,16 +55,6 @@ public class DateFormatHelper: NSObject {
         }
 
         return "0 seconds"
-    }
-
-    // MARK: - 2 days or 2 years or 3 seconds
-
-    public func shortTimeRemaining(_ time: TimeInterval) -> String {
-        if let formattedTime = singleDigitFormatter.string(from: round(time)) {
-            return formattedTime
-        }
-
-        return "0 days"
     }
 
     // MARK: - Long d MMMM yyyy
@@ -94,12 +74,6 @@ public class DateFormatHelper: NSObject {
     }
 
     // MARK: - Tiny dd MMM
-
-    public lazy var tinyLocalizedFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM"
-        return formatter
-    }()
 
     public func tinyLocalizedFormat(_ date: Date?) -> String {
         guard let date else { return "" }
@@ -142,21 +116,5 @@ public class DateFormatHelper: NSObject {
         guard let string else { return nil }
 
         return jsonDateFormatter.date(from: string)
-    }
-
-    // MARK: - HTTP
-
-    private lazy var httpDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss z"
-        formatter.timeZone = TimeZone(abbreviation: "GMT")
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return formatter
-    }()
-
-    public func httpDate(_ string: String?) -> Date? {
-        guard let string else { return nil }
-
-        return httpDateFormatter.date(from: string)
     }
 }

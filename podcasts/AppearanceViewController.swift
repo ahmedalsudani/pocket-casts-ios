@@ -1,4 +1,3 @@
-import PocketCastsServer
 import UIKit
 
 class AppearanceViewController: PCViewController, UITableViewDataSource, UITableViewDelegate, IconSelectorCellDelegate {
@@ -6,10 +5,9 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     private let disclosureCellId = "DisclosureCell"
     private let buttonCellId = "ButtonCell"
     private let iconSelectorCellId = "IconSelectorCell"
-    private let plusLockedInfoCellId = "PlusLockedCell"
 
     private enum TableRow {
-        case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, plusCallout, darkUpNextTheme, tabBarMinimizing
+        case themeOption, lightTheme, darkTheme, appIcon, refreshArtwork, embeddedArtwork, darkUpNextTheme, tabBarMinimizing
     }
 
     private var tableData = [[TableRow]]()
@@ -20,7 +18,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             settingsTable.register(UINib(nibName: "DisclosureCell", bundle: nil), forCellReuseIdentifier: disclosureCellId)
             settingsTable.register(UINib(nibName: "ButtonCell", bundle: nil), forCellReuseIdentifier: buttonCellId)
             settingsTable.register(UINib(nibName: "IconSelectorCell", bundle: nil), forCellReuseIdentifier: iconSelectorCellId)
-            settingsTable.register(UINib(nibName: "PlusLockedInfoCell", bundle: nil), forCellReuseIdentifier: plusLockedInfoCellId)
 
             settingsTable.rowHeight = UITableView.automaticDimension
             settingsTable.estimatedRowHeight = UITableView.automaticDimension
@@ -34,9 +31,7 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
         title = L10n.settingsAppearance
         updateTableAndData()
-        addCustomObserver(ServerNotifications.subscriptionStatusChanged, selector: #selector(subscriptionStatusChanged))
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
-        Analytics.track(.settingsAppearanceShown)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -44,18 +39,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
 
         if let appSection = tableData.firstIndex(of: [.appIcon]), let iconSelectorCell = settingsTable.cellForRow(at: IndexPath(item: 0, section: appSection)) as? IconSelectorCell {
             iconSelectorCell.scrollToSelected()
-        }
-    }
-
-    deinit {
-        removeAllCustomObservers()
-    }
-
-    @objc func subscriptionStatusChanged() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.updateTableAndData()
         }
     }
 
@@ -147,10 +130,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             cell.cellSwitch.addTarget(self, action: #selector(loadEmbeddedArtToggled(_:)), for: UIControl.Event.valueChanged)
 
             return cell
-        case .plusCallout:
-            let cell = tableView.dequeueReusableCell(withIdentifier: plusLockedInfoCellId, for: indexPath) as! PlusLockedInfoCell
-            cell.lockView.delegate = self
-            return cell
         }
     }
 
@@ -176,14 +155,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     func presentThemePicker(selectedTheme: Theme.ThemeType, persistThemeChange: @escaping (Theme.ThemeType) -> Void) {
         let themeSelector = ThemeSelectorView(title: L10n.appearanceThemeSelect, onThemeSelected: { [weak self] theme in
             guard let self else { return }
-
-            if theme.isPlusOnly, !SubscriptionHelper.hasActiveSubscription() {
-                self.dismiss(animated: true) {
-                    NavigationManager.shared.showUpsellView(from: self, source: .themes)
-                }
-
-                return
-            }
 
             persistThemeChange(theme)
             self.updateTableAndData()
@@ -231,12 +202,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         ThemeableTable.setHeaderFooterTextColor(on: view)
     }
 
-    func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-        let item = tableData[indexPath.section][indexPath.row]
-
-        return item == .plusCallout ? nil : indexPath
-    }
-
     override var preferredStatusBarStyle: UIStatusBarStyle {
         AppTheme.defaultStatusBarStyle()
     }
@@ -244,7 +209,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     // MARK: - Actions
     @objc private func darkUpNextToggled(_ sender: UISwitch) {
         Settings.darkUpNextTheme = sender.isOn
-        Settings.trackValueToggled(.settingsAppearanceUseDarkUpNextToggled, enabled: sender.isOn)
     }
 
     @objc private func shouldFollowSystemThemeToggled(_ sender: UISwitch) {
@@ -256,8 +220,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         } else if Theme.shared.activeTheme != Theme.preferredLightTheme() {
             Theme.shared.activeTheme = Theme.preferredLightTheme()
         }
-
-        Settings.trackValueToggled(.settingsAppearanceFollowSystemThemeToggled, enabled: sender.isOn)
     }
 
     @objc private func loadEmbeddedArtToggled(_ sender: UISwitch) {
@@ -267,7 +229,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     @objc private func tabBarMinimizingToggled(_ sender: UISwitch) {
         Settings.tabBarMinimizingEnabled = sender.isOn
         NavigationManager.shared.miniPlayer?.applyTabBarMinimizingPreference()
-        Settings.trackValueToggled(.settingsAppearanceTabBarMinimizingToggled, enabled: sender.isOn)
     }
 
     private func updateTableAndData() {
@@ -283,10 +244,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
             newTableData.append([.tabBarMinimizing])
         }
 
-        if !SubscriptionHelper.hasActiveSubscription(), !Settings.plusInfoDismissedOnAppearance {
-            newTableData.append([.plusCallout])
-        }
-
         tableData = newTableData
         settingsTable.reloadData()
     }
@@ -295,8 +252,6 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
         DispatchQueue.global(qos: .default).async { () in
             ImageManager.shared.clearPodcastCache(recacheWhenDone: true)
         }
-
-        Analytics.track(.settingsAppearanceRefreshAllArtworkTapped)
     }
 
     // MARK: - IconSelectorCellDelegate
@@ -304,35 +259,11 @@ class AppearanceViewController: PCViewController, UITableViewDataSource, UITable
     func changeIcon(icon: IconType) {
         let name = icon.iconName
 
-        AnalyticsHelper.didChooseIcon(iconName: name)
         UIApplication.shared.setAlternateIconName(name, completionHandler: { _ in
             WidgetHelper.shared.updateWidgetAppIcon()
             DispatchQueue.main.async {
                 self.updateTableAndData()
             }
         })
-
-        Settings.trackValueChanged(.settingsAppearanceAppIconChanged, value: icon)
-    }
-
-    func iconSelectorPresentingVC() -> UIViewController {
-        self
-    }
-}
-
-// MARK: - PlusLockedInfoDelegate
-
-extension AppearanceViewController: PlusLockedInfoDelegate {
-    func closeInfoTapped() {
-        Settings.plusInfoDismissedOnAppearance = true
-        updateTableAndData()
-    }
-
-    var displayingViewController: UIViewController {
-        self
-    }
-
-    var displaySource: PlusUpgradeViewSource {
-        .appearance
     }
 }

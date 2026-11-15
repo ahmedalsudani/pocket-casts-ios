@@ -44,18 +44,6 @@ public class TimeFormatter {
         localizedFormatter(style: .full, allowedUnits: [.minute])
     }()
 
-    private lazy var appleFormatterHours: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.hour])
-    }()
-
-    private lazy var appleFormatterDays: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.day])
-    }()
-
-    private lazy var appleFormatterYears: DateComponentsFormatter = {
-        localizedFormatter(style: .full, allowedUnits: [.year])
-    }()
-
     private lazy var minutesHoursFormatter: DateComponentsFormatter = {
         localizedFormatter(style: .full, allowedUnits: [.hour, .minute])
     }()
@@ -127,24 +115,6 @@ public class TimeFormatter {
 
     public func appleStyleElapsedString(date: Date) -> String {
         relativeFormatter.localizedString(for: date, relativeTo: Date())
-    }
-
-    public func appleStyleTillString(date: Date) -> String? {
-        let time = date.timeIntervalSinceNow
-        var timeStr: String?
-        if time <= 1.minute {
-            timeStr = appleFormatterSeconds.string(from: time)
-        } else if time <= 1.hour {
-            timeStr = appleFormatterMinutes.string(from: time)
-        } else if time <= 1.days {
-            timeStr = appleFormatterHours.string(from: time)
-        } else if time <= 365.days {
-            timeStr = appleFormatterDays.string(from: time)
-        } else {
-            timeStr = appleFormatterYears.string(from: time)
-        }
-
-        return timeStr
     }
 
     public class func currentUTCTimeInMillis() -> Int64 {

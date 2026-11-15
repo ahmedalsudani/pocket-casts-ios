@@ -28,7 +28,6 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
         title = L10n.settingsAutoDownload
         NotificationCenter.default.addObserver(self, selector: #selector(podcastUpdated(_:)), name: Constants.Notifications.podcastUpdated, object: nil)
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: settingsTable)
-        Analytics.track(.settingsAutoDownloadShown)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -43,7 +42,7 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
         super.viewDidAppear(animated)
         if firstAppear {
             firstAppear = false
-            ManageDownloadsCoordinator.showModalIfNeeded(from: self, source: "auto_download")
+            ManageDownloadsCoordinator.showModalIfNeeded(from: self)
         }
     }
 
@@ -168,7 +167,6 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
         switch row {
         case .podcastSelection:
             podcastChooserController = PodcastChooserViewController()
-            podcastChooserController?.analyticsSource = .downloads
             if let podcastSelectController = podcastChooserController {
                 podcastSelectController.delegate = self
                 let allPodcasts = DataManager.shared.allPodcasts(includeUnsubscribed: false)
@@ -184,7 +182,6 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
             }
             playlistSelectionViewController.selectedPlaylists = selectedFilters
             playlistSelectionViewController.playlistSelected = { playlist in
-                Analytics.track(.filterAutoDownloadUpdated, properties: ["enabled": true, "source": AnalyticsSource.autoDownloadSettings])
                 playlist.autoDownloadEpisodes = true
                 playlist.autoDownloadLimit = playlist.maxAutoDownloadEpisodes()
                 DataManager.shared.save(playlist: playlist)
@@ -192,13 +189,9 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
                 PlaylistManager.checkForAutoDownloads(in: playlist)
             }
             playlistSelectionViewController.playlistUnselected = { playlist in
-                Analytics.track(.filterAutoDownloadUpdated, properties: ["enabled": false, "source": AnalyticsSource.autoDownloadSettings])
                 playlist.autoDownloadEpisodes = false
                 DataManager.shared.save(playlist: playlist)
                 NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
-            }
-            playlistSelectionViewController.didChangePlaylist = {
-                Analytics.track(.settingsAutoDownloadFiltersChanged)
             }
 
             navigationController?.pushViewController(playlistSelectionViewController, animated: true)
@@ -244,10 +237,6 @@ class DownloadSettingsViewController: PCViewController, UITableViewDataSource, U
     func podcastUnselected(podcast: String) {
         DataManager.shared.savePodcastDownloadSetting(.off, podcastUuid: podcast)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
-    }
-
-    func didChangePodcasts(numberSelected: Int) {
-        Analytics.track(.settingsAutoDownloadPodcastsChanged, properties: ["number_selected": numberSelected])
     }
 
     // MARK: - Switch Settings

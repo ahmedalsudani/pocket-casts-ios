@@ -18,15 +18,6 @@ extension ThemeType {
         }
     }
 
-    var isPlusOnly: Bool {
-        switch self {
-        case .electric, .classic:
-            return true
-        default:
-            return false
-        }
-    }
-
     var description: String {
         switch self {
         case .light:
@@ -151,7 +142,6 @@ class Theme: ObservableObject {
         }
 
         guard userInitiated else { return }
-        Settings.trackValueChanged(.settingsAppearanceDarkThemeChanged, value: preferredType)
     }
 
     class func preferredLightTheme() -> ThemeType {
@@ -172,10 +162,9 @@ class Theme: ObservableObject {
             if !systemIsDark {
                 Theme.shared.activeTheme = preferredType
             }
-            Settings.trackValueChanged(.settingsAppearanceLightThemeChanged, value: preferredType)
         } else {
             Theme.shared.activeTheme = preferredType
-            Settings.trackValueChanged(.settingsAppearanceThemeChanged, value: preferredType)
+            NotificationsCoordinator.shared.handle(.themeChanged)
         }
     }
 

@@ -1,13 +1,10 @@
 import AppIntents
-import AutomatticRemoteLogging
 import BackgroundTasks
-import Combine
-import Firebase
 import Foundation
 import PocketCastsDataModel
 import PocketCastsServer
 import PocketCastsUtils
-import Sentry
+import UIKit
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     private static let initialRefreshDelay = 1.second
@@ -15,19 +12,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private let shortcutManager = ShortcutManager()
     private let badgeHelper = BadgeHelper()
+    private let newEpisodeNotificationScheduler = NewEpisodeNotificationScheduler()
 
     @objc var backgroundSessionCompletionHandler: (() -> Void)?
 
     var window: UIWindow?
     var progressDialog: ShiftyLoadingAlert?
-    var modalController: UINavigationController?
 
-    lazy var appLifecycleAnalytics = AppLifecycleAnalytics()
-
-    private var backgroundSignOutListener: BackgroundSignOutListener?
-    private(set) var appInstallState: AppLifecycleAnalytics.AppInstallState?
-
-    lazy var whatsNew = WhatsNew()
+    private(set) var appInstallState: AppInstallState?
 
     // MARK: - App Lifecycle
 
@@ -35,20 +27,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ImageManager.readDisplayScale()
         ImageManager.setUpMemoryStorage()
 
-        #if DEBUG
-        QALaunchHooks.prepareForLaunch()
-        #endif
-
-        configureFirebase()
-
-        setupSecrets()
-        addAnalyticsObservers()
-        setupAnalytics()
-
-        DataManager.logger = SentryLogger()
-        ServerConfig.shared.errorLogger = SentryLogger()
-
-        appInstallState = appLifecycleAnalytics.checkApplicationInstalledOrUpgraded()
+        appInstallState = AppInstallState.check()
 
         if let appInstallState {
             switch appInstallState {
@@ -62,22 +41,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 Settings.shouldShowRecentlyPlayedSortingTip = false
                 Settings.shouldShowUpNextSortDurationTip = false
                 Settings.shouldShowPlaylistsOnboarding = false
-                // Anchor the EAC cadence on fresh install so the modal waits a full interval before
-                // its first show (existing users updating leave it nil and see it immediately).
-                Settings.encourageAccountCreationReferenceDate = Date()
-                WhatsNewManager.shared.startFeed()
             case .sameVersion:
                 break
             }
-        }
-
-        let defaults = UserDefaults.standard
-
-        // check to see that this app has a unique ID, if not create one
-        let uniqueId = defaults.string(forKey: Constants.UserDefaults.appId)
-        if uniqueId?.count ?? 0 < 1 {
-            let uuid = UUID().uuidString
-            defaults.set(uuid, forKey: Constants.UserDefaults.appId)
         }
 
         GoogleCastManager.shared.setup()
@@ -85,14 +51,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupRoutes()
         PocketCastsAppShortcutsProvider.updateAppShortcutParameters()
 
-        if Settings.shouldResultEndOfYearSyncStatus {
-            Settings.setHasSyncedEpisodesForPlayback(false, year: 2025)
-            Settings.setHasSyncedEpisodesForPlaybackAsPlusUser(false, year: 2025)
-            Settings.shouldResultEndOfYearSyncStatus = false
-        }
-
-
-        NotificationsHelper.shared.register(checkToken: false)
+        NotificationsHelper.shared.register()
 
         DispatchQueue.global().async { [weak self] in
             guard let self else {
@@ -103,8 +62,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             ServerConfig.shared.playbackDelegate = PlaybackManager.shared
             checkDefaults()
 
-            logActiveDownloadTasks()
-            logStaleDownloads()
             postLaunchSetup()
             checkIfRestoreCleanupRequired()
 
@@ -114,14 +71,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             SiriShortcutsManager.shared.setup()
 
             DownloadManager.shared.startAllQueued()
-
-            if FeatureFlag.enableLocalizationHeaders.enabled {
-                LocalizationHelper.provider = InternationalizationProvider(userRegion: Settings.userRegion())
-            }
-
-            #if DEBUG
-            QALaunchHooks.runIfRequested()
-            #endif
         }
 
         badgeHelper.setup()
@@ -129,17 +78,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         shortcutManager.listenForShortcutChanges()
 
         setupBackgroundRefresh()
-
-        IAPHelper.shared.setup(hasSubscription: SubscriptionHelper.hasActiveSubscription())
-
-        setupSignOutListener()
-
-        if FeatureFlag.earlyReloadSubscriptionStatus.enabled,
-           SyncManager.isUserLoggedIn(),
-           appInstallState == .updated {
-            ApiServerHandler.shared.retrieveSubscriptionStatus()
-            FileLog.shared.addMessage("Reload subscription status early as the app updated")
-        }
 
         return true
     }
@@ -155,7 +93,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UserDefaults.standard.set(Date(), forKey: Constants.UserDefaults.lastAppCloseDate)
         badgeHelper.updateBadge()
 
-        appLifecycleAnalytics.didEnterBackground()
+        NotificationsCoordinator.shared.handle(.applicationClosed)
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
@@ -163,12 +101,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func handleBecomeActive() {
-        setupSignOutListener()
-        appLifecycleAnalytics.didBecomeActive()
-
-        if FeatureFlag.whatsNewFeed.enabled {
-            WhatsNewManager.shared.refreshIfNeeded()
-        }
+        NotificationsCoordinator.shared.handle(.applicationOpened)
 
         // give the network a few seconds to come up before refreshing, also only refresh if the last refresh was more than 5 minutes ago
         let lastUpdateTime = ServerSettings.lastRefreshEndTime()
@@ -179,7 +112,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         } else {
             DispatchQueue.global(qos: .userInitiated).async {
                 PodcastManager.shared.checkForPendingAndAutoDownloads()
-                UserEpisodeManager.checkForPendingUploads()
             }
         }
         PlaybackManager.shared.updateIdleTimer()
@@ -188,24 +120,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
         backgroundSessionCompletionHandler = completionHandler
-    }
-
-    // This method will be invoked even if the application was launched or resumed because of the remote notification. The respective delegate methods will be invoked first. Note that this behavior is in contrast to application:didReceiveRemoteNotification:, which is not called in those cases, and which will not be invoked if this method is implemented.
-    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        RefreshManager.shared.refreshPodcasts(completion: { refreshFetchResult in
-            completionHandler(self.convertRefreshResult(result: refreshFetchResult))
-        })
-        badgeHelper.updateBadge()
-    }
-
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let token = deviceToken.reduce(into: "") { $0 += String(format: "%02X", $1) }
-
-        PodcastManager.shared.didReceiveToken(token)
-    }
-
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        ServerSettings.removePushToken()
     }
 
     func application(_ application: UIApplication, didChangeStatusBarFrame oldStatusBarFrame: CGRect) {
@@ -219,7 +133,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         badgeHelper.teardown()
         shortcutManager.stopListeningForShortcutChanges()
 
-        IAPHelper.shared.tearDown()
         UIApplication.shared.endReceivingRemoteControlEvents()
     }
 
@@ -270,7 +183,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         })
     }
 
-
     private func setupBackgroundRefresh() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: Constants.Values.refreshTaskId, using: nil) { task in
             FileLog.shared.addMessage("Background refresh called")
@@ -302,40 +214,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             task.setTaskCompleted(success: refreshFetchResult != .failed)
         })
         badgeHelper.updateBadge()
-    }
-
-    private func configureFirebase() {
-        FirebaseApp.configure()
-
-        FirebaseManager.refreshRemoteConfig() { [weak self] _ in
-            self?.updateEndOfYearRemoteValue()
-            self?.updateRemoteFeatureFlags()
-        }
-    }
-
-    func updateRemoteFeatureFlags(forceReload: Bool = false) {
-        guard BuildEnvironment.current != .debug || forceReload else { return }
-
-        try? FeatureFlagOverrideStore().override(FeatureFlag.slumber, withValue: Settings.slumberPromoCode?.isEmpty == false)
-
-        FeatureFlag.allCases.forEach { flag in
-            if let remoteKey = flag.remoteKey {
-                let remoteValue = RemoteConfig.remoteConfig().configValue(forKey: remoteKey)
-                if remoteValue.source == .remote {
-                    do {
-                        FileLog.shared.console("Override \(flag): \(remoteValue.boolValue)")
-                        try FeatureFlagOverrideStore().override(flag, withValue: remoteValue.boolValue)
-                    } catch {
-                        FileLog.shared.addMessage("Failed to set remote feature flag \(flag): \(error)")
-                    }
-                }
-            }
-        }
-    }
-
-    private func updateEndOfYearRemoteValue() {
-        // Update if EOY requires an account to be seen
-        EndOfYear.requireAccount = Settings.endOfYearRequireAccount
     }
 
     private func postLaunchSetup() {
@@ -370,17 +248,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.manyEpisodesChanged)
     }
 
-    private func convertRefreshResult(result: RefreshFetchResult) -> UIBackgroundFetchResult {
-        switch result {
-        case .failed:
-            return UIBackgroundFetchResult.failed
-        case .newData:
-            return UIBackgroundFetchResult.newData
-        case .noData:
-            return UIBackgroundFetchResult.noData
-        }
-    }
-
     // MARK: UISceneSession Lifecycle
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
@@ -403,36 +270,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if includesCarPlay {
             FileLog.shared.addMessage("AppDelegate: CarPlay didDiscard")
         }
-    }
-
-    // MARK: Secrets
-
-    private func setupSecrets() {
-        ServerCredentials.sharing = ApiCredentials.sharingServerSecret
-    }
-
-    private func setupSignOutListener() {
-        guard backgroundSignOutListener == nil else {
-            return
-        }
-
-        backgroundSignOutListener = BackgroundSignOutListener(presentingViewController: SceneHelper.rootViewController())
-    }
-}
-
-struct SentryLogger: ErrorLogger {
-    func log(error: Error, context: [String: String]?) {
-        if BuildEnvironment.current == .appStore {
-            let crumb = Breadcrumb()
-            crumb.level = SentryLevel.info
-            crumb.category = "grdb"
-            crumb.message = error.localizedDescription
-            SentrySDK.addBreadcrumb(crumb)
-            return
-        }
-
-    #if os(iOS)
-    CrashLoggingAdapter.shared?.crashLogging?.logError(error, tags: context ?? [:], level: .warning)
-    #endif
     }
 }

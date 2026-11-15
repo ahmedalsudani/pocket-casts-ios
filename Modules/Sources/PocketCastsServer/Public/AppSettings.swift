@@ -49,7 +49,6 @@ public struct AppSettings: JSONCodable {
 
     @ModifiedDate public var filesAutoUpNext: Bool = false
     @ModifiedDate public var filesAfterPlayingDeleteLocal: Bool = false
-    @ModifiedDate public var filesAfterPlayingDeleteCloud: Bool = false
 
     @ModifiedDate public var warnDataUsage: Bool = false
 
@@ -59,11 +58,6 @@ public struct AppSettings: JSONCodable {
     @ModifiedDate public var headphoneControlsNextAction: HeadphoneControl = .skipForward
     @ModifiedDate public var headphoneControlsPreviousAction: HeadphoneControl = .skipBack
 
-    @ModifiedDate public var privacyAnalytics: Bool = true
-    @ModifiedDate public var marketingOptIn: Bool = false
-    @ModifiedDate public var freeGiftAcknowledgement: Bool = false
-
-    @ModifiedDate public var gridOrder: LibrarySort = .dateAddedNewestToOldest
     @ModifiedDate public var gridLayout: LibraryType = .threeByThree
     @ModifiedDate public var badges: BadgeType = .off
 

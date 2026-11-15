@@ -113,20 +113,6 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
         }
     }
 
-    func testDeleteAllUpNextEpisodesNotInKeepsSpecifiedUpNextEpisodes() throws {
-        try runWithDataManager { dataManager in
-            saveUpNextEpisode(dataManager: dataManager, episodeUuid: "to-keep", title: "Keep", podcastUuid: "pod", position: 0)
-            saveUpNextEpisode(dataManager: dataManager, episodeUuid: "to-remove-1", title: "Remove 1", podcastUuid: "pod", position: 1)
-            saveUpNextEpisode(dataManager: dataManager, episodeUuid: "to-remove-2", title: "Remove 2", podcastUuid: "pod", position: 2)
-
-            dataManager.deleteAllUpNextEpisodesNotIn(uuids: ["to-keep"])
-
-            let episodes = dataManager.allUpNextPlaylistEpisodes()
-            XCTAssertEqual(episodes.map(\.episodeUuid), ["to-keep"], "only kept episode should remain")
-            XCTAssertEqual(episodes.map { Int($0.episodePosition) }, [0], "positions should start at zero")
-        }
-    }
-
     func testSavingUpNextEpisodeDoesNotShiftManualPlaylistOrdering() throws {
         try runWithDataManager { dataManager in
             let manualPlaylistUuid = "manual-playlist"
@@ -196,32 +182,6 @@ final class UpNextEpisodeFetchTests: DataManagerTestCase {
                 ["manual-episode-1", "manual-episode-2"],
                 "manual playlist ordering should remain unchanged"
             )
-        }
-    }
-
-    func testDeletingUpNextEpisodesWithEmptyListDoesNotAffectManualPlaylist() throws {
-        try runWithDataManager { dataManager in
-            let manualPlaylistUuid = "manual-playlist"
-            addManualPlaylistEntry(
-                queue: dataManager.dbQueue,
-                episodeUuid: "manual-episode-1",
-                playlistId: 42,
-                playlistUuid: manualPlaylistUuid,
-                position: 0,
-                title: "Manual Episode 1",
-                podcastUuid: "manual-podcast"
-            )
-
-            saveUpNextEpisode(dataManager: dataManager, episodeUuid: "upnext-episode", title: "Up Next Episode", podcastUuid: "upnext-podcast", position: 0)
-
-            dataManager.deleteAllUpNextEpisodesNotIn(uuids: [])
-
-            XCTAssertEqual(
-                fetchManualPlaylistOrder(queue: dataManager.dbQueue, playlistUuid: manualPlaylistUuid),
-                ["manual-episode-1"],
-                "manual playlist should be unchanged"
-            )
-            XCTAssertTrue(dataManager.allUpNextPlaylistEpisodes().isEmpty, "up next should be empty")
         }
     }
 

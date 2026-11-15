@@ -4,12 +4,7 @@ import Foundation
 
 class DataManagerMock: DataManager {
     var podcastsToReturn: [Podcast] = []
-    var episodesToReturn: [Episode] = []
     var dailyListeningTimeToReturn: [String: Double] = [:]
-
-    override func findEpisodesWhere(customWhere: String, arguments: [Any]?) -> [Episode] {
-        return episodesToReturn
-    }
 
     override func allPodcasts(includeUnsubscribed: Bool) -> [Podcast] {
         return podcastsToReturn

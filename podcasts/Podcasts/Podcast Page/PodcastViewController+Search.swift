@@ -1,5 +1,5 @@
 import Foundation
-import PocketCastsServer
+import PocketCastsDataModel
 
 extension PodcastViewController {
     func setupSearchController() {
@@ -37,25 +37,23 @@ extension PodcastViewController {
     func performEpisodeSearch(query: String) {
         guard let podcast else { return }
 
-        let search = CacheServerHandler.EpisodeSearchQuery(podcastUuid: podcast.uuid, searchTerm: query)
-        CacheServerHandler.shared.searchEpisodesInPodcast(search: search) { [weak self] results in
-            self?.showSearchResults(results)
+        // Every episode of the podcast is in the database, so that's where the search runs
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let matchingUuids = DataManager.shared.findEpisodes(with: query, podcastUUID: podcast.uuid).map(\.uuid)
+
+            DispatchQueue.main.async {
+                self?.showSearchResults(matchingUuids, podcastUuid: podcast.uuid)
+            }
         }
     }
 
-    func showSearchResults(_ result: CacheServerHandler.EpisodeSearchResult?) {
-        DispatchQueue.main.async { [weak self] in
-            self?.searchController?.isLoading = false
-        }
+    private func showSearchResults(_ matchingUuids: [String], podcastUuid: String) {
+        searchController?.isLoading = false
 
-        guard let podcast, let result else { return }
+        guard let podcast, podcast.uuid == podcastUuid else { return }
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            self.uuidsThatMatchSearch = result.episodes.map(\.uuid)
-            self.loadLocalEpisodes(podcast: podcast, animated: true)
-        }
+        uuidsThatMatchSearch = matchingUuids
+        loadLocalEpisodes(podcast: podcast, animated: true)
     }
 }
 

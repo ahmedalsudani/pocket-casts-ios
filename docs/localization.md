@@ -6,11 +6,9 @@ On each build any new string added to the english localization of `Localizable.s
 
 When Strings are generated, they are converted from snake case to camel case and strings with an associated format are created as functions that will accept the passed in parameters and perform a type checking.
 
-During the release process, the `en.lproj/Localizable.strings` file is then uploaded to [GlotPress](https://translate.wordpress.com/projects/pocket-casts/ios/) for translation. Before the release build is finalized, all the translations are grabbed from GlotPress and saved back to the `Localizable.strings` files.
-
 ## Use Snake Cased Keys
 
-When adding strings add then with meaningful keys that describe `feature_` + `relevantIdentifier(s)_` + `description`. GlotPress will truncate strings over 255 characters which can cause issues with detecting changes.
+When adding strings add then with meaningful keys that describe `feature_` + `relevantIdentifier(s)_` + `description`.
 
 ```swift
 // Do
@@ -66,7 +64,7 @@ let str = NSLocalizedString("© \(year) Acme, Inc.", comment: "Copyright Notice"
 
 ## Pluralization
 
-GlotPress currently does not support pluralization using the [`.stringsdict` file](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/LocalizingYourApp/LocalizingYourApp.html#//apple_ref/doc/uid/10000171i-CH5-SW10). So, right now, you have to support plurals manually by having separate localized strings.
+The project doesn't use a [`.stringsdict` file](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/LocalizingYourApp/LocalizingYourApp.html#//apple_ref/doc/uid/10000171i-CH5-SW10) for plurals. Support them by having separate localized strings.
 
 ```swift
 // Localizable Strings

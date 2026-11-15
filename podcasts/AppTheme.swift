@@ -10,10 +10,6 @@ enum AppTheme {
         AppTheme.tintColor
     }
 
-    static var placeholderTextColor: UIColor {
-        Theme.isDarkTheme ? UIColor(hex: "#808892") : UIColor(hex: "#C7C7CD")
-    }
-
     static func pcPlusGoldGradientDark() -> UIColor {
         UIColor(hex: "#feb525")
     }
@@ -34,12 +30,6 @@ enum AppTheme {
 
     static var waitingForWifiColor: UIColor {
         Theme.isDarkTheme ? UIColor(hex: "#525466") : UIColor(hex: "#B8C3C9")
-    }
-
-    // MARK: - Podcast Page
-
-    static var extraContentBorderColor: UIColor {
-        Theme.isDarkTheme ? UIColor(hex: "#3A3A3B") : UIColor(hex: "#E0E6EA")
     }
 
     // MARK: - Episode Card Message
@@ -72,10 +62,6 @@ enum AppTheme {
         UIColor.black
     }
 
-    static var defaultPodcastBackgroundColor: UIColor {
-        UIColor(hex: "#1E1F1E")
-    }
-
     // MARK: - Paid podcast colours
 
     static var podcastHeartDarkGradientColor: UIColor {
@@ -95,207 +81,6 @@ enum AppTheme {
     }
 
     // MARK: - Illustrations
-
-    static func setupNewAccountGoldImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "setup-new-account-gold-dark"
-        case .electric:
-            return "setup-new-account-gold-electricity"
-        case .light, .classic:
-            return "setup-new-account-gold"
-        case .indigo:
-            return "setup-new-account-gold-indigo"
-        case .rosé:
-            return "setup-new-account-gold-rose"
-        case .contrastLight:
-            return "setup-new-account-gold-contrastLight"
-        case .contrastDark:
-            return "setup-new-account-gold-contrastDark"
-        }
-    }
-
-    static func paymentFailedImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "payment-failed-dark"
-        case .light, .classic:
-            return "payment-failed"
-        case .electric:
-            return "payment-failed-electricity"
-        case .indigo:
-            return "payment-failed-indigo"
-        case .rosé:
-            return "payment-failed-rose"
-        case .contrastLight:
-            return "payment-failed-contrastLight"
-        case .contrastDark:
-            return "payment-failed-contrastDark"
-        }
-    }
-
-    static func passwordChangedImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "key-stars-dark"
-        case .light, .classic:
-            return "key-stars"
-        case .electric:
-            return "key-stars-electricity"
-        case .indigo:
-            return "key-stars-indigo"
-        case .rosé:
-            return "key-stars-rose"
-        case .contrastLight:
-            return "key-stars-contrastLight"
-        case .contrastDark:
-            return "key-stars-contrastDark"
-        }
-    }
-
-    static func accountUpgradedImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "avatar-plus-gold-dark"
-        case .light, .classic:
-            return "avatar-plus-gold"
-        case .electric:
-            return "avatar-plus-gold-electricity"
-        case .indigo:
-            return "avatar-plus-gold-indigo"
-        case .rosé:
-            return "avatar-plus-gold-rose"
-        case .contrastLight:
-            return "avatar-plus-gold-contrastLight"
-        case .contrastDark:
-            return "avatar-plus-gold-contrastDark"
-        }
-    }
-
-    static func plusCancelledImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "avatar-cancelled-dark"
-        case .light, .classic:
-            return "avatar-cancelled"
-        case .electric:
-            return "avatar-cancelled-electricity"
-        case .indigo:
-            return "avatar-cancelled-indigo"
-        case .rosé:
-            return "avatar-cancelled-rose"
-        case .contrastLight:
-            return "avatar-cancelled-contrastLight"
-        case .contrastDark:
-            return "avatar-cancelled-contrastDark"
-        }
-    }
-
-    static func plusCancelledGoldImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "avatar-cancelled-gold-dark"
-        case .light, .classic:
-            return "avatar-cancelled-gold"
-        case .electric:
-            return "avatar-cancelled-gold-electricity"
-        case .indigo:
-            return "avatar-cancelled-gold-indigo"
-        case .rosé:
-            return "avatar-cancelled-gold-rose"
-        case .contrastLight:
-            return "avatar-cancelled-gold-contrastLight"
-        case .contrastDark:
-            return "avatar-cancelled-gold-contrastDark"
-        }
-    }
-
-    static func changedEmailImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "email-stars-dark"
-        case .light, .classic:
-            return "email-stars"
-        case .electric:
-            return "email-stars-electricity"
-        case .indigo:
-            return "email-stars-indigo"
-        case .rosé:
-            return "email-stars-rose"
-        case .contrastLight:
-            return "email-stars-contrastLight"
-        case .contrastDark:
-            return "email-stars-contrastDark"
-        }
-    }
-
-    static func cancelSubscriptionImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "dollar-recycle-dark"
-        case .light, .classic:
-            return "dollar-recycle"
-        case .electric:
-            return "dollar-recycle-electricity"
-        case .indigo:
-            return "dollar-recycle-indigo"
-        case .rosé:
-            return "dollar-recycle-rose"
-        case .contrastLight:
-            return "dollar-recycle-contrastLight"
-        case .contrastDark:
-            return "dollar-recycle-contrastDark"
-        }
-    }
-
-    static func pcPlusLogoHorizontalImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark, .electric, .contrastDark:
-            return "PCPlusHorizontal-Dark"
-        case .light, .classic, .indigo, .rosé, .contrastLight:
-            return "PCPlusHorizontal"
-        }
-    }
-
-    static func pcLogoHorizontalImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark, .electric, .contrastDark:
-            return "horizontal-logo-dark"
-        case .light, .classic, .indigo, .rosé, .contrastLight:
-            return "horizontal-logo"
-        }
-    }
-
-    static func pcLogoSmallHorizontalForBackgroundImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark, .electric, .contrastDark:
-            return "small-horizontal-logo-dark"
-        case .light, .classic, .indigo, .rosé, .contrastLight:
-            return "small-horizontal-logo"
-        }
-    }
-
-    static func socialIconAppleImageName(theme: Theme = .shared) -> String {
-        switch theme.activeTheme {
-        case .dark, .extraDark, .electric, .contrastDark:
-            return "sso-icon-apple-dark"
-        case .light, .classic, .indigo, .rosé, .contrastLight:
-            return "sso-icon-apple"
-        }
-    }
-
-    static func socialIconGoogleImageName() -> String {
-        return "sso-icon-google"
-    }
-
-    static func pcPlusLogoVerticalImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark, .electric, .contrastDark:
-            return "verticalLogoDark"
-        case .light, .classic, .indigo, .rosé, .contrastLight:
-            return "verticalLogo"
-        }
-    }
 
     static func pcLogoVerticalImageName() -> String {
         switch Theme.shared.activeTheme {
@@ -325,25 +110,6 @@ enum AppTheme {
         }
     }
 
-    static func promoErrorImageName() -> String {
-        switch Theme.shared.activeTheme {
-        case .dark, .extraDark:
-            return "promo-error-dark"
-        case .light, .classic:
-            return "promo-error"
-        case .electric:
-            return "promo-error-electricity"
-        case .indigo:
-            return "promo-error-indigo"
-        case .rosé:
-            return "promo-error-rose"
-        case .contrastLight:
-            return "promo-error-contrastLight"
-        case .contrastDark:
-            return "promo-error-contrastDark"
-        }
-    }
-
     // MARK: - App Colors
 
     static func keyboardAppearance() -> UIKeyboardAppearance {
@@ -354,7 +120,6 @@ enum AppTheme {
         ThemeColor.primaryUi01(for: theme)
     }
 
-    #if !os(tvOS)
     static func defaultStatusBarStyle() -> UIStatusBarStyle {
         switch Theme.shared.activeTheme {
         case .dark, .extraDark, .electric, .contrastDark:
@@ -378,7 +143,6 @@ enum AppTheme {
             return UIStatusBarStyle.darkContent
         }
     }
-    #endif
 
     static var loadingActivityColor: UIColor {
         ThemeColor.primaryIcon01()

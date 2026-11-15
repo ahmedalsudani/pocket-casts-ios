@@ -32,10 +32,6 @@ extension StarredViewController: MultiSelectActionDelegate {
         })
     }
 
-    var multiSelectViewSource: AnalyticsSource {
-        analyticsSource
-    }
-
     // MARK: - Selected Episode
 
     func selectedEpisodesContains(uuid: String) -> Bool {
@@ -50,8 +46,6 @@ extension StarredViewController: MultiSelectActionDelegate {
 
     @IBAction func selectAllTapped() {
         let shouldSelectAll = MultiSelectHelper.shouldSelectAll(onCount: selectedEpisodes.count, totalCount: episodes.count)
-
-        Analytics.track(.starredSelectAllButtonTapped, properties: ["select_all": shouldSelectAll])
 
         if shouldSelectAll {
             starredTable.selectAll()

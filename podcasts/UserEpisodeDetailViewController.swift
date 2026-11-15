@@ -6,7 +6,6 @@ import UIKit
 protocol UserEpisodeDetailProtocol: AnyObject {
     func showEdit(userEpisode: UserEpisode)
     func showDeleteConfirmation(userEpisode: UserEpisode)
-    func showUpgradeRequired()
     func userEpisodeDetailClosed()
     func showBookmarks(userEpisode: UserEpisode)
 }
@@ -85,8 +84,6 @@ class UserEpisodeDetailViewController: UIViewController {
         }
     }
 
-    @IBOutlet var uploadStatusImage: UIImageView!
-    @IBOutlet var uploadProgressIndicator: ProgressPieView!
     var episode: UserEpisode
     weak var delegate: UserEpisodeDetailProtocol?
 
@@ -98,7 +95,7 @@ class UserEpisodeDetailViewController: UIViewController {
     /// from the content, so this is the only fixed dimension we toggle.
     private static let errorBannerHeight: CGFloat = 100
 
-    enum TableRow { case download, bookmarks, removeFromCloud, upload, upNext, markAsPlayed, editDetails, delete, cancelUpload, cancelDownload }
+    enum TableRow { case download, bookmarks, upNext, markAsPlayed, editDetails, delete, cancelDownload }
     let actionCellId = "UserEpisodeActionCell"
 
     // MARK: - Init
@@ -138,11 +135,10 @@ class UserEpisodeDetailViewController: UIViewController {
         greyBackgroundView.isHidden = true
         barView.isHidden = true
 
-        hasError = episode.playbackError() || episode.uploadFailed() || episode.downloadFailed()
+        hasError = episode.playbackError() || episode.downloadFailed()
         errorContainerView.isHidden = !hasError
         errorContainerHeight.constant = hasError ? UserEpisodeDetailViewController.errorBannerHeight : 0
         updateStatus()
-        Analytics.track(.userFileDetailShown)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -163,9 +159,7 @@ class UserEpisodeDetailViewController: UIViewController {
     func addObservers() {
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodeDownloaded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodeDownloadStatusChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: ServerNotifications.userEpisodeUploadStatusChanged, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateFromNotification), name: Constants.Notifications.episodePlayStatusChanged, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(updateUploadProgress), name: ServerNotifications.userEpisodeUploadProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(updateDownloadProgress), name: Constants.Notifications.downloadProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleThemeChanged), name: Constants.Notifications.themeChanged, object: nil)
     }
@@ -187,7 +181,7 @@ class UserEpisodeDetailViewController: UIViewController {
             self.reloadEpisode()
             self.updateStatus()
 
-            if oldEpisode.uploadStatus != self.episode.uploadStatus || oldEpisode.episodeStatus != self.episode.episodeStatus {
+            if oldEpisode.episodeStatus != self.episode.episodeStatus {
                 self.actionTable.reloadData()
             }
         }
@@ -199,7 +193,7 @@ class UserEpisodeDetailViewController: UIViewController {
         }
 
         episode = reloadedEpisode
-        let newHasError = episode.playbackError() || episode.uploadFailed() || episode.downloadFailed()
+        let newHasError = episode.playbackError() || episode.downloadFailed()
         if !hasError, newHasError, !isAnimatingOut, !isAnimatingIn {
             hasError = newHasError
             animateInError()
@@ -240,42 +234,13 @@ class UserEpisodeDetailViewController: UIViewController {
             } else if episode.playbackError() {
                 errorTypeLabel.text = L10n.playerUserEpisodePlaybackError
                 errorMessageLabel.text = episode.playbackErrorDetails
-            } else if episode.uploadFailed() {
-                errorTypeLabel.text = L10n.playerUserEpisodeUploadError
-                errorMessageLabel.text = L10n.pleaseTryAgain
             }
         }
 
         downloadStatusImage.isHidden = !episode.downloaded(pathFinder: DownloadManager.shared)
-        uploadStatusImage.isHidden = !episode.uploaded()
-
-        uploadProgressIndicator.isHidden = !episode.uploading()
         downloadingIndicator.isHidden = !episode.downloading()
 
-        updateUploadProgress()
         updateDownloadProgress()
-    }
-
-    @objc private func updateUploadProgress() {
-        guard UploadManager.shared.progressManager.hasProgress(forUserEpisodeUuid: episode.uuid) else { return }
-
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            if !self.episode.uploading() {
-                self.reloadEpisode()
-            }
-
-            self.uploadProgressIndicator.isHidden = !self.episode.uploading()
-            if self.episode.uploading() {
-                self.infoLabel.text = self.episode.displayableInfo(includeSize: true)
-                if let progress = UploadManager.shared.progressManager.progress(forEpisodeUuid: self.episode.uuid) {
-                    self.uploadProgressIndicator.progress = progress.percentageProgress()
-                } else {
-                    self.uploadProgressIndicator.progress = 0
-                }
-            }
-        }
     }
 
     @objc func updateDownloadProgress() {
@@ -372,15 +337,10 @@ class UserEpisodeDetailViewController: UIViewController {
 extension UserEpisodeDetailViewController: UISheetPresentationControllerDelegate {
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
         // Fired on interactive (swipe) dismissal only.
-        Analytics.track(.userFileDetailDismissed)
         delegate?.userEpisodeDetailClosed()
     }
 }
 
 private extension UISheetPresentationController.Detent.Identifier {
     static let userEpisodeDetail = UISheetPresentationController.Detent.Identifier("userEpisodeDetail")
-}
-
-extension UserEpisodeDetailViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource { .userEpisode }
 }

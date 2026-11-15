@@ -86,7 +86,7 @@ class EpisodeLoadingController: UIHostingController<AnyView> {
     }
 
     private func transitionToEpisodeControllerFadingIntoIt() {
-        let controller = EpisodeDetailViewController(episodeUuid: episodeUuid, source: .homeScreenWidget, timestamp: timestamp)
+        let controller = EpisodeDetailViewController(episodeUuid: episodeUuid, timestamp: timestamp)
 
         view.addSubview(controller.view)
         controller.view.alpha = 0

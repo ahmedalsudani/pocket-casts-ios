@@ -28,7 +28,7 @@ class ShowNotesFormatterUtilsTests: XCTestCase {
         expected = "Grizzlies win over the Timberwolves (<a href=\"http://localhost/#playerJumpTo=8:52\">8:52</a>, from Anthony Davis <a href=\"http://localhost/#playerJumpTo=25:32\">25:32</a>), and the Lakers' new life without Kobe (<a href=\"http://localhost/#playerJumpTo=35:35\">35:35</a>)."
         XCTAssertEqual(actual, expected)
 
-        // Accidental Tech Podcast - https://nodeweb.pocketcasts.com/admin/podcasts/180561
+        // Accidental Tech Podcast
         actual = ShowNotesFormatterUtils.convertToLinks(stringWithTimes: "<li><a href=\"https://overcast.fm/+BtuyYAAIQ/16:45\">Confirmation of John's prediction about face swipe timing</a></li>")
         expected = "<li><a href=\"https://overcast.fm/+BtuyYAAIQ/16:45\">Confirmation of John's prediction about face swipe timing</a></li>"
         XCTAssertEqual(actual, expected)
@@ -38,14 +38,14 @@ class ShowNotesFormatterUtilsTests: XCTestCase {
         expected = "No timestamps in show notes"
         XCTAssertEqual(actual, expected)
 
-        actual = ShowNotesFormatterUtils.convertToLinks(stringWithTimes: "Only links in show notes <a href='https://www.pocketcasts.com'>Pocket Casts</a>")
-        expected = "Only links in show notes <a href='https://www.pocketcasts.com'>Pocket Casts</a>"
+        actual = ShowNotesFormatterUtils.convertToLinks(stringWithTimes: "Only links in show notes <a href='https://www.example.com'>Pocket Casts</a>")
+        expected = "Only links in show notes <a href='https://www.example.com'>Pocket Casts</a>"
         XCTAssertEqual(actual, expected)
 
         actual = ShowNotesFormatterUtils.convertToLinks(stringWithTimes: """
         This is a block of html that I've crafted to find issues with my attempt at safe `a` tag detection
 
-                <a href='https://www.automattic.com'>It contains</a> many links that are valid, <a href='https://www.pocketcasts.com'> that are
+                <a href='https://www.automattic.com'>It contains</a> many links that are valid, <a href='https://www.example.com'> that are
                 broken across multiple lines</a>, and that are <a href='https://www.tsn.ca'>themselves <a href='https://www.cbcsports.ca'>invalid and nested</a> in an </a> attempt to confuse the regex `a` tag detection.
 
                 <ul>
@@ -84,7 +84,7 @@ class ShowNotesFormatterUtilsTests: XCTestCase {
         expected = """
         This is a block of html that I've crafted to find issues with my attempt at safe `a` tag detection
 
-                <a href='https://www.automattic.com'>It contains</a> many links that are valid, <a href='https://www.pocketcasts.com'> that are
+                <a href='https://www.automattic.com'>It contains</a> many links that are valid, <a href='https://www.example.com'> that are
                 broken across multiple lines</a>, and that are <a href='https://www.tsn.ca'>themselves <a href='https://www.cbcsports.ca'>invalid and nested</a> in an </a> attempt to confuse the regex `a` tag detection.
 
                 <ul>

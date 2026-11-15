@@ -1,23 +1,18 @@
 import UIKit
-import PocketCastsServer
 import PocketCastsDataModel
 import EndOfYear
 
 class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @unchecked Sendable {
     private var text: String
 
-    private let pocketCastsUrl = ServerConstants.Urls.share()
-
-    private var shortenedURL: String?
     private var longURL: String?
-    private var podcastListURL: String?
 
     var shareableMetadataProvider = ShareableMetadataProvider()
 
     private var year: EndOfYear.Year
 
     var hashtags: [String] {
-        var hashtags = ["pocketcasts"]
+        var hashtags = [String]()
         if let year = year.year {
             hashtags.append("playback\(year)")
         }
@@ -25,7 +20,7 @@ class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @
     }
 
     var shareableLink: String {
-        return [shortenedURL, longURL, podcastListURL].compactMap { $0 }.first ?? pocketCastsUrl
+        longURL ?? ""
     }
 
     init(_ text: String, year: EndOfYear.Year) {
@@ -39,7 +34,6 @@ class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @
         self.year = year
         super.init(placeholderItem: self.text)
         self.longURL = podcast.shareURL
-        requestShortenedURL()
     }
 
     init(_ text: String, episode: Episode, year: EndOfYear.Year) {
@@ -47,15 +41,12 @@ class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @
         self.year = year
         super.init(placeholderItem: self.text)
         self.longURL = episode.shareURL
-        requestShortenedURL()
     }
 
     init(_ text: String, podcasts: [Podcast], year: EndOfYear.Year) {
         self.text = text
         self.year = year
         super.init(placeholderItem: self.text)
-        podcastListURL = ""
-        createList(from: podcasts)
     }
 
     override func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
@@ -94,51 +85,10 @@ class StoryShareableText: UIActivityItemProvider, ShareableMetadataDataSource, @
         }
 
         if let longURL {
-            let url = showLinks ? (shortenedURL ?? longURL) : ""
-            return String(format: text, url)
+            return String(format: text, showLinks ? longURL : "")
         }
 
-        if let podcastListURL {
-            return String(format: text, showLinks ? podcastListURL : "")
-        }
-
-        return "\(text)" + (showLinks ? " \(pocketCastsUrl)" : "")
-    }
-
-    private func requestShortenedURL() {
-        guard let longURL, let url = URL(string: longURL) else {
-            return
-        }
-
-        let task = URLSession(configuration: .default, delegate: self, delegateQueue: nil).dataTask(with: url) { _, _, _ in }
-
-        task.resume()
-    }
-
-    private func createList(from podcasts: [Podcast]) {
-        if let shareUrl = Settings.top5PodcastsListLink {
-            podcastListURL = shareUrl
-            return
-        }
-
-        let listInfo = SharingServerHandler.PodcastShareInfo(title: L10n.eoyStoryTopPodcastsListTitle, description: "", podcasts: podcasts.map { $0.uuid })
-        SharingServerHandler.shared.sharePodcastList(listInfo: listInfo) { [weak self] shareUrl in
-            DispatchQueue.main.async {
-                if let shareUrl {
-                    Settings.top5PodcastsListLink = shareUrl
-                    self?.podcastListURL = shareUrl
-                }
-            }
-        }
-    }
-}
-
-extension StoryShareableText: URLSessionDelegate, URLSessionTaskDelegate {
-    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
-        // Stops the redirection, and returns (internally) the response body.
-        completionHandler(nil)
-        if let url = request.url?.absoluteString {
-            shortenedURL = url
-        }
+        // The top podcasts text has a slot for a link to the list, which there is nowhere to publish
+        return String(format: text, "").trim()
     }
 }

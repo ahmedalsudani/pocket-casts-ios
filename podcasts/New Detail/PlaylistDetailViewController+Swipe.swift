@@ -41,10 +41,6 @@ extension PlaylistDetailViewController: SwipeTableViewCellDelegate, SwipeHandler
 
     // MARK: - SwipeActionsHandler
 
-    var swipeSource: String {
-        "filters"
-    }
-
     var swipeSourceType: SwipeSourceType {
         viewModel.isManualPlaylist ? .manualPlaylistDetail : .smartPlaylistDetail
     }
@@ -76,8 +72,6 @@ extension PlaylistDetailViewController: SwipeTableViewCellDelegate, SwipeHandler
     }
 
     func removeFromManualPlaylist(episode: PocketCastsDataModel.Episode, at: IndexPath) {
-        track(episode: episode, added: false, to: viewModel.playlist, source: "swipe_remove")
-
         viewModel.delete(episodes: [episode.uuid])
         viewModel.reloadEpisodeList()
     }

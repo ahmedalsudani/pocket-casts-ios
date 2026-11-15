@@ -54,7 +54,6 @@ struct EpilogueStory2025: StoryView {
             Spacer()
             Button(L10n.eoyStoryReplay) {
                 StoriesController.shared.replay()
-                Analytics.track(.endOfYearStoryReplayButtonTapped, properties: ["current_year": "2025"])
             }
             .buttonStyle(BasicButtonStyle(textColor: .black, backgroundColor: foregroundColor))
             .allowsHitTesting(true)
@@ -79,10 +78,6 @@ struct EpilogueStory2025: StoryView {
             self.offset = 30
             self.opacity = 0
         }
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
     }
 }
 

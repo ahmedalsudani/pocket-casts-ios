@@ -82,9 +82,7 @@ class FloatingVideoView: UIView {
         ])
         shadowView.anchorToAllSidesOf(view: videoView)
 
-        #if !APPCLIP
             setupFullScreenButton()
-        #endif
     }
 
     private func updateVideoViewSize() {
@@ -101,7 +99,6 @@ class FloatingVideoView: UIView {
         videoHeightConstraint.constant = fittedSize.height
     }
 
-    #if !APPCLIP
         private lazy var fullScreenButton: UIButton = {
             let button = UIButton(type: .system)
             button.setImage(UIImage(named: "fullscreen-video"), for: .normal)
@@ -143,5 +140,4 @@ class FloatingVideoView: UIView {
         @objc private func fullScreenButtonTapped() {
             onFullScreenTapped?()
         }
-    #endif
 }

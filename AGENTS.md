@@ -6,7 +6,7 @@ When the `xcode` MCP server is available, prefer it for building, testing, runni
 make build_staging
 make test_staging  # PocketCastsTests only, not the module tests
 make test_staging ONLY_TESTING=PocketCastsTests/YourTestClass/testMethodName
-make test_staging ONLY_TESTING=PocketCastsDataModelTests  # or PocketCastsServerTests, PocketCastsUtilsTests, PocketCastsAnalyticsTests
+make test_staging ONLY_TESTING=PocketCastsDataModelTests  # or PocketCastsServerTests, PocketCastsUtilsTests
 ```
 
 ## Formatting
@@ -16,14 +16,13 @@ In Claude Code, a hook (`.claude/hooks/swiftlint.sh`) autocorrects each edited S
 ## Architecture
 
 - `podcasts/`: the iOS app, a UIKit and SwiftUI hybrid with XIBs and storyboards, organized by feature. CarPlay lives in `podcasts/CarPlay/`.
-- Other targets: `Pocket Casts Watch App/`, `Pocket Casts TV App/`, `Pocket Casts App Clip/`, `WidgetExtension/`, `Share Extension/`.
+- Other targets: `Pocket Casts Watch App/` (driven by the phone), `WidgetExtension/`, `PodcastsIntents/` and `PodcastsIntentsUI/` (Siri), `NotificationContent/` (expanded new-episode notifications), `Share Extension/`.
 - `PocketCastsTests/`: app unit tests.
 - `BuildTools/`: pins the SwiftLint and SwiftGen versions.
 - `Modules/Package.swift`: a single Swift package, with targets in `Modules/Sources/` and tests in `Modules/Tests/`:
   - **PocketCastsDataModel**: GRDB persistence. All data access goes through `DataManager.shared` (`Public/DataManager.swift`).
-  - **PocketCastsServer**: the API client, using Protocol Buffers.
+  - **PocketCastsServer**: the on-device feed engine (`Public/Refresh/LocalFeedService.swift` fetches and parses RSS feeds, `RefreshManager` drives refreshes) and podcast search through the iTunes Search API (`Public/Search/iTunesSearchService.swift`).
   - **PocketCastsUtils**: shared utilities.
-  - **PocketCastsAnalytics**: `Analytics`, the Tracks and logging adapters, and the A/B test provider. Add new events to `AnalyticsEvent.swift`.
 
 ## Localization
 
@@ -46,11 +45,3 @@ For RTL support, use `.natural` text alignment and `naturalContentHorizontalAlig
 
 - In SwiftUI, use `@EnvironmentObject private var theme: Theme`, inject `.environmentObject(Theme.shared)` where the view is used, and read colors with `AppTheme.color(for: .primaryText01, theme: theme)`.
 - `ThemeColor.swift` and `ThemeStyle.swift` are generated. Edit `scripts/themes/theme.csv`, then run `make generate_colors`.
-
-## Protocol Buffers
-
-After API changes, regenerate the server objects (the script installs `protobuf` and `swift-protobuf` with Homebrew):
-
-```bash
-make update_proto API_PATH=/path/to/pocketcasts-api/api/modules/protobuf/src/main/proto
-```

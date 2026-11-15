@@ -86,11 +86,4 @@ enum ExplicitBadgeHelper {
 
         return result
     }
-
-    static func accessibilityTitle(_ title: String) -> String {
-        guard FeatureFlag.showExplicitBadges.enabled else {
-            return title
-        }
-        return [title, L10n.podcastExplicitContent].joined(separator: ", ")
-    }
 }

@@ -185,23 +185,6 @@ public struct BookmarkDataManager {
         return count
     }
 
-    // MARK: - Syncing
-
-    /// Returns all the bookmarks in the database that have the syncStatus of `notSynced`
-    public func bookmarksToSync() -> [Bookmark] {
-        selectBookmarks(where: [.syncStatus], values: [SyncStatus.notSynced.rawValue], allowDeleted: true)
-    }
-
-    @discardableResult
-    public func markAllBookmarksAsSynced() async -> Bool {
-        let query = """
-        UPDATE \(Self.tableName)
-        SET \(Column.syncStatus) = ?
-        """
-
-        return executeUpdate(query, values: [SyncStatus.synced.rawValue], context: "markAllBookmarksAsSynced")
-    }
-
     // MARK: - Deleting
 
     /// Marks the bookmarks as deleted, but doesn't actually remove them from the database

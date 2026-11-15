@@ -1,5 +1,4 @@
 import SwiftUI
-import PocketCastsServer
 import EndOfYear
 
 struct StoryHeader2025: View {
@@ -9,22 +8,16 @@ struct StoryHeader2025: View {
 
     let title: String?
     let description: String?
-    let subscriptionTier: SubscriptionTier?
     let topPadding: CGFloat?
 
-    init(title: String? = nil, description: String? = nil, subscriptionTier: SubscriptionTier? = nil, topPadding: CGFloat? = nil) {
+    init(title: String? = nil, description: String? = nil, topPadding: CGFloat? = nil) {
         self.title = title
         self.description = description
-        self.subscriptionTier = subscriptionTier
         self.topPadding = topPadding
     }
 
     var body: some View {
         VStack(spacing: 8) {
-            if let subscriptionTier {
-                SubscriptionBadge2025(subscriptionTier: subscriptionTier)
-                    .padding(.bottom, 8)
-            }
             if let title {
                 Text(title)
                     .font(size: 25, style: .title, weight: .semibold)
@@ -65,8 +58,6 @@ struct StoryHeader2025_Previews: PreviewProvider {
         VStack {
             StoryHeader2025(title: "This is the title")
             StoryHeader2025(title: "This is the title", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-            StoryHeader2025(title: "This is the title", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", subscriptionTier: .plus)
-            StoryHeader2025(title: "This is the title", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", subscriptionTier: .patron)
             Spacer()
         }
         .padding(.horizontal, 24)

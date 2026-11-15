@@ -14,15 +14,6 @@ extension View {
     }
 }
 
-// MARK: - Global Functions
-
-/// A drop in replacement for `withAnimation` to automatically support the reduced animation accessibility setting
-/// If the user has the setting enabled, the animation will be set to none
-///
-public func withAccessibilityAnimation<Result>(_ animation: Animation? = .default, _ body: () throws -> Result) rethrows -> Result {
-    return try withAnimation(UIAccessibility.isReduceMotionEnabled ? .none : animation, body)
-}
-
 // MARK: - Internal View Modifiers
 
 /// If the user has the Reduce Motion setting enabled the transition will be ignored

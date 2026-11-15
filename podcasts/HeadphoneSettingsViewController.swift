@@ -1,4 +1,3 @@
-import Combine
 import UIKit
 
 class HeadphoneSettingsViewController: PCTableViewController {
@@ -9,13 +8,11 @@ class HeadphoneSettingsViewController: PCTableViewController {
 
     private var visibleSections: [TableSection] = []
     private let bookmarksManager = BookmarkManager()
-    private var cancellables = Set<AnyCancellable>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = L10n.settingsHeadphoneControls
-        Analytics.track(.settingsHeadphoneControlsShown)
     }
 
     override var customCellTypes: [ReusableTableCell.Type] {
@@ -111,7 +108,6 @@ class HeadphoneSettingsViewController: PCTableViewController {
 
     private func updateBookmarkSoundEnabled(_ enabled: Bool) {
         Settings.playBookmarkCreationSound = enabled
-        Settings.trackValueToggled(.settingsHeadphoneControlsBookmarkSoundToggled, enabled: enabled)
 
         // Play a preview of the sound if the user has enabled the option
         if enabled {
@@ -122,39 +118,17 @@ class HeadphoneSettingsViewController: PCTableViewController {
     // MARK: - Headphone Option
 
     private func headphoneOptionChanged(to selection: HeadphoneControlAction, for row: TableSection.Row) {
-        // Store the setting action as a closure to be able to finish setting the value after the purchase
-        let action = { [weak self] in
-            switch row {
-            case .previousAction:
-                Settings.trackValueChanged(.settingsHeadphoneControlsPreviousChanged, value: selection)
-                Settings.headphonesPreviousAction = selection
+        switch row {
+        case .previousAction:
+            Settings.headphonesPreviousAction = selection
 
-            case .nextAction:
-                Settings.trackValueChanged(.settingsHeadphoneControlsNextChanged, value: selection)
-                Settings.headphonesNextAction = selection
+        case .nextAction:
+            Settings.headphonesNextAction = selection
 
-            default: break
-            }
-
-            self?.reloadData()
+        default: break
         }
 
-        // Show the upsell if needed
-        selection.isUnlocked ? action() : showUpsell(for: selection, unlocked: action)
-    }
-
-    private func showUpsell(for selection: HeadphoneControlAction, unlocked: @escaping () -> Void) {
-        guard let feature = selection.paidFeature else { return }
-
-        // If the feature is unlocked, then finish updating the setting they were trying to change to
-        // This will only fire once, and only if the feature is unlocked.
-        feature.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .first(where: { feature.isUnlocked })
-            .sink { unlocked() }
-            .store(in: &cancellables)
-
-        feature.presentUpgradeController(from: self, source: .headphoneSettings)
+        reloadData()
     }
 
     // MARK: - Data Struct
@@ -203,7 +177,7 @@ private extension HeadphoneSettingsViewController {
     private func showPicker(_ title: String, _ options: [HeadphoneControlAction], currentValue: HeadphoneControlAction, onChange: @escaping ((HeadphoneControlAction) -> Void)) {
         let picker = OptionsPicker(title: title)
         picker.addActions(options.map { option in
-            OptionAction(label: option.displayableTitle, icon: option.iconName, tintIcon: false, selected: currentValue == option) {
+            OptionAction(label: option.displayableTitle, selected: currentValue == option) {
                 onChange(option)
             }
         })
@@ -227,9 +201,5 @@ private extension HeadphoneControlAction {
         case .addBookmark:
             return L10n.addBookmark
         }
-    }
-
-    var iconName: String? {
-        isUnlocked ? nil : "plusGold24"
     }
 }

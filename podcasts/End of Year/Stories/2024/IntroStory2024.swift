@@ -42,10 +42,6 @@ struct IntroStory2024: StoryView {
         .background(backgroundColor)
         .enableProportionalValueScaling()
     }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
 }
 
 struct InfiniteScrollingView<Content: View>: View {

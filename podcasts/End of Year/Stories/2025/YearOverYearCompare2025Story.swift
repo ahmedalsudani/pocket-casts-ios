@@ -8,10 +8,8 @@ struct YearOverYearCompare2025Story: ShareableStory {
     @Environment(\.renderForSharing) var renderForSharing: Bool
     @Environment(\.animated) var animated: Bool
 
-    let subscriptionTier: SubscriptionTier
     let listeningTime: YearOverYearListeningTime
 
-    let plusOnly = true
     let identifier: String = "year_over_year"
 
     private let foregroundColor = Color.white
@@ -43,17 +41,8 @@ struct YearOverYearCompare2025Story: ShareableStory {
         let content = headerContent
         StoryHeader2025(
             title: content.title,
-            description: content.description,
-            subscriptionTier: subscriptionTier
+            description: content.description
         )
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
     }
 
     func sharingAssets() -> [Any] {
@@ -187,21 +176,21 @@ fileprivate class MyFontProvider: AnimationFontProvider {
 }
 
 #Preview("Down") {
-    YearOverYearCompare2025Story(subscriptionTier: .plus, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 968*60*60, totalPlayedTimeLastYear: 1191*60*60))
+    YearOverYearCompare2025Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 968*60*60, totalPlayedTimeLastYear: 1191*60*60))
         .body.environment(\.animated, false)
 }
 
 #Preview("Up") {
-    YearOverYearCompare2025Story(subscriptionTier: .patron, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 203360, totalPlayedTimeLastYear: 173734))
+    YearOverYearCompare2025Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 203360, totalPlayedTimeLastYear: 173734))
         .body.environment(\.animated, false)
 }
 
 #Preview("Up - Max") {
-    YearOverYearCompare2025Story(subscriptionTier: .plus, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 300000, totalPlayedTimeLastYear: 20000))
+    YearOverYearCompare2025Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 300000, totalPlayedTimeLastYear: 20000))
         .body.environment(\.animated, false)
 }
 
 #Preview("Same") {
-    YearOverYearCompare2025Story(subscriptionTier: .patron, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 30000, totalPlayedTimeLastYear: 30000))
+    YearOverYearCompare2025Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 30000, totalPlayedTimeLastYear: 30000))
         .body.environment(\.animated, false)
 }

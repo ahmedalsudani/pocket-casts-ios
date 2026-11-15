@@ -10,12 +10,10 @@ enum PlaybackActionHelper {
 
         AutoplayHelper.shared.playedFrom(playlist: playlist)
 
-        #if !os(tvOS)
         if GoogleCastManager.shared.connectedOrConnectingToDevice() {
             PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
             return
         }
-        #endif
 
         if !episode.downloaded(pathFinder: DownloadManager.shared) {
             NetworkUtils.shared.streamEpisodeRequested({
@@ -37,8 +35,6 @@ enum PlaybackActionHelper {
     }
 
     static func download(episodeUuid: String) {
-        AnalyticsEpisodeHelper.shared.downloaded(episodeUUID: episodeUuid)
-
         NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { later in
             if later {
                 DownloadManager.shared.queueForLaterDownload(episodeUuid: episodeUuid, fireNotification: true, autoDownloadStatus: .notSpecified)
@@ -50,8 +46,6 @@ enum PlaybackActionHelper {
 
     static func stopDownload(episodeUuid: String) {
         DownloadManager.shared.removeFromQueue(episodeUuid: episodeUuid, fireNotification: true, userInitiated: true)
-
-        AnalyticsEpisodeHelper.shared.downloadCancelled(episodeUUID: episodeUuid)
     }
 
     static func overrideWaitingForWifi(episodeUuid: String, autoDownloadStatus: AutoDownloadStatus) {
@@ -64,43 +58,23 @@ enum PlaybackActionHelper {
         }, disallowed: nil)
     }
 
-    static func upload(episodeUuid: String) {
-        NetworkUtils.shared.uploadEpisodeRequested({ later in
-            if later {
-                UploadManager.shared.queueForLaterUpload(episodeUuid: episodeUuid, fireNotification: true)
-            } else {
-                UploadManager.shared.addToQueue(episodeUuid: episodeUuid)
-            }
-        }, disallowed: nil)
-
-        AnalyticsEpisodeHelper.shared.episodeUploaded(episodeUUID: episodeUuid)
-    }
-
-    static func stopUpload(episodeUuid: String) {
-        UploadManager.shared.removeFromQueue(episodeUuid: episodeUuid, fireNotification: true)
-        AnalyticsEpisodeHelper.shared.episodeUploadCancelled(episodeUUID: episodeUuid)
-    }
-
     private static func performPlay(episode: BaseEpisode, playlistUuid: String? = nil, podcastUuid: String? = nil) {
         if PlaybackManager.shared.isCurrentEpisode(uuid: episode.uuid) {
             PlaybackManager.shared.play()
         } else {
             if episode.archived, let episode = episode as? Episode {
-                DataManager.shared.saveEpisode(archived: false, episode: episode, updateSyncFlag: SyncManager.isUserLoggedIn())
+                DataManager.shared.saveEpisode(archived: false, episode: episode, updateSyncFlag: false)
             }
 
             if episode is Episode { // only record play stats for Episodes, not UserEpisodes
-                AnalyticsHelper.playedEpisode()
             }
 
             PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
         }
-        #if !os(tvOS)
         if let playlistUuid {
             SiriShortcutsManager.shared.donatePlaylistPlayed(playlistUuid: playlistUuid)
         } else if let podcastUuid {
             SiriShortcutsManager.shared.donatePodcastPlayed(podcastUuid: podcastUuid)
         }
-        #endif
     }
 }

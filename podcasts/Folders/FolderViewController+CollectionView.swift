@@ -56,7 +56,7 @@ extension FolderViewController: UICollectionViewDelegate, UICollectionViewDataSo
 
         guard let podcast = podcasts[safe: indexPath.row] else { return }
 
-        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast, NavigationManager.podcastSourceKey: PodcastScreenSource.podcastList])
+        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
     }
 
     // MARK: - Row Sizing

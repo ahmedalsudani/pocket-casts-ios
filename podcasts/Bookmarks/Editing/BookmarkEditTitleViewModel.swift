@@ -24,8 +24,6 @@ class BookmarkEditTitleViewModel: ObservableObject {
     private let bookmarkManager: BookmarkManager
     private let bookmark: Bookmark
 
-    var analyticsSource: BookmarkAnalyticsSource = .unknown
-
     init(manager: BookmarkManager, bookmark: Bookmark, state: EditState) {
         self.bookmarkManager = manager
         self.bookmark = bookmark
@@ -59,10 +57,6 @@ class BookmarkEditTitleViewModel: ObservableObject {
             let title = String(title.trim().prefix(maxTitleLength))
 
             await bookmarkManager.update(.init(title: title.isEmpty ? placeholder : title), for: bookmark)
-
-            if editState == .updating {
-                Analytics.track(.bookmarkUpdateTitle, source: analyticsSource)
-            }
 
             await MainActor.run {
                 router?.titleUpdated(title: title)

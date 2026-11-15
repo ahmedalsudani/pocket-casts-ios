@@ -35,10 +35,6 @@ extension DownloadsViewController: SwipeTableViewCellDelegate, SwipeHandler {
 
     // MARK: - SwipeActionsHandler
 
-    var swipeSource: String {
-        "downloads"
-    }
-
     var swipeSourceType: SwipeSourceType {
         .downloads
     }

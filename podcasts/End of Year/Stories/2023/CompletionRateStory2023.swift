@@ -6,10 +6,6 @@ import EndOfYear
 struct CompletionRateStory2023: ShareableStory {
     let identifier: String = "completion_rate"
 
-    let plusOnly = true
-
-    let subscriptionTier: SubscriptionTier
-
     let startedAndCompleted: EpisodesStartedAndCompleted
 
     var percentageToDisplay: String {
@@ -20,7 +16,6 @@ struct CompletionRateStory2023: ShareableStory {
         GeometryReader { geometry in
             PodcastCoverContainer(geometry: geometry) {
                 StoryLabelContainer(geometry: geometry) {
-                    SubscriptionBadge(tier: subscriptionTier, displayMode: .gradient, foregroundColor: .black)
                     StoryLabel(L10n.eoyYearCompletionRateTitle(percentageToDisplay), for: .title, geometry: geometry)
                     StoryLabel(L10n.eoyYearCompletionRateSubtitle(startedAndCompleted.started, startedAndCompleted.completed), for: .subtitle, color: Color(hex: "8F97A4"), geometry: geometry)
                 }
@@ -90,14 +85,6 @@ struct CompletionRateStory2023: ShareableStory {
         }
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
-    }
-
     func sharingAssets() -> [Any] {
         [
             StoryShareableProvider.new(AnyView(self)),
@@ -114,16 +101,16 @@ private extension Double {
 
 struct CompletionRateStory2023_Previews: PreviewProvider {
     static var previews: some View {
-        CompletionRateStory2023(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 10))
+        CompletionRateStory2023(startedAndCompleted: .init(started: 100, completed: 10))
             .previewDisplayName("10%")
 
-        CompletionRateStory2023(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 30))
+        CompletionRateStory2023(startedAndCompleted: .init(started: 100, completed: 30))
             .previewDisplayName("30%")
 
-        CompletionRateStory2023(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 70))
+        CompletionRateStory2023(startedAndCompleted: .init(started: 100, completed: 70))
             .previewDisplayName("70%")
 
-        CompletionRateStory2023(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 100))
+        CompletionRateStory2023(startedAndCompleted: .init(started: 100, completed: 100))
             .previewDisplayName("100%")
     }
 }

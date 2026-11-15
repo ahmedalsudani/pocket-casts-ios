@@ -3,29 +3,6 @@ import PocketCastsDataModel
 import PocketCastsUtils
 import CoreMedia
 
-enum ChapterOrigin {
-    case podcastIndex
-    case nativeMedia
-    case generated
-    case showNotes
-    case unknown
-
-    var analyticsDescription: String {
-        switch self {
-        case .generated:
-            "generated"
-        case .nativeMedia:
-            "native_media"
-        case .showNotes:
-            "show_notes"
-        case .podcastIndex:
-            "podcast_index"
-        case .unknown:
-            "unknown"
-        }
-    }
-}
-
 class ChapterManager {
     private var chapterParser = PodcastChapterParser()
     private var showInfoCoordinator: ShowInfoCoordinating
@@ -39,8 +16,6 @@ class ChapterManager {
     private var lastEpisodeUuid = ""
 
     var currentChapters = Chapters()
-
-    var chaptersOrigin: ChapterOrigin = .unknown
 
     private var playableChapters: [ChapterInfo] {
         visibleChapters.filter { $0.isPlayable() }
@@ -144,21 +119,20 @@ class ChapterManager {
         // Parse chapters from the file and request external chapters
         async let fileChaptersAsync = loadChapters(for: episode, duration: duration)
 
-        async let (podloveChaptersAsync, podcastIndexChaptersAsync, generatedChaptersAsync) = await
+        async let (podloveChaptersAsync, podcastIndexChaptersAsync) = await
         showInfoCoordinator.loadChapters(podcastUuid: episode.parentIdentifier(), episodeUuid: episode.uuid)
 
         var chapters: [ChapterInfo]
 
         do {
-            let (fileChapters, podloveChapters, podcastIndexChapters, generatedChapters) = try await (fileChaptersAsync, podloveChaptersAsync, podcastIndexChaptersAsync, generatedChaptersAsync)
+            let (fileChapters, podloveChapters, podcastIndexChapters) = try await (fileChaptersAsync, podloveChaptersAsync, podcastIndexChaptersAsync)
 
             // Prioritize embedded chapters, given for some shows it will take
             // into account dynamic ads
             if !fileChapters.isEmpty {
                 chapters = fileChapters
                 FileLog.shared.addMessage("ChapterManager: using file chapters")
-                chaptersOrigin = .nativeMedia
-            } else if let externalChapters = parseExternalChapters(podlove: podloveChapters, podcastIndex: podcastIndexChapters, generated: generatedChapters, duration: duration) {
+            } else if let externalChapters = parseExternalChapters(podlove: podloveChapters, podcastIndex: podcastIndexChapters, duration: duration) {
                 chapters = externalChapters
                 FileLog.shared.addMessage("ChapterManager: using external chapters")
             } else {
@@ -185,23 +159,15 @@ class ChapterManager {
         return []
     }
 
-    private func parseExternalChapters(podlove: [Episode.Metadata.EpisodeChapter]?, podcastIndex: [PodcastIndexChapter]?, generated: [GeneratedChapter]?, duration: TimeInterval) -> [ChapterInfo]? {
+    private func parseExternalChapters(podlove: [Episode.Metadata.EpisodeChapter]?, podcastIndex: [PodcastIndexChapter]?, duration: TimeInterval) -> [ChapterInfo]? {
         if let podcastIndex {
-            chaptersOrigin = .podcastIndex
             return chapterParser.parsePodcastIndexChapters(podcastIndex, episodeDuration: duration)
         }
 
         if let podlove {
-            chaptersOrigin = .showNotes
             return chapterParser.parsePodloveChapters(podlove, episodeDuration: duration)
         }
 
-        if let generated {
-            chaptersOrigin = .generated
-            return chapterParser.parseGeneratedChapters(generated, episodeDuration: duration)
-        }
-
-        chaptersOrigin = .unknown
         return nil
     }
 
@@ -219,10 +185,6 @@ class ChapterManager {
 
     /// How much of the episode after `time` falls in deselected chapters, which playback skips.
     func deselectedDuration(after time: TimeInterval) -> TimeInterval {
-        #if APPCLIP
-        // The App Clip treats every chapter as unplayable, so it has nothing to subtract.
-        return 0
-        #else
         let ranges = visibleChapters
             .filter { !$0.isPlayable() }
             .map { (start: max(time, $0.startTime.seconds), end: $0.startTime.seconds + $0.duration) }
@@ -238,11 +200,6 @@ class ChapterManager {
         }
 
         return total
-        #endif
-    }
-
-    var chaptersAnalyticsProperties: [String: Any] {
-        return ["origin": chaptersOrigin.analyticsDescription]
     }
 
     private func handleChaptersLoaded(_ chapters: [ChapterInfo], for episode: BaseEpisode) {

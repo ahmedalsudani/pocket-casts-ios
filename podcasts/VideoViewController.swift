@@ -120,19 +120,11 @@ class VideoViewController: SimpleNotificationsViewController, AVPictureInPicture
         }
     }
 
-    #if APPCLIP
-    @IBOutlet var castButton: UIButton! {
-        didSet {
-            castButton.tintColor = controlsTintColor
-        }
-    }
-    #else
     @IBOutlet var castButton: PCGoogleCastButton! {
         didSet {
             castButton.tintColor = controlsTintColor
         }
     }
-    #endif
 
     private var pipController: AVPictureInPictureController?
     @IBOutlet var controlsOverlay: UIView! {
@@ -236,7 +228,6 @@ class VideoViewController: SimpleNotificationsViewController, AVPictureInPicture
         let options = OptionsPicker(title: nil, themeOverride: .dark)
 
         let markPlayedOption = OptionAction(label: L10n.markPlayedShort, icon: nil) {
-            AnalyticsEpisodeHelper.shared.currentSource = .videoPlayerSkipForwardLongPress
             EpisodeManager.markAsPlayed(episode: episode, fireNotification: true)
         }
         options.addAction(action: markPlayedOption)

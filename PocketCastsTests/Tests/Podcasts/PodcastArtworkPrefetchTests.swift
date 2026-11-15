@@ -1,4 +1,5 @@
 import Kingfisher
+import PocketCastsServer
 import UIKit
 import XCTest
 @testable import podcasts
@@ -9,7 +10,9 @@ final class PodcastArtworkPrefetchTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        podcastUuid = UUID().uuidString.lowercased()
+        // Artwork is loaded from the URL the podcast's feed gives, so the podcast needs one
+        let feedId = UUID().uuidString.lowercased()
+        podcastUuid = DiscoveredPodcasts.shared.add(feedUrl: "https://example.com/\(feedId)/feed.xml", artworkUrl: "https://example.com/\(feedId)/artwork.png")
         originalSessionConfiguration = ImageDownloader.default.sessionConfiguration
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [ArtworkURLProtocol.self]
@@ -26,7 +29,8 @@ final class PodcastArtworkPrefetchTests: XCTestCase {
 
     func testSavesArtworkToDiskWhenAnotherCacheHasItInMemory() {
         let url = ImageManager.shared.podcastUrl(imageSize: .list, uuid: podcastUuid)
-        ImageManager.shared.discoverCache.store(ArtworkURLProtocol.image, forKey: url.cacheKey, toDisk: false)
+        let otherCache = ImageManager.makeCache(name: "PodcastArtworkPrefetchTests")
+        otherCache.store(ArtworkURLProtocol.image, forKey: url.cacheKey, toDisk: false)
 
         ImageManager.shared.cacheImages(podcastUuid: podcastUuid)
 

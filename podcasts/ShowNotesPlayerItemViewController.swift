@@ -178,7 +178,7 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, @preconcurren
                 self?.displayShowNotes(showNotes, shouldResetScrollOffset: shouldResetScrollOffset)
 
                 // if we get back the no show notes available message, make sure next update we try again
-                if showNotes == CacheServerHandler.noShowNotesMessage {
+                if showNotes == ShowInfoCoordinator.noShowNotesMessage {
                     self?.lastEpisodeUuidRendered = ""
                 }
             }
@@ -247,8 +247,6 @@ class ShowNotesPlayerItemViewController: PlayerItemViewController, @preconcurren
                 safariViewController?.delegate = self
 
                 SceneHelper.rootViewController()?.present(safariViewController!, animated: true, completion: nil)
-
-                Analytics.track(.playerShowNotesLinkTapped, properties: ["episode_uuid": lastEpisodeUuidRendered])
             } else if URLHelper.isMailtoScheme(url.scheme), UIApplication.shared.canOpenURL(url) {
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)
             }

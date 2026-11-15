@@ -95,7 +95,7 @@ extension ListeningHistoryViewController: UITableViewDelegate, UITableViewDataSo
             tableView.deselectRow(at: indexPath, animated: true)
 
             if let parentPodcast = episode.parentPodcast() {
-                let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast, source: .listeningHistory)
+                let episodeController = EpisodeDetailViewController(episodeUuid: episode.uuid, podcast: parentPodcast)
                 episodeController.modalPresentationStyle = .formSheet
                 present(episodeController, animated: true, completion: nil)
             }

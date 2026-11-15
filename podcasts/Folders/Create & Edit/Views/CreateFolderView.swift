@@ -58,7 +58,6 @@ struct CreateFolderView: View {
             if let uuid = preselectPodcastUuid {
                 pickerModel.selectedPodcastUuids.append(uuid)
             }
-            Analytics.track(.folderCreateShown, properties: ["source": analyticsSource])
         }
         .onDisappear {
             model.selectedPodcastUuids = pickerModel.selectedPodcastUuids
@@ -107,10 +106,6 @@ struct CreateFolderView: View {
             }
     }
 
-    /// From when the flow was initiated
-    var analyticsSource: AnalyticsSource {
-        preselectPodcastUuid != nil ? .chooseFolder : .podcastsList
-    }
 }
 
 struct CreateFolderView_Previews: PreviewProvider {

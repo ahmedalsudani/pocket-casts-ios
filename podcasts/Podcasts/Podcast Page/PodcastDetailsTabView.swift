@@ -12,7 +12,6 @@ struct PodcastDetailsTabView: View {
     enum Tab {
         case episodes
         case bookmarks
-        case youMightLike
 
         init(from viewMode: PodcastViewController.ViewMode) {
             switch viewMode {
@@ -20,24 +19,15 @@ struct PodcastDetailsTabView: View {
                 self = .episodes
             case .bookmarks:
                 self = .bookmarks
-            case .youMightLike:
-                self = .youMightLike
             }
         }
     }
 
     var body: some View {
-        Group {
-            if FeatureFlag.recommendations.enabled {
-                ScrollView(.horizontal, showsIndicators: false) { tabs }
-                    .scrollClipDisabled()
-            } else {
-                tabs
+        tabs
+            .onReceive(delegate?.currentViewModePublisher ?? Just(.episodes).eraseToAnyPublisher()) { viewMode in
+                selectedTab = Tab(from: viewMode)
             }
-        }
-        .onReceive(delegate?.currentViewModePublisher ?? Just(.episodes).eraseToAnyPublisher()) { viewMode in
-            selectedTab = Tab(from: viewMode)
-        }
     }
 
     @ViewBuilder var tabs: some View {
@@ -59,16 +49,6 @@ struct PodcastDetailsTabView: View {
                 } customize: { config in
                     config.label
                         .applyStyle(theme: theme, highlighted: selectedTab == .bookmarks)
-                        .applyButtonEffect(isPressed: config.isPressed)
-                }
-
-            Text(L10n.youMightLike)
-                .buttonize {
-                    selectedTab = .youMightLike
-                    delegate?.showYouMightLike()
-                } customize: { config in
-                    config.label
-                        .applyStyle(theme: theme, highlighted: selectedTab == .youMightLike)
                         .applyButtonEffect(isPressed: config.isPressed)
                 }
 

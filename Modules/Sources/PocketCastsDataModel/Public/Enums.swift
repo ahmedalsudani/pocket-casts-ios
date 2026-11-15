@@ -67,18 +67,6 @@ public enum PlaylistSort: Int32 {
     case newestToOldest = 0, oldestToNewest = 1, shortestToLongest = 2, longestToShortest = 3, dragAndDrop = 4
 }
 
-public struct EpisodeBasicData {
-    public init() {}
-
-    public var uuid: String?
-    public var duration: Int?
-    public var playingStatus: Int?
-    public var playedUpTo: Int?
-    public var isArchived: Bool?
-    public var starred: Bool?
-    public var deselectedChapters: String?
-}
-
 public enum LibrarySort: Int32, CaseIterable, Codable {
     case dateAddedNewestToOldest = 0, titleAtoZ = 1, episodeDateNewestToOldest = 2, custom = 3, recentlyPlayed = 4
 }

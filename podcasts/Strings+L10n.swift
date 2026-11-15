@@ -5,55 +5,8 @@ extension L10n {
     // MARK: Proper Nouns
 
     /// These strings are proper nouns and shouldn't be localized
-    static let appleWatch = "Apple Watch"
     static let pocketCasts = "Pocket Casts"
     static let pocketCastsShort = "Casts"
-    static let xCom = "X"
-    static let instagram = "Instagram"
-    static let bluesky = "Bluesky"
-    static let socialHandle = "@pocketcasts"
-    static let blueskyHandle = "@pocketcasts.com"
-    static let websiteShort = "pocketcasts.com"
-
-    // MARK: Support
-
-    /// These items are intentionally left un-localized to help enforce the expectation that we only provide support in English at this time.
-    ///
-
-    /* Subject label for a support request (instead of providing feedback) */
-    static let support = "Support"
-
-    /* Subject label for a request that suggests a new feature (instead of asking for support) */
-    static let supportFeedback = "Feedback"
-
-    /* Line in the support email body, below the space for the customer's message and above the device details. */
-    static let supportEmailDetailsPrompt = "Please write your message above this line. The details below help our team look into your request."
-
-    /* Activity message shown while the support email and its logs are prepared. */
-    static let supportPreparingEmail = "Preparing email..."
-
-    /* Title of the sheet shown when no email app can open the support email. */
-    static let supportNoEmailAppTitle = "No email app found"
-
-    /* Message of the sheet shown when no email app can open the support email. The parameter is the support email address. */
-    static func supportNoEmailAppMessage(_ address: String) -> String {
-        "Please email us at \(address) from any email app. Copy the address into the To field, then copy the email into your message. It includes your device details and the IDs of your logs."
-    }
-
-    /* Button that copies the whole support email: address, subject and body. */
-    static let supportCopyEmail = "Copy Email"
-
-    /* Button title after the whole support email is copied. */
-    static let supportEmailCopied = "Email Copied"
-
-    /* Button that copies the support email address. */
-    static let supportCopyEmailAddress = "Copy Email Address"
-
-    /* Button title after the support email address is copied. */
-    static let supportEmailAddressCopied = "Email Address Copied"
-
-    /* Prompt to submit a service request. */
-    static let supportSubmit = "Submit"
 
     // MARK: Helper Functions
 

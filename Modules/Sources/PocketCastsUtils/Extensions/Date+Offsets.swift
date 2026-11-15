@@ -11,8 +11,4 @@ public extension Date {
 
         return date!
     }
-
-    func sevenDaysAgo() -> Date? {
-        Calendar.current.date(byAdding: .day, value: -7, to: self)
-    }
 }

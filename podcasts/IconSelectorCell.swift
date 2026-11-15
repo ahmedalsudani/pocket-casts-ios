@@ -1,12 +1,10 @@
-import PocketCastsServer
 import UIKit
 
 protocol IconSelectorCellDelegate: AnyObject {
     func changeIcon(icon: IconType)
-    func iconSelectorPresentingVC() -> UIViewController
 }
 
-enum IconType: Int, CaseIterable, AnalyticsDescribable {
+enum IconType: Int, CaseIterable {
     case primary, dark, roundLight, roundDark, indigo
     case rose, pocketCats, redVelvet, pride, plus, classic, electricBlue
     case electricPink, radioactivity, halloween
@@ -18,9 +16,7 @@ enum IconType: Int, CaseIterable, AnalyticsDescribable {
     }
 
     static var availableIcons: [IconType] {
-        Self.allCases.filter {
-            $0.subscription <= .patron
-        }
+        Self.allCases
     }
 
     var description: String {
@@ -151,66 +147,6 @@ enum IconType: Int, CaseIterable, AnalyticsDescribable {
             return "AppIcon-Pride"
         }
     }
-
-    var analyticsDescription: String {
-        switch self {
-        case .primary:
-            return "default"
-        case .dark:
-            return "dark"
-        case .roundLight:
-            return "round_light"
-        case .roundDark:
-            return "round_dark"
-        case .indigo:
-            return "indigo"
-        case .rose:
-            return "rose"
-        case .pocketCats:
-            return "pocket_cats"
-        case .redVelvet:
-            return "red_velvet"
-        case .plus:
-            return "plus"
-        case .classic:
-            return "classic"
-        case .electricBlue:
-            return "electric_blue"
-        case .electricPink:
-            return "electric_pink"
-        case .radioactivity:
-            return "radioactive"
-        case .halloween:
-            return "halloween"
-        case .patronChrome:
-            return "patron_chrome"
-        case .patronRound:
-            return "patron_round"
-        case .patronGlow:
-            return "patron_glow"
-        case .patronDark:
-            return "patron_dark"
-        case .pride:
-            return "pride_2023"
-        }
-    }
-
-    /// Whether the icon is unlocked for the users active subscription
-    var isUnlocked: Bool {
-        SubscriptionHelper.activeTier >= subscription
-    }
-
-    /// The minimum subscription level required to unlock the icon
-    var subscription: SubscriptionTier {
-        switch self {
-        case .patronChrome, .patronRound, .patronGlow, .patronDark:
-            return .patron
-        case .plus, .classic, .electricBlue, .electricPink, .radioactivity, .halloween:
-            return .plus
-        default:
-            return .none
-        }
-    }
 }
 
 class IconSelectorCell: ThemeableCell, UICollectionViewDataSource, UICollectionViewDelegate, GridLayoutDelegate {
@@ -321,23 +257,11 @@ class IconSelectorCell: ThemeableCell, UICollectionViewDataSource, UICollectionV
         let iconType = IconType(rawValue: indexPath.row) ?? .primary
         cell.nameLabel.text = iconType.description
         cell.imageView.image = UIImage(named: iconType.previewIconName)
-        cell.isLocked = !iconType.isUnlocked
 
         cell.isCellSelected = selectedIcon == iconType
 
         cell.isAccessibilityElement = true
         cell.accessibilityLabel = cell.nameLabel.text
-
-        if cell.isLocked {
-            switch iconType.subscription {
-            case .patron:
-                cell.accessibilityHint = L10n.accessibilityPatronOnly
-                cell.lockImage = UIImage(named: "patron-locked")
-            default:
-                cell.accessibilityHint = L10n.accessibilityPlusOnly
-                cell.lockImage = UIImage(named: "plusGoldCircle")
-            }
-        }
 
         return cell
     }
@@ -345,16 +269,8 @@ class IconSelectorCell: ThemeableCell, UICollectionViewDataSource, UICollectionV
     // MARK: - CollectionView Delegate
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let icon = IconType(rawValue: indexPath.item), icon.isUnlocked else {
+        guard let icon = IconType(rawValue: indexPath.item) else {
             collectionView.deselectItem(at: indexPath, animated: true)
-
-            if let delegate {
-                let context: OnboardingFlow.Context? = IconType(rawValue: indexPath.item).flatMap {
-                    ["product": ProductInfo(plan: $0.subscription == .patron ? .patron : .plus, frequency: .yearly)]
-                }
-
-                NavigationManager.shared.showUpsellView(from: delegate.iconSelectorPresentingVC(), source: .icons, context: context)
-            }
             return
         }
 

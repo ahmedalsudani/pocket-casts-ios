@@ -12,30 +12,6 @@ import SafariServices
 enum PodcastFeedReloadSource {
     case menu
     case refreshControl
-
-    var analyticsValue: String {
-        switch self {
-        case .menu:
-            return "refresh_button"
-        case .refreshControl:
-            return "pull_to_refresh"
-        }
-    }
-}
-
-/// Where the podcast screen was opened from, sent as the `source` property of `podcast_screen_shown`.
-/// The raw values match the ones the Android app sends, so the event can be compared across platforms.
-enum PodcastScreenSource: String {
-    case podcastList = "podcast_list"
-    case search
-    case episodeDetails = "episode_details"
-    case discover
-    case player
-    case bottomShelf = "bottom_shelf"
-    case podcastScreen = "podcast_screen"
-    case shareList = "share_list"
-    case notification
-    case unknown
 }
 
 protocol PodcastActionsDelegate: AnyObject {
@@ -44,25 +20,17 @@ protocol PodcastActionsDelegate: AnyObject {
     func setSummaryExpanded(expanded: Bool)
 
     func tableView() -> UITableView
-    func displayedPodcast() -> Podcast?
 
     func settingsTapped()
     func fundingTapped()
     func folderTapped()
     func notificationTapped()
-    func categoryTapped(_ category: String)
-    func networkTapped(listId: String)
     func subscribe()
     func unsubscribe()
     func refreshArtwork()
 
-    var podcastRatingViewModel: PodcastRatingViewModel { get }
-    var ratingView: UIView { get }
-
     func showBookmarks()
     func showEpisodes()
-    func showYouMightLike()
-    func showLogin(message: String?)
 
     func open(url: URL)
 }
@@ -71,27 +39,13 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     var podcast: Podcast?
     var episodeInfo = [ArraySection<String, ListItem>]()
     var uuidsThatMatchSearch = [String]()
-    var featuredPodcast = false
-    var listUuid: String?
-    var screenSource: PodcastScreenSource = .unknown
     var summaryExpanded = false
     var currentViewMode: ViewMode = .episodes
-    var hasSimilarShows = CurrentValueSubject<Bool, Never>(false)
-    var isLoadingRecommendations = CurrentValueSubject<Bool, Never>(false)
     var currentViewModeSubject = CurrentValueSubject<ViewMode, Never>(.episodes)
 
     var currentViewModePublisher: AnyPublisher<ViewMode, Never> {
         currentViewModeSubject.eraseToAnyPublisher()
     }
-
-    var recommendations: PodcastCollection?
-
-    /// Opens the network the podcast belongs to, tapped in the header.
-    private lazy var networkNavigator: NetworkNavigator = {
-        let navigator = NetworkNavigator(source: .podcastScreenNetwork)
-        navigator.presenter = self
-        return navigator
-    }()
 
     /// The bookmarks tab, created the first time it's displayed
     var bookmarkList: BookmarkListController?
@@ -99,22 +53,11 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     enum ViewMode {
         case episodes
         case bookmarks
-        case youMightLike
-
-        var analyticsValue: String {
-            switch self {
-            case .episodes: return "episodes"
-            case .bookmarks: return "bookmarks"
-            case .youMightLike: return "you_might_like"
-            }
-        }
     }
 
     var searchController: EpisodeListSearchController?
 
     var cellHeights: [IndexPath: CGFloat] = [:]
-
-    var podcastRatingViewModel = PodcastRatingViewModel()
 
     private var podcastInfo: PodcastInfo?
     var loadingPodcastInfo = false
@@ -154,7 +97,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     var isMultiSelectEnabled = false {
         didSet {
             setHidesEnclosingTabBar(isMultiSelectEnabled, animated: false)
-            // For non-episode cells we don't enable editing. It needs to be for Bookmarks and already if for You Might Like.
+            // For non-episode cells we don't enable editing.
             if currentViewMode == .episodes {
                 self.episodesTable.beginUpdates()
                 self.episodesTable.setEditing(isMultiSelectEnabled, animated: true)
@@ -225,25 +168,11 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     private var refreshController: PodcastFeedRefreshController?
     private var podcastFeedReloadTooltip: UIViewController?
 
-    lazy var ratingView: UIView = {
-        let view = StarRatingView(viewModel: podcastRatingViewModel,
-                                  onRate: { [weak self] in
-            self?.podcastRatingViewModel.update(podcast: self?.podcast, ignoringCache: true)
-        })
-            .padding(.top, 10)
-            .themedUIView
-        view.backgroundColor = .clear
-        return view
-    }()
-
     init(podcast: Podcast) {
         self.podcast = podcast
 
         // show the expanded view for unsubscribed podcasts, as well as paid podcasts that have expired and you no longer have access to play/download
         summaryExpanded = !podcast.isSubscribed()
-
-        AnalyticsHelper.podcastOpened(uuid: podcast.uuid)
-        podcastRatingViewModel.update(podcast: podcast)
 
         super.init(nibName: "PodcastViewController", bundle: nil)
     }
@@ -255,11 +184,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         } else {
             self.podcastInfo = podcastInfo
             summaryExpanded = true
-        }
-
-        if let uuid = podcastInfo.uuid {
-            podcastRatingViewModel.update(podcast: podcast)
-            AnalyticsHelper.podcastOpened(uuid: uuid)
         }
 
         super.init(nibName: "PodcastViewController", bundle: nil)
@@ -348,7 +272,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         NotificationCenter.default.addObserver(self, selector: #selector(folderChanged(_:)), name: Constants.Notifications.folderChanged, object: nil)
 
         listenForBookmarkChanges()
-        setupLogin()
 
         setupRefreshControl()
     }
@@ -380,20 +303,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         setTransparentNavBarScrolled(shouldBlur)
     }
 
-    private func setupLogin() {
-        podcastRatingViewModel.presentLogin = { [weak self] _ in
-            self?.showLogin(message: L10n.ratingLoginRequired)
-        }
-    }
-
-    func showLogin(message: String?) {
-        let loginViewController = LoginCoordinator.make(traitCollection: traitCollection)
-        present(loginViewController, animated: true)
-        if let message {
-            Toast.show(message)
-        }
-    }
-
     private func listenForBookmarkChanges() {
         let bookmarkManager = PlaybackManager.shared.bookmarkManager
 
@@ -423,11 +332,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        // Load the ratings even if we've already started loading them to cover all other potential view states
-        // The view model will ignore extra calls
-        if let _ = [podcast?.uuid, podcastInfo?.uuid].compactMap({ $0 }).first {
-            podcastRatingViewModel.update(podcast: podcast)
-        }
         updateColors()
     }
 
@@ -454,7 +358,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(colorsDidDownload(_:)))
         addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(refreshEpisodes))
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(refreshEpisodes))
         addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(refreshEpisodes))
@@ -469,11 +372,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         addCustomObserver(Constants.Notifications.episodeDownloaded, selector: #selector(refreshEpisodes))
         addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(refreshEpisodes))
 
-        if featuredPodcast, !hasAppearedAlready {
-            Analytics.track(.discoverFeaturedPodcastTapped, properties: ["uuid": podcastUUID])
-            AnalyticsHelper.openedFeaturedPodcast()
-        }
-
         // if it's a local podcast, refresh it when the view appears, eg: when you tab back to it
         if let podcast, podcast.isSubscribed(), hasAppearedAlready {
             refreshEpisodes()
@@ -481,23 +379,10 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
 
         hasAppearedAlready = true // we use this so the page doesn't double load from viewDidLoad and viewDidAppear
 
-        var properties = ["uuid": podcastUUID, "source": screenSource.rawValue]
-        if let listUuid {
-            properties["list_id"] = listUuid
-        }
-        Analytics.track(.podcastScreenShown, properties: properties)
-
         if FeatureFlag.podcastFeedUpdate.enabled {
             showPodcastFeedReloadTipIfNeeded()
         }
         showViewChangesTipIfNeeded()
-
-        // Load recommendations when view appears
-        if FeatureFlag.recommendations.enabled && recommendations == nil {
-            Task {
-                await loadRecommendations()
-            }
-        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -549,17 +434,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         searchController?.beginEditing()
     }
 
-    @objc private func colorsDidDownload(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
-
-        if let uuid = podcast?.uuid, uuid == uuidLoaded {
-            if let podcast = DataManager.shared.findPodcast(uuid: uuid, includeUnsubscribed: true) {
-                self.podcast = podcast
-            }
-            updateColors()
-        }
-    }
-
     func reloadData() {
         if currentViewMode == .bookmarks {
             bookmarkList?.rebuildRows()
@@ -609,8 +483,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         guard let podcast else { return }
 
         // - warning: important to pass shareBarButtonItem
-        SharingHelper.shared.shareLinkTo(podcast: podcast, fromController: self, fromSource: analyticsSource, barButtonItem: shareBarButtonItem)
-        Analytics.track(.podcastScreenShareTapped, properties: ["podcast_uuid": podcast.uuid, "is_private": podcast.isPrivate])
+        SharingHelper.shared.shareLinkTo(podcast: podcast, fromController: self, barButtonItem: shareBarButtonItem)
     }
 
     private func loadPodcastInfo() {
@@ -635,8 +508,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             }
         } else if let uuid = podcastInfo?.uuid {
             loadPodcastInfoFromUuid(uuid)
-        } else if let iTunesId = podcastInfo?.iTunesId {
-            loadPodcastInfoFromiTunesId(iTunesId)
         }
     }
 
@@ -772,8 +643,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             self?.performUnsubscribe()
         })
         present(alert, animated: true)
-
-        Analytics.track(.podcastScreenUnsubscribeTapped)
     }
 
     private func performUnsubscribe() {
@@ -781,7 +650,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
 
         PodcastManager.shared.unsubscribe(podcast: podcast)
         navigationController?.popViewController(animated: true)
-        Analytics.track(.podcastUnsubscribed, properties: ["source": analyticsSource, "uuid": podcast.uuid])
     }
 
     func subscribe() {
@@ -794,18 +662,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         ServerPodcastManager.shared.updateLatestEpisodeInfo(podcast: podcast, setDefaults: true, autoDownloadLimit: Settings.autoDownloadOnFollow() ? Settings.autoDownloadLimits.rawValue : 0)
         loadLocalEpisodes(podcast: podcast, animated: true)
 
-        if featuredPodcast {
-            Analytics.track(.discoverFeaturedPodcastSubscribed, properties: ["podcast_uuid": podcast.uuid])
-            AnalyticsHelper.subscribedToFeaturedPodcast()
-        }
-        if let listId = listUuid {
-            AnalyticsHelper.podcastSubscribedFromList(listId: listId, podcastUuid: podcast.uuid)
-        }
-
         HapticsHelper.triggerSubscribedHaptic()
-
-        Analytics.track(.podcastScreenSubscribeTapped)
-        Analytics.track(.podcastSubscribed, properties: ["source": analyticsSource, "uuid": podcast.uuid])
     }
 
     // MARK: - Multi-select nav bar
@@ -861,10 +718,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         episodesTable
     }
 
-    func displayedPodcast() -> Podcast? {
-        podcast
-    }
-
     var searchUuidsToFilter: [String]? {
         isSearching ? uuidsThatMatchSearch : nil
     }
@@ -898,11 +751,9 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         } else {
             navigationController?.pushViewController(settingsController, animated: true)
         }
-        Analytics.track(.podcastScreenSettingsTapped)
     }
 
     func fundingTapped() {
-        Analytics.track(.podcastScreenFundingTapped, properties: ["podcast_uuid": podcast?.uuid ?? ""])
         guard let urlString = podcast?.fundingURL, let url = URL(string: urlString) else { return }
         UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
@@ -920,12 +771,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
     }
 
     func folderTapped() {
-        Analytics.track(.podcastScreenFolderTapped)
-        if !SubscriptionHelper.hasActiveSubscription() {
-            NavigationManager.shared.showUpsellView(from: self, source: .folders)
-            return
-        }
-
         guard let podcast else { return }
 
         if let currentFolder = podcast.folderUuid, !currentFolder.isEmpty {
@@ -943,18 +788,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             return
         }
         let newValue = !podcast.pushEnabled
-        Analytics.track(.podcastScreenNotificationsTapped, properties: ["enabled": newValue])
         NotificationsHelper.shared.setNotificationsEnabled(newValue, for: podcast)
-    }
-
-    func categoryTapped(_ category: String) {
-        NavigationManager.shared.navigateTo(NavigationManager.discoverPageKey, data: [NavigationManager.discoverCategoryKey: category])
-        Analytics.track(.podcastScreenCategoryTapped, properties: ["category": category])
-    }
-
-    func networkTapped(listId: String) {
-        Analytics.track(.podcastScreenNetworkTapped, properties: ["podcast_uuid": podcast?.uuid ?? "", "list_id": listId])
-        networkNavigator.show(listId: listId)
     }
 
     func searchEpisodes(query: String) {
@@ -971,7 +805,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
 
         if !isSearching {
             isSearching = true
-            Analytics.track(.podcastScreenSearchPerformed)
         }
     }
 
@@ -982,7 +815,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         isSearching = false
         uuidsThatMatchSearch.removeAll()
         loadLocalEpisodes(podcast: podcast, animated: true)
-        Analytics.track(.podcastScreenSearchCleared)
     }
 
     func toggleShowArchived() {
@@ -991,8 +823,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         podcast.showArchived = !podcast.showArchived
         DataManager.shared.save(podcast: podcast)
         loadLocalEpisodes(podcast: podcast, animated: true)
-
-        Analytics.track(.podcastScreenToggleArchived, properties: ["show_archived": podcast.showArchived])
     }
 
     func showingArchived() -> Bool {
@@ -1004,9 +834,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
 
         DispatchQueue.global().async { [self] in
             DataManager.shared.markAllUnarchived(forPodcastId: podcast.id)
-
-            AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
-            AnalyticsEpisodeHelper.shared.bulkUnarchiveEpisodes(count: self.episodeCount())
 
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
@@ -1022,17 +849,12 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         DispatchQueue.global().async { [weak self] in
             guard let allObjects = self?.episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
 
-            var count = 0
             for object in allObjects {
                 guard let listEpisode = object as? ListEpisode else { continue }
                 if listEpisode.episode.archived || (playedOnly && !listEpisode.episode.played()) { continue }
 
                 EpisodeManager.archiveEpisode(episode: listEpisode.episode, fireNotification: false, userInitiated: false)
-                count += 1
             }
-
-            AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
-            AnalyticsEpisodeHelper.shared.bulkArchiveEpisodes(count: count)
 
             DispatchQueue.main.async { [weak self] in
                 guard let strongSelf = self else { return }
@@ -1046,10 +868,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         DispatchQueue.global().async { [weak self] in
             guard let self, let allObjects = self.episodeInfo[safe: 1]?.elements, !allObjects.isEmpty else { return }
 
-            let episodes = allObjects.compactMap { ($0 as? ListEpisode)?.episode }
-            AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
-            AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
-
             self.downloadItems(allObjects: allObjects)
         }
     }
@@ -1059,14 +877,11 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             return
         }
 
-        Analytics.track(.podcastScreenSeasonOptionsTapped, properties: ["season": season])
-
         let optionPicker = OptionsPicker(title: nil)
 
         optionPicker.addActions([
             .init(label: L10n.selectAll, icon: "option-multiselect") { [weak self] in
                 self?.selectSeasonTapped(season: season)
-                Analytics.track(.podcastScreenSeasonOptionsSelectAllTapped, properties: ["season": season])
             },
             downloadActionForSeason(season),
             archiveActionForSeason(season)
@@ -1087,12 +902,10 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         if allDownloaded {
             return .init(label: L10n.removeAll, icon: "episode-remove-download") {
                 EpisodeManager.removeDownload(for: episodes)
-                Analytics.track(.podcastScreenSeasonOptionsRemoveAllTapped, properties: ["season": season])
             }
         } else {
             return .init(label: L10n.downloadAll, icon: "player-download") { [weak self] in
                 self?.downloadSeasonTapped(season: season)
-                Analytics.track(.podcastScreenSeasonOptionsDownloadAllTapped, properties: ["season": season])
             }
         }
     }
@@ -1104,12 +917,10 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         if unarchivedCount > 0 {
             return OptionAction(label: L10n.podcastArchiveAll, icon: "options-archiveall") { [weak self] in
                 self?.archiveAllSeasonTapped(season: season)
-                Analytics.track(.podcastScreenSeasonOptionsArchiveAllTapped, properties: ["season": season])
             }
         } else {
             return OptionAction(label: L10n.podcastUnarchiveAll, icon: "list_unarchive") { [weak self] in
                 self?.unarchiveAllSeasonTapped(season: season)
-                Analytics.track(.podcastScreenSeasonOptionsUnarchiveAllTapped, properties: ["season": season])
             }
         }
     }
@@ -1142,14 +953,10 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
 
     func downloadSeasonTapped(season: Int) {
         let listEpisodesForSeason = episodesForSeason(season)
-        let episodes = listEpisodesForSeason.map { $0.episode }
 
         NetworkUtils.shared.downloadEpisodeRequested(autoDownloadStatus: .notSpecified, { [weak self] later in
             DispatchQueue.global().async {
                 guard let self else { return }
-
-                AnalyticsEpisodeHelper.shared.currentSource = .podcastScreen
-                AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
 
                 if later {
                     self.queueItems(allObjects: listEpisodesForSeason)
@@ -1246,8 +1053,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             DataManager.shared.updateFolderSyncModified(folderUuid: currentFolderUuid, syncModified: TimeFormatter.currentUTCTimeInMillis())
 
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: currentFolderUuid)
-
-            Analytics.track(.folderPodcastModalOptionTapped, properties: ["option": "remove"])
         }
         optionsPicker.addAction(action: removeAction)
 
@@ -1255,14 +1060,11 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             guard let self else { return }
 
             self.showFolderPickerDialog()
-
-            Analytics.track(.folderPodcastModalOptionTapped, properties: ["option": "change"])
         }
         optionsPicker.addAction(action: changeFolderAction)
 
         let goToFolderAction = OptionAction(label: L10n.folderGoTo.localizedCapitalized, icon: "folder-goto") {
             NavigationManager.shared.navigateTo(NavigationManager.folderPageKey, data: [NavigationManager.folderKey: folder])
-            Analytics.track(.folderPodcastModalOptionTapped, properties: ["option": "go_to"])
         }
         optionsPicker.addAction(action: goToFolderAction)
 
@@ -1287,10 +1089,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
 
     func showBookmarks() {
         switchViewMode(to: .bookmarks)
-    }
-
-    func showYouMightLike() {
-        switchViewMode(to: .youMightLike)
     }
 
     // MARK: - Podcast Feed Reload
@@ -1332,8 +1130,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             return
         }
 
-        //TODO: Add analytics based on source
-
         Task { @MainActor [weak self] in
             let podcastNeedsReload = await self?.podcastFeedViewModel?.checkIfNewEpisodesAreAvailable(from: source) ?? false
             if podcastNeedsReload {
@@ -1363,7 +1159,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         else {
             return
         }
-        Analytics.track(.podcastRefreshEpisodeTooltipDismissed)
         Settings.shouldShowPodcastFeeReloadTip = false
         podcastFeedReloadTooltip.dismiss(animated: true) { [weak self] in
             self?.podcastFeedReloadTooltip = nil
@@ -1387,9 +1182,7 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             return
         }
         if let vc = showPodcastFeedReloadTip() {
-            present(vc, animated: true) {
-                Analytics.track(.podcastRefreshEpisodeTooltipShown)
-            }
+            present(vc, animated: true)
             podcastFeedReloadTooltip = vc
         }
     }
@@ -1497,43 +1290,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
         return true
     }
 
-    @MainActor
-    func loadRecommendations() async {
-        guard let podcast else { return }
-
-        isLoadingRecommendations.send(true)
-        updateEmptyStateVisibility()
-
-        do {
-            var originalRecommendations = try await ServerPodcastManager.shared.loadRecommendations(for: podcast.uuid, in: Settings.userRegion())
-            filterCurrentPodcast(from: &originalRecommendations)
-            recommendations = originalRecommendations
-            guard !Task.isCancelled else { return }
-            hasSimilarShows.send(recommendations?.podcasts?.isEmpty == false)
-        } catch {
-            // We won't do anything in the interface here since the You Might Like button is optional and hidden by default
-            FileLog.shared.addMessage("[PodcastViewController] Failed to load recommendations \(error)")
-            guard !Task.isCancelled else { return }
-            hasSimilarShows.send(false)
-        }
-
-        isLoadingRecommendations.send(false)
-        updateEmptyStateVisibility()
-    }
-
-    private func filterCurrentPodcast(from collection: inout PodcastCollection?) {
-        if var podcasts = collection?.podcasts {
-            podcasts = podcasts.filter { $0.uuid != self.podcast?.uuid }
-            collection?.podcasts = podcasts
-        }
-    }
-
-    private func updateEmptyStateVisibility() {
-        if currentViewMode == .youMightLike {
-            episodesTable.reloadData()
-        }
-    }
-
     private func switchViewMode(to mode: ViewMode) {
         // Clear any externally presented action bar when switching modes
         bookmarkList?.removeActionBar()
@@ -1547,13 +1303,6 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             if let podcast {
                 loadLocalEpisodes(podcast: podcast, animated: true)
             }
-        case .youMightLike:
-            updateEmptyStateVisibility()
-            if recommendations == nil {
-                Task {
-                    await loadRecommendations()
-                }
-            }
         case .bookmarks:
             if bookmarkList == nil {
                 setupBookmarkList() // Reloads on init
@@ -1564,22 +1313,13 @@ class PodcastViewController: PCViewController, PodcastActionsDelegate, MultiSele
             // The multi select state is kept when switching between the tabs
             bookmarkList?.updateActionBar()
         }
-        Analytics.track(.podcastsScreenTabTapped, properties: ["value": mode.analyticsValue])
         reloadData()
-    }
-}
-
-// MARK: - Analytics
-
-extension PodcastViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .podcastScreen
     }
 }
 
 private extension PodcastViewController {
     var podcastUUID: String {
-        podcast?.uuid ?? podcastInfo?.analyticsDescription ?? "unknown"
+        podcast?.uuid ?? podcastInfo?.uuid ?? "unknown"
     }
 }
 
@@ -1605,11 +1345,11 @@ extension PodcastViewController: SFSafariViewControllerDelegate {
 
 extension PodcastViewController: BookmarkListRouter {
     func bookmarkPlay(_ bookmark: Bookmark) async throws {
-        try await PlaybackManager.shared.playBookmark(bookmark, source: .podcasts)
+        try await PlaybackManager.shared.playBookmark(bookmark)
     }
 
     func bookmarkEdit(_ bookmark: Bookmark) {
-        let controller = BookmarkEditTitleViewController(manager: PlaybackManager.shared.bookmarkManager, bookmark: bookmark, state: .updating, style: .themed, source: .podcasts)
+        let controller = BookmarkEditTitleViewController(manager: PlaybackManager.shared.bookmarkManager, bookmark: bookmark, state: .updating, style: .themed)
 
         present(controller, animated: true)
     }
@@ -1618,8 +1358,7 @@ extension PodcastViewController: BookmarkListRouter {
         guard let episode = bookmark.episode as? Episode else {
             return
         }
-        Analytics.track(.bookmarkShareTapped, source: analyticsSource, properties: ["podcast_uuid": episode.podcastUuid, "episode_uuid": bookmark.episodeUuid])
-        SharingModal.show(option: .bookmark(episode, bookmark.time), from: .podcastScreen, in: self)
+        SharingModal.show(option: .bookmark(episode, bookmark.time), in: self)
     }
 
     func dismissBookmarksList() {

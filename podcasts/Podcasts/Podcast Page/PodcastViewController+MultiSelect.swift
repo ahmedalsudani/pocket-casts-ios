@@ -35,10 +35,6 @@ extension PodcastViewController {
         })
     }
 
-    var multiSelectViewSource: AnalyticsSource {
-        analyticsSource
-    }
-
     // MARK: - Selected Episode
 
     func selectedEpisodesContains(uuid: String) -> Bool {

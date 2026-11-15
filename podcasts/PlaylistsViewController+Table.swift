@@ -45,32 +45,12 @@ extension PlaylistsViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if informationalBannerCoordinator.shouldShowBanner() {
-            return UITableView.automaticDimension
-        } else {
-            return CGFloat.leastNormalMagnitude
-        }
-    }
-
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        if !informationalBannerCoordinator.shouldShowBanner() {
-            return nil
-        }
-        return informationalBannerCoordinator.tableHeaderView(size: CGSize(width: filtersTable.bounds.width, height: 135)) { [weak self] in
-            UIView.animate(withDuration: 0.5) { [weak self] in
-                self?.filtersTable.reloadData()
-            }
-        }
+        CGFloat.leastNormalMagnitude
     }
 
     func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
-        if informationalBannerCoordinator.shouldShowBanner() {
-            return 135
-        } else {
-            return CGFloat.leastNormalMagnitude
-        }
+        CGFloat.leastNormalMagnitude
     }
-
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
@@ -114,8 +94,6 @@ extension PlaylistsViewController: UITableViewDelegate, UITableViewDataSource {
         }
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
-
-        Analytics.track(.filterListReordered)
     }
 }
 
@@ -123,9 +101,6 @@ extension PlaylistsViewController: UITableViewDelegate, UITableViewDataSource {
 
 extension PlaylistsViewController {
     fileprivate func showDeleteConfirmationDialog(for playlist: EpisodeFilter, at indexPath: IndexPath, in tableView: UITableView) {
-        let playlistType = playlist.manual ? "manual" : "smart"
-        let analyticsProperties = ["filter_type": playlistType]
-        Analytics.track(.filterDeleteTriggered, properties: analyticsProperties)
 
         let alert = UIAlertController(
             title: L10n.playlistsDeleteAlertTitle,
@@ -133,7 +108,6 @@ extension PlaylistsViewController {
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel) { _ in
-            Analytics.track(.filterDeleteDismissed, properties: analyticsProperties)
         })
         alert.addAction(UIAlertAction(title: L10n.delete, style: .destructive) { [weak self] _ in
             self?.delete(playlist: playlist, at: indexPath, in: tableView)
@@ -147,11 +121,6 @@ extension PlaylistsViewController {
         tableView.beginUpdates()
         tableView.deleteRows(at: [indexPath], with: .top)
         tableView.endUpdates()
-
-        var properties: [String: Sendable] = [:]
-        properties["filter_type"] = playlist.manual ? "manual" : "smart"
-
-        Analytics.track(.filterDeleted, properties: properties)
     }
 }
 
@@ -165,7 +134,6 @@ extension PlaylistsViewController {
             return
         }
         newFilterTip = vc
-        Analytics.track(.filterTooltipShown)
         present(vc, animated: true) {
             Settings.shouldShowNewFilterTip = false
         }
@@ -175,12 +143,10 @@ extension PlaylistsViewController {
         dismiss(animated: true) { [weak self] in
             self?.newFilterTip = nil
         }
-        Analytics.track(.filterTooltipClosed)
     }
 
     func showPlaylistsTipIfNeeded() {
-        if SyncManager.isUserLoggedIn(),
-           Settings.shouldShowNewFilterTip,
+        if Settings.shouldShowNewFilterTip,
            !hasPremadePlaylists(),
            newFilterTip == nil {
             showNewFilterTip()
@@ -234,8 +200,6 @@ extension PlaylistsViewController {
         )
         guard let tip else { return }
         newFilterTip = tip
-
-        //TODO: Add analytics
 
         present(tip, animated: true) {
             Settings.firstTimePlaylistCreated = false
@@ -314,7 +278,5 @@ extension PlaylistsViewController: UITableViewDragDelegate, UITableViewDropDeleg
         }
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
-
-        Analytics.track(.filterListReordered)
     }
 }

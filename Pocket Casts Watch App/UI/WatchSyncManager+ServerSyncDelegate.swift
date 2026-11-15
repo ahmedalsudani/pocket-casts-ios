@@ -5,10 +5,6 @@ import PocketCastsServer
 extension WatchSyncManager: ServerSyncDelegate {
     // MARK: - Podcast functions
 
-    func podcastUpdated(podcastUuid: String) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcastUuid)
-    }
-
     func podcastAdded(podcastUuid: String) {
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastAdded, object: podcastUuid)
     }
@@ -21,27 +17,7 @@ extension WatchSyncManager: ServerSyncDelegate {
 
     func applyAutoArchivingToAllPodcasts() {}
 
-    func subscribedToPodcast() {}
-
-    // MARK: - Playlists
-
-    func playlistChanged() {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
-    }
-
     // MARK: - Episode functions
-
-    func episodeStarredChanged(episode: Episode) {
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeStarredChanged, object: episode.uuid)
-    }
-
-    func archiveEpisodeExternal(episode: Episode) {
-        EpisodeManager.archiveEpisodeExternal(episode)
-    }
-
-    func markEpisodeAsPlayedExternal(episode: Episode) {
-        EpisodeManager.markEpisodeAsPlayedExternal(episode)
-    }
 
     func cleanupAllUnusedEpisodeBuffers() {
         EpisodeManager.cleanupAllUnusedEpisodeBuffers()
@@ -51,36 +27,11 @@ extension WatchSyncManager: ServerSyncDelegate {
         episode.episodeCanBeCleanedUp()
     }
 
-    // User Episodes functions
-    func deleteFromDevice(userEpisode: UserEpisode) {
-        UserEpisodeManager.deleteFromDevice(userEpisode: userEpisode)
-    }
+    func performActionsAfterRefresh() {}
 
-    func performActionsAfterSync() {
-        checkForUpNextAutoDownloads()
-    }
-
-    func cleanupCloudOnlyFiles() {}
-
-    func autoDownloadUserEpisodes(episodes: [UserEpisode]) {}
-
-    func userEpisodeFileProtocol() -> FilePathProtocol {
-        DownloadManager.shared
-    }
-
-    func deselectedChaptersChanged() {
-        PlaybackManager.shared.forceUpdateChapterInfo()
-    }
+    func autoDownloadLatestEpisodes(uuids: [String]) {}
 
     // MARK: - Settings
-
-    func isPushEnabled() -> Bool {
-        false
-    }
-
-    func isNewEpisodeNotificationsEnabled() -> Bool {
-        false
-    }
 
     func defaultPodcastGrouping() -> Int32 {
         Settings.defaultPodcastGrouping.rawValue
@@ -88,31 +39,5 @@ extension WatchSyncManager: ServerSyncDelegate {
 
     func defaultShowArchived() -> Bool {
         Settings.showArchivedDefault
-    }
-
-    func uniqueAppId() -> String {
-        UserDefaults.standard.string(forKey: Constants.UserDefaults.appId) ?? ""
-    }
-
-    func appVersion() -> String {
-        Settings.appVersion()
-    }
-
-    func privateUserAgent() -> String {
-        "Pocket Casts/watchOS/" + Settings.appVersion()
-    }
-
-    func autoDownloadLatestEpisodes(uuids: [String]) {}
-
-    func minTimeBetweenProgressSaves() -> Double {
-        2.minutes
-    }
-
-    func production() -> Bool {
-        #if STAGING
-            return false
-        #else
-            return true
-        #endif
     }
 }

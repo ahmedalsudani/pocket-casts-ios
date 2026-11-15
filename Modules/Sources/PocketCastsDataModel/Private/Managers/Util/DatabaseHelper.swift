@@ -970,5 +970,42 @@ class DatabaseHelper {
                 return
             }
         }
+
+        if schemaVersion < 79 {
+            do {
+                // Databases written by the first offline build already carry the feed metadata columns
+                // (added there as schema 74, so upstream's own 74 never ran) and keep the feed URL in podcastUrl.
+                let isEarlyOfflineDatabase = try columnExists("chaptersUrl", inTable: "SJEpisode", db: db)
+                if !isEarlyOfflineDatabase {
+                    try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN chaptersUrl TEXT;", values: nil)
+                    try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN chaptersType TEXT;", values: nil)
+                    try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN transcriptUrl TEXT;", values: nil)
+                    try db.executeUpdate("ALTER TABLE SJEpisode ADD COLUMN transcriptType TEXT;", values: nil)
+                }
+                if try !columnExists("isExplicit", inTable: "SJPodcast", db: db) {
+                    try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN isExplicit INTEGER DEFAULT 0;", values: nil)
+                }
+                try db.executeUpdate("ALTER TABLE SJPodcast ADD COLUMN feedUrl TEXT;", values: nil)
+                if isEarlyOfflineDatabase {
+                    try db.executeUpdate("UPDATE SJPodcast SET feedUrl = podcastUrl;", values: nil)
+                }
+                schemaVersion = 79
+            } catch {
+                failedAt(79)
+                return
+            }
+        }
+    }
+
+    private class func columnExists(_ column: String, inTable table: String, db: PCDatabase) throws -> Bool {
+        let resultSet = try db.executeQuery("PRAGMA table_info(\(table))", values: nil)
+        var exists = false
+        // Read every row so the statement is finished before the schema changes that follow.
+        while resultSet.next() {
+            if resultSet.string(forColumn: "name") == column {
+                exists = true
+            }
+        }
+        return exists
     }
 }

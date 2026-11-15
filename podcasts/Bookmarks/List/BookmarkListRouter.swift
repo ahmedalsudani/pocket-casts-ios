@@ -8,7 +8,7 @@ protocol BookmarkListRouter: AnyObject {
     func bookmarkShare(_ bookmark: Bookmark)
 
     /// Opens the bookmark in full, with the transcript passage it captured
-    func bookmarkDetails(_ bookmark: Bookmark, source: BookmarkAnalyticsSource)
+    func bookmarkDetails(_ bookmark: Bookmark)
 
     /// Opens the episode the bookmark was made in
     func bookmarkEpisode(_ episode: Episode)
@@ -38,8 +38,8 @@ extension BookmarkListRouter where Self: UIViewController {
 
     /// Pushed where the list already sits in a navigation stack, presented where it doesn't,
     /// such as the player's bookmarks tab
-    func bookmarkDetails(_ bookmark: Bookmark, source: BookmarkAnalyticsSource) {
-        let controller = BookmarkDetailsViewController(bookmark: bookmark, source: source, opensEpisode: opensBookmarkEpisode)
+    func bookmarkDetails(_ bookmark: Bookmark) {
+        let controller = BookmarkDetailsViewController(bookmark: bookmark, opensEpisode: opensBookmarkEpisode)
 
         if let navigationController {
             navigationController.pushViewController(controller, animated: true)
@@ -59,7 +59,7 @@ extension UIViewController {
     func presentBookmarkEpisode(_ episode: Episode) {
         guard let podcast = episode.parentPodcast() else { return }
 
-        let controller = EpisodeDetailViewController(episode: episode, podcast: podcast, source: .bookmarks)
+        let controller = EpisodeDetailViewController(episode: episode, podcast: podcast)
         controller.modalPresentationStyle = .formSheet
         present(controller, animated: true)
     }

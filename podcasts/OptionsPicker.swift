@@ -66,14 +66,12 @@ class OptionsPicker {
     /// the call site.
     @MainActor
     func present() {
-        #if !APPCLIP
         guard let presenter = SceneHelper.rootViewController() else {
             // This should never happen
             assertionFailure("Unable to find a view controller to present the options picker from")
             return
         }
         present(from: presenter)
-        #endif
     }
 
     func controllerDidAnimateOut(optionChosen: Bool) {

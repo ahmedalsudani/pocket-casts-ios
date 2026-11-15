@@ -7,16 +7,7 @@ extension UserEpisode {
     // MARK: - Helpers
 
     func displayableInfo(includeSize: Bool = true) -> String {
-        if uploading() {
-            let progress = UploadManager.shared.progressManager.progress(forEpisodeUuid: uuid)?.percentageProgressAsString() ?? ""
-            return L10n.podcastUploading(progress).trimmingCharacters(in: .whitespaces)
-        } else if uploadWaitingForWifi() {
-            return L10n.podcastWaitingUpload
-        } else if uploadFailed() {
-            return L10n.podcastFailedUpload
-        } else {
-            return commonDisplayableInfo(includeSize: includeSize)
-        }
+        commonDisplayableInfo(includeSize: includeSize)
     }
 
     func displayableDuration(includeSize: Bool = true) -> String {
@@ -34,7 +25,7 @@ extension UserEpisode {
     }
 
     public func shouldArchiveOnCompletion() -> Bool {
-        Settings.userEpisodeRemoveFileAfterPlaying || Settings.userEpisodeRemoveFromCloudAfterPlaying()
+        Settings.userEpisodeRemoveFileAfterPlaying
     }
 
     func urlForImage(size: Int = 280) -> URL {
@@ -57,8 +48,15 @@ extension UserEpisode {
         #endif
     }
 
+    /// Where the images picked for files are kept
+    private static let customImageDirectory: String = {
+        let directory = (NSHomeDirectory() as NSString).appendingPathComponent("Documents/custom_images")
+        try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: nil)
+        return directory
+    }()
+
     func pathToLocalImage() -> String {
-        UploadManager.shared.customImageDirectory + "/" + uuid + ".jpg"
+        Self.customImageDirectory + "/" + uuid + ".jpg"
     }
 
     public func subTitle() -> String {

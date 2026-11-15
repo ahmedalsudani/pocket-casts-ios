@@ -33,10 +33,6 @@ class PhoneSourceViewModel: PlaySourceViewModel {
         return (playingEpisode?.uuid == episode.uuid)
     }
 
-    func supportsPodcastNavigation(forEpisode: BaseEpisode) -> Bool {
-        false
-    }
-
     // MARK: Playback
 
     let trimSilenceAvailable: Bool = true

@@ -18,18 +18,15 @@ class ManageDownloadsCoordinator {
         return percentage < 0.1
     }
 
-    static func showModalIfNeeded(from presentationVC: UIViewController, source: String) {
+    static func showModalIfNeeded(from presentationVC: UIViewController) {
         guard Self.shouldShowBanner else {
             return
         }
-        Analytics.track(.freeUpSpaceModalShown, properties: ["source": source])
         let dataModel = ManageDownloadsModel(initialSize: "", onManageTap: { [weak presentationVC] in
-            Analytics.track(.freeUpSpaceManageDownloadsTapped, properties: ["source": source])
             presentationVC?.dismiss(animated: true, completion: {
                 presentationVC?.navigationController?.pushViewController(DownloadedFilesViewController(), animated: true)
             })
         }, onNotNowTap: { [weak presentationVC] in
-            Analytics.track(.freeUpSpaceMaybeLaterTapped, properties: ["source": source])
             Settings.manageDownloadsLastCheckDate = Date.now
             presentationVC?.dismiss(animated: true)
         })

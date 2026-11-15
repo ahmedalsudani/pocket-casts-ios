@@ -33,15 +33,7 @@ class EndOfYearStoriesDataSource: StoriesDataSource {
     }
 
     func refresh() async -> Bool {
-        Settings.setHasSyncedEpisodesForPlayback(false, year: type(of: model).year)
-
-        await SyncYearListeningProgress.shared.reset()
-
-        return await isReady()
-    }
-
-    func paywallView() -> AnyView {
-        model.paywallView()
+        await isReady()
     }
 
     func overlaidShareView() -> AnyView? {

@@ -123,6 +123,5 @@ extension PodcastListViewController: UICollectionViewDragDelegate, UICollectionV
         }
         hasReorderedItems = true
         coordinator.drop(dropItem.dragItem, toItemAt: destinationIndexPath)
-        Analytics.track(.podcastsListReordered)
     }
 }

@@ -28,10 +28,6 @@ extension UploadedViewController: SwipeTableViewCellDelegate, SwipeHandler {
 
     // MARK: - SwipeActionsHandler
 
-    var swipeSource: String {
-        "files"
-    }
-
     var swipeSourceType: SwipeSourceType {
         .uploaded
     }

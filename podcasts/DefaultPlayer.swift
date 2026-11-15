@@ -1,4 +1,3 @@
-import Accelerate
 import AVFoundation
 import CoreAudioTypes
 import Foundation
@@ -13,7 +12,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private var audioMix: AVAudioMix?
     private var assetTrack: AVAssetTrack?
 
-    private(set) var player: AVPlayer?
+    private var player: AVPlayer?
 
     private var requiredPlaybackRate: Double = 0
     private var shouldKeepPlaying = false
@@ -56,7 +55,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private var episodeUuid: String?
     private var podcastUuid: String?
 
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !os(watchOS)
     private var cellularTracker: StreamingCellularTracker?
 #endif
 
@@ -67,17 +66,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
     private var backgroundTaskId: UIBackgroundTaskIdentifier
 
 #endif
-
-    /// RMS audio level (0...1) computed from the audio processing tap each buffer.
-    /// Written from the real-time audio thread, read from the main thread.
-    ///
-    /// This is a benign data race: on ARM64 an aligned 32-bit store/load is
-    /// atomic at the hardware level, so the main thread will always read a
-    /// coherent Float value (never a torn write). The worst case is reading a
-    /// slightly stale sample, which is invisible for a visual-only meter.
-    /// A lock or `os_unfair_lock` is avoided here because this runs on the
-    /// real-time audio thread where blocking is not acceptable.
-    private(set) var currentAudioLevel: Float = 0
 
     init() {
 #if !os(watchOS)
@@ -124,7 +112,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         // Start cellular tracking for remote streaming
         // MediaExporterResourceLoaderDelegate handles its own tracking for cache+stream,
         // but for direct AVPlayer streaming we use StreamingCellularTracker
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
+        #if !os(watchOS)
         if FeatureFlag.trackNetworkDataUsage.enabled,
            let urlAsset = playerItem.asset as? AVURLAsset,
            !urlAsset.url.isFileURL,
@@ -285,7 +273,7 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
         }
         cleanupPlayer()
 
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
+        #if !os(watchOS)
         cellularTracker?.stopTracking()
         cellularTracker = nil
         #endif
@@ -494,14 +482,8 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
 
         // MARK: - Tap Callbacks
 
-        let tapInit: MTAudioProcessingTapInitCallback = { tap, clientInfo, tapStorageOut in
+        let tapInit: MTAudioProcessingTapInitCallback = { _, clientInfo, tapStorageOut in
             tapStorageOut.pointee = clientInfo
-
-            guard let referenceToSelf = DefaultPlayer.unretainedDefaultPlayer(for: tap) else {
-                return
-            }
-
-            referenceToSelf.currentAudioLevel = 0
         }
 
         let tapFinalize: MTAudioProcessingTapFinalizeCallback = { tap in
@@ -549,9 +531,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
                     referenceToSelf.handlePlaybackError("MTAudioProcessingTapGetSourceAudio failed")
                     return
                 }
-#if os(tvOS)
-                referenceToSelf.updateAudioLevel(from: bufferListInOut, frameCount: Int(numberFrames))
-#endif
                 return
             }
 
@@ -604,37 +583,6 @@ class DefaultPlayer: PlaybackProtocol, Hashable {
 
                 numberFramesOut.pointee = numberFrames
             }
-
-            #if os(tvOS)
-            referenceToSelf.updateAudioLevel(from: bufferListInOut, frameCount: Int(numberFrames))
-            #endif
-        }
-
-        // MARK: - Audio Level Metering
-
-        /// Compute RMS audio level from the buffer and store it for UI consumption.
-        /// Called from the real-time audio thread — must be lock-free.
-        ///
-        /// Reads only the first buffer, which is channel 0 in the tap's canonical
-        /// non-interleaved float format. This is sufficient for a visual meter.
-        private func updateAudioLevel(from bufferList: UnsafeMutablePointer<AudioBufferList>, frameCount: Int) {
-            let list = UnsafeMutableAudioBufferListPointer(bufferList)
-            guard let firstBuffer = list.first, let data = firstBuffer.mData else {
-                currentAudioLevel = 0
-                return
-            }
-            // Guard against reading past the buffer's actual data size
-            let availableFrames = min(frameCount, Int(firstBuffer.mDataByteSize) / MemoryLayout<Float>.size)
-            guard availableFrames > 0 else {
-                currentAudioLevel = 0
-                return
-            }
-            let samples = data.assumingMemoryBound(to: Float.self)
-            var rms: Float = 0
-            vDSP_rmsqv(samples, 1, &rms, vDSP_Length(availableFrames))
-            // Clamp to 0...1 and apply light smoothing to avoid jitter
-            let smoothed = currentAudioLevel * 0.3 + min(rms * 3.0, 1.0) * 0.7
-            currentAudioLevel = smoothed
         }
 
         // MARK: - Peak Limter

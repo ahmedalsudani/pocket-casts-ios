@@ -70,7 +70,6 @@ final class BookmarkListController {
         viewModel = BookmarkPodcastListViewModel(podcast: podcast,
                                                  bookmarkManager: PlaybackManager.shared.bookmarkManager,
                                                  sortOption: Settings.podcastBookmarksSort)
-        viewModel.analyticsSource = .podcasts
         viewModel.router = delegate
 
         setupSearchController()
@@ -139,7 +138,7 @@ final class BookmarkListController {
                                                   attributes: [.foregroundColor: AppTheme.colorForStyle(.primaryText02)])
 
         let bookmarks = viewModel.bookmarks
-        guard viewModel.feature.isUnlocked, !bookmarks.isEmpty else {
+        guard !bookmarks.isEmpty else {
             rows = [.empty]
             return
         }
@@ -254,7 +253,7 @@ final class BookmarkListController {
 
         case .empty:
             return hostingCell(tableView, identifier: CellID.empty, at: indexPath) {
-                BookmarksEmptyRow(viewModel: listViewModel, style: style, feature: viewModel.feature)
+                BookmarksEmptyRow(viewModel: listViewModel, style: style)
                     .padding(.top, showsSearch ? 0 : BookmarksTabConstants.emptyRowTopPadding)
                     .environmentObject(listViewModel)
             }
@@ -364,12 +363,9 @@ class TransparentBookmarksStyle: ThemedBookmarksStyle {
 private struct BookmarksEmptyRow<Style: BookmarksStyle>: View {
     @ObservedObject var viewModel: BookmarkListViewModel
     @ObservedObject var style: Style
-    @ObservedObject var feature: PaidFeature
 
     var body: some View {
-        if !feature.isUnlocked {
-            BookmarksLockedStateView(style: style.emptyStyle, feature: feature, source: viewModel.analyticsSource)
-        } else if !viewModel.isSearching {
+        if !viewModel.isSearching {
             BookmarksEmptyStateView(style: style.emptyStyle)
         } else {
             BookmarksEmptyStateView(style: .defaultStyle,

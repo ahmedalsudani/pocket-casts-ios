@@ -25,9 +25,6 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark>, MultiSelectable 
 
     var sortOption: BookmarkSortOption {
         didSet {
-            Analytics.track(.bookmarksSortByChanged, source: analyticsSource, properties: [
-                "sort_order": sortOption
-            ])
             sortSettingValue = sortOption
         }
     }
@@ -46,9 +43,6 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark>, MultiSelectable 
 
     var cancellables = Set<AnyCancellable>()
     @Binding private var sortSettingValue: BookmarkSortOption
-
-    let feature: PaidFeature = .bookmarks
-    var analyticsSource: BookmarkAnalyticsSource = .unknown
 
     @Published private(set) var loadingBookmarkUuid: String?
 
@@ -73,7 +67,7 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark>, MultiSelectable 
 
         guard FeatureFlag.smartBookmarks.enabled else { return }
 
-        router?.bookmarkDetails(item, source: analyticsSource)
+        router?.bookmarkDetails(item)
     }
 
     /// A tap on the artwork opens the episode the bookmark was made in, anything else,
@@ -118,21 +112,6 @@ class BookmarkListViewModel: SearchableListViewModel<Bookmark>, MultiSelectable 
             .receive(on: DispatchQueue.main)
             .sink { [weak self] bookmark in
                 self?.refresh(bookmark: bookmark)
-            }
-            .store(in: &cancellables)
-
-        ServerNotifications.syncCompleted.publisher()
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.reload()
-            }
-            .store(in: &cancellables)
-
-        feature.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.reload()
-                self?.objectWillChange.send()
             }
             .store(in: &cancellables)
     }
@@ -205,8 +184,6 @@ extension BookmarkListViewModel {
     }
 
     func openHeadphoneSettings() {
-        Analytics.track(.bookmarksEmptyGoToHeadphoneSettings, source: analyticsSource)
-
         router?.dismissBookmarksList()
         NavigationManager.shared.navigateTo(NavigationManager.settingsHeadphoneKey)
     }
@@ -248,19 +225,14 @@ extension BookmarkListViewModel {
 private extension BookmarkListViewModel {
     func confirmDeletion(count: Int, _ delete: @escaping () -> Void) {
         guard let router else { return }
-        let source = analyticsSource
         let alert = UIAlertController(title: count == 1 ? L10n.bookmarkDeleteWarningTitleSingular : L10n.bookmarkDeleteWarningTitle,
                                       message: count == 1 ? L10n.bookmarkDeleteWarningBodySingular : L10n.bookmarkDeleteWarningBody,
                                       preferredStyle: .alert)
 
-        alert.addAction(.init(title: L10n.cancel, style: .cancel, handler: { _ in
-            Analytics.track(.bookmarkDeleteFormDismissed, source: source)
-        }))
+        alert.addAction(.init(title: L10n.cancel, style: .cancel))
         alert.addAction(.init(title: L10n.delete, style: .destructive, handler: { _ in
-            Analytics.track(.bookmarkDeleteFormSubmitted, source: source)
             delete()
         }))
-        Analytics.track(.bookmarkDeleteFormShown, source: analyticsSource)
         router.presentBookmarkController(alert)
     }
 
@@ -270,7 +242,6 @@ private extension BookmarkListViewModel {
                 return
             }
 
-            Analytics.track(.bookmarkDeleted, source: analyticsSource)
             reload()
         }
     }

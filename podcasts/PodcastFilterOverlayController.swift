@@ -190,10 +190,6 @@ class PodcastFilterOverlayController: PodcastChooserViewController, PodcastSelec
         DataManager.shared.save(playlist: filterToEdit)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filterToEdit)
         navigationController?.popViewController(animated: true)
-
-        if !filterToEdit.isNew {
-            Analytics.track(.filterUpdated, properties: ["group": "podcasts", "source": analyticsSource])
-        }
     }
 
     func updateRightBarBtn() {
@@ -219,7 +215,6 @@ class PodcastFilterOverlayController: PodcastChooserViewController, PodcastSelec
                 }
             }
         }
-        Analytics.track(.settingsSelectPodcastsSelectAllPodcastsToggled, properties: ["enabled": switchIsOn, "source": analyticsSource])
         updateRightBarBtn()
         updateSaveButtonEnabledState()
         podcastTable.reloadData()
@@ -241,8 +236,6 @@ class PodcastFilterOverlayController: PodcastChooserViewController, PodcastSelec
         updateRightBarBtn()
         updateSaveButtonEnabledState()
     }
-
-    func didChangePodcasts(numberSelected: Int) {}
 
     override func currentPodcastsSource() -> [Podcast] {
         return isSearching ? tempPodcasts : allPodcasts

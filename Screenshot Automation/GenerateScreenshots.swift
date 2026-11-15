@@ -1,8 +1,17 @@
 import XCTest
 
 enum Config {
-    static let promoListUUID = "297172b7-948b-4da2-9b0d-7ae9b9068125"
-    static let promoList = "pktc://sharelist/lists.pocketcasts.com/\(promoListUUID)"
+    /// Feeds of the podcasts the screenshots show
+    static let podcastFeeds = [
+        "https://feeds.simplecast.com/PpzWFGhg", // Serial
+        "https://relay.fm/connected/feed", // Connected
+        "https://www.abc.net.au/feeds/2888650/podcast.xml", // All In The Mind
+        "https://distributed.blog/category/podcast/feed/", // Distributed, with Matt Mullenweg
+        "https://feeds.megaphone.fm/vergecast", // The Vergecast
+        "https://www.abc.net.au/feeds/12801214/podcast.xml", // Download This Show
+        "https://feeds.simplecast.com/93bEBtXA", // American Fiasco
+        "https://making.podcasts.wbez.org" // Making
+    ]
 }
 
 class GenerateScreenshots: XCTestCase {
@@ -50,15 +59,17 @@ extension GenerateScreenshots {
     }
 
     func setupSubscriptions() {
-        // Setup Podcast subscription
-        safari.launch()
-        XCTAssert(safari.wait(for: .runningForeground, timeout: 5))
-        safariLoad(url: Config.promoList)
-        safari.buttons["Open"].waitForThenTap()
+        // Open each feed through the app's subscribe link, which shows the podcast page once the feed is loaded
+        for feed in Config.podcastFeeds {
+            safari.launch()
+            XCTAssert(safari.wait(for: .runningForeground, timeout: 5))
+            safariLoad(url: "pktc://subscribe/\(feed)")
+            safari.buttons["Open"].waitForThenTap()
 
-        XCTAssert(app.wait(for: .runningForeground, timeout: 5))
-        app.buttons["SUBSCRIBE TO ALL"].waitForThenTap()
-        app.buttons["action_0"].waitForThenTap()
+            XCTAssert(app.wait(for: .runningForeground, timeout: 5))
+            app.buttons["Follow"].waitForThenTap(timeout: 60)
+            backButton.waitForThenTap()
+        }
     }
 
     func safariLoad(url: String) {
@@ -72,8 +83,17 @@ extension GenerateScreenshots {
         app.tabBars.firstMatch.buttons.element(boundBy: tab.rawValue).waitForThenTap()
     }
 
+    /// Opens the episode whose title contains `key`, scrolling down the episode list until it's on screen
     func openEpisode(_ key: String) {
-        app.cells.containing(NSPredicate(format: "label CONTAINS '\(key)'")).firstMatch.waitForThenTap()
+        let episode = app.cells.containing(NSPredicate(format: "label CONTAINS %@", key)).firstMatch
+        if !episode.waitForExistence(timeout: 5) {
+            var swipes = 0
+            while !episode.exists, swipes < 30 {
+                app.swipeUp()
+                swipes += 1
+            }
+        }
+        episode.waitForThenTap()
     }
 
     func navigateToApperance() {

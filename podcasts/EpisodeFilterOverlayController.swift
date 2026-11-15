@@ -11,10 +11,6 @@ class EpisodeFilterOverlayController: FilterSettingsOverlayController, UITableVi
     private var filterPartiallyPlayed: Bool!
     private var filterFinished: Bool!
 
-    override var analyticsSource: AnalyticsSource {
-        .episodeStatus
-    }
-
     override func viewDidLoad() {
         super.viewDidLoad()
         largeTitleFont = UIFont.systemFont(ofSize: 22, weight: .bold)

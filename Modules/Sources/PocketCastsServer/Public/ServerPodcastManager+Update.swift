@@ -4,21 +4,42 @@ import PocketCastsUtils
 
 extension ServerPodcastManager {
 
-    /// Update a podcast if required.
+    /// Update a podcast if required, by conditionally re-fetching its feed.
+    /// A 304 means nothing to do; a 200 runs the full update path, which also
+    /// persists the new Last-Modified and prunes episodes that left the feed.
     /// - Parameters:
     ///   - podcast: a `Podcast`
     ///   - addMissingEpisodes: if set to `true` it will add missing episodes that are not the latest ones.
     ///   Latest ones are handled by a refresh (due to auto-download/up next)
     ///   - completion: a completion block that receives a `Bool`
     public func updatePodcastIfRequired(podcast: Podcast, addMissingEpisodes: Bool = false, completion: ((Bool) -> Void)?) {
-        CacheServerHandler.shared.loadPodcastIfModified(podcast: podcast) { [weak self] podcastInfo, lastModified in
-            if let podcastInfo {
-                self?.updatePodcast(podcast: podcast, lastModified: lastModified, podcastInfo: podcastInfo, addMissingEpisodes: addMissingEpisodes, completion: {
-                    FileLog.shared.addMessage("\(podcast.title ?? "") updated from cache server")
-                    completion?(true)
-                })
-            } else {
-                FileLog.shared.addMessage("\(podcast.title ?? "") didn't need to be updated from cache server")
+        guard let urlString = podcast.feedUrl, let feedURL = URL(string: urlString) else {
+            FileLog.shared.addMessage("\(podcast.title ?? "") has no feed URL, can't update")
+            completion?(false)
+            return
+        }
+
+        Task { [weak self] in
+            guard let self else {
+                completion?(false)
+                return
+            }
+
+            do {
+                let result = try await LocalFeedService.shared.fetch(feedURL: feedURL, lastModified: podcast.lastUpdatedAt)
+                switch result {
+                case .notModified:
+                    FileLog.shared.addMessage("\(podcast.title ?? "") feed not modified, no update needed")
+                    completion?(false)
+                case .success(let feed, let lastModified, _):
+                    let podcastInfo = feed.toPodcastInfoJson(uuid: podcast.uuid, feedURLString: urlString)
+                    self.updatePodcast(podcast: podcast, lastModified: lastModified ?? podcast.lastUpdatedAt, podcastInfo: podcastInfo, addMissingEpisodes: addMissingEpisodes, completion: {
+                        FileLog.shared.addMessage("\(podcast.title ?? "") updated from local feed")
+                        completion?(true)
+                    })
+                }
+            } catch {
+                FileLog.shared.addMessage("\(podcast.title ?? "") feed update failed: \(error.localizedDescription)")
                 completion?(false)
             }
         }
@@ -36,6 +57,7 @@ extension ServerPodcastManager {
     func update(podcast: Podcast, podcastInfo: [String: Any], lastModified: String?, addMissingEpisodes: Bool) {
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any], let episodesJson = podcastJson["episodes"] as? [[String: Any]] else { return }
 
+        let previousLastUpdatedAt = podcast.lastUpdatedAt
         podcast.lastUpdatedAt = lastModified
         if let title = podcastJson["title"] as? String {
             podcast.title = title
@@ -43,9 +65,11 @@ extension ServerPodcastManager {
         if let author = podcastJson["author"] as? String {
             podcast.author = author
         }
-        podcast.networkListId = Podcast.networkListId(fromPodcastJson: podcastJson)
         if let url = podcastJson["url"] as? String {
             podcast.podcastUrl = url
+        }
+        if let feedUrl = podcastJson["feed_url"] as? String {
+            podcast.feedUrl = feedUrl
         }
         if let description = podcastJson["description"] as? String {
             podcast.podcastDescription = description
@@ -87,10 +111,15 @@ extension ServerPodcastManager {
         if let fundingsJson = podcastJson["fundings"] as? [[String: Any]], let url = fundingsJson.first?["url"] as? String {
             podcast.fundingURL = url
         }
+        if let imageURL = podcastJson["image_url"] as? String {
+            podcast.imageURL = imageURL
+        }
 
         DataManager.shared.save(podcast: podcast)
 
         var latestEpisodeWasMissing: Bool?
+
+        var leftEpisodesForRefresh = false
 
         var missingEpisodesThatIsNotTheLatestOnes = false
 
@@ -129,9 +158,28 @@ extension ServerPodcastManager {
                     existingEpisode.episodeType = type
                     episodeChanged = true
                 }
-
-                if let type = episodeJson["has_generated_transcript"] as? Bool?, existingEpisode.hasGeneratedTranscript != type {
-                    existingEpisode.hasGeneratedTranscript = type
+                if let description = episodeJson["description"] as? String, existingEpisode.episodeDescription != description {
+                    existingEpisode.episodeDescription = description
+                    episodeChanged = true
+                }
+                if let descriptionHTML = episodeJson["description_html"] as? String, existingEpisode.detailedDescription != descriptionHTML {
+                    existingEpisode.detailedDescription = descriptionHTML
+                    episodeChanged = true
+                }
+                if let chaptersUrl = episodeJson["chapters_url"] as? String, existingEpisode.chaptersUrl != chaptersUrl {
+                    existingEpisode.chaptersUrl = chaptersUrl
+                    episodeChanged = true
+                }
+                if let chaptersType = episodeJson["chapters_type"] as? String, existingEpisode.chaptersType != chaptersType {
+                    existingEpisode.chaptersType = chaptersType
+                    episodeChanged = true
+                }
+                if let transcriptUrl = episodeJson["transcript_url"] as? String, existingEpisode.transcriptUrl != transcriptUrl {
+                    existingEpisode.transcriptUrl = transcriptUrl
+                    episodeChanged = true
+                }
+                if let transcriptType = episodeJson["transcript_type"] as? String, existingEpisode.transcriptType != transcriptType {
+                    existingEpisode.transcriptType = transcriptType
                     episodeChanged = true
                 }
 
@@ -163,6 +211,7 @@ extension ServerPodcastManager {
                 }
 
                 latestEpisodeWasMissing = true
+                leftEpisodesForRefresh = true
                 continue
             }
 
@@ -202,9 +251,23 @@ extension ServerPodcastManager {
             if let type = episodeJson["type"] as? String {
                 episode.episodeType = type
             }
-
-            if let type = episodeJson["has_generated_transcript"] as? Bool? {
-                episode.hasGeneratedTranscript = type
+            if let description = episodeJson["description"] as? String {
+                episode.episodeDescription = description
+            }
+            if let descriptionHTML = episodeJson["description_html"] as? String {
+                episode.detailedDescription = descriptionHTML
+            }
+            if let chaptersUrl = episodeJson["chapters_url"] as? String {
+                episode.chaptersUrl = chaptersUrl
+            }
+            if let chaptersType = episodeJson["chapters_type"] as? String {
+                episode.chaptersType = chaptersType
+            }
+            if let transcriptUrl = episodeJson["transcript_url"] as? String {
+                episode.transcriptUrl = transcriptUrl
+            }
+            if let transcriptType = episodeJson["transcript_type"] as? String {
+                episode.transcriptType = transcriptType
             }
 
             episode.hlsUrl = Episode.hlsUrl(fromEpisodeJson: episodeJson)
@@ -220,6 +283,13 @@ extension ServerPodcastManager {
             DataManager.shared.insertMissing(episodes: Array(newEpisodes.values))
         }
 
+        // The episodes left for a refresh are only found if the refresh downloads the feed again,
+        // which it won't do while the feed still looks unmodified since this update
+        if leftEpisodesForRefresh {
+            podcast.lastUpdatedAt = previousLastUpdatedAt
+            DataManager.shared.save(podcast: podcast)
+        }
+
         if !podcast.isSubscribed() {
             ServerPodcastManager.shared.updateLatestEpisodeInfo(podcast: podcast, setDefaults: false)
         } else {
@@ -232,7 +302,9 @@ extension ServerPodcastManager {
         // episodes never being added, so we add them here
         if addMissingEpisodes, missingEpisodesThatIsNotTheLatestOnes, let latestAvailableEpisodeUuid {
             FileLog.shared.addMessage("[ServerPodcastManager] Updating \(podcast.title ?? "") from episode UUID \(latestAvailableEpisodeUuid)")
-            RefreshManager.shared.refresh(podcast: podcast, from: latestAvailableEpisodeUuid)
+            Task {
+                await RefreshManager.shared.refresh(podcast: podcast)
+            }
         }
     }
 

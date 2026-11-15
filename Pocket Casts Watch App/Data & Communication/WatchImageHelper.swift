@@ -7,7 +7,6 @@ import WatchKit
 class WatchImageHelper {
     static let shared = WatchImageHelper()
 
-    // Discover Cache
     var mainCache = ImageCache(name: "mainCache")
 
     init() {
@@ -21,10 +20,6 @@ class WatchImageHelper {
             mainCache.memoryStorage.config.totalCostLimit = Int(5.megabytes)
             mainCache.memoryStorage.config.expiration = .seconds(10.minutes)
         }
-    }
-
-    class func imageUrl(size: Int, podcastUuid: String) -> String {
-        ServerHelper.image(podcastUuid: podcastUuid, size: size)
     }
 
     class func largeImageUrl(episode: BaseEpisode) -> URL {

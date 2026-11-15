@@ -68,7 +68,6 @@ class PlaylistCell: ThemeableCell {
         isLastRow: Bool,
         isSelected: Binding<Bool> = .constant(false),
         canBeDisabled: Bool = false,
-        analyticsSource: String? = nil,
         additionalEpisodesCount: Int = 0
     ) {
         switch cellType {
@@ -88,8 +87,7 @@ class PlaylistCell: ThemeableCell {
             PlaylistCellView(
                 viewModel: viewModel,
                 isSelected: isSelected,
-                canBeDisabled: canBeDisabled,
-                analyticsSource: analyticsSource
+                canBeDisabled: canBeDisabled
             )
             .environmentObject(Theme.shared)
             .frame(maxWidth: .infinity, minHeight: Self.cellHeight, alignment: .leading)

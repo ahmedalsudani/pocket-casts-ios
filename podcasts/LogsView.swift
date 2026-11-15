@@ -1,22 +1,15 @@
 import Foundation
 import SwiftUI
 import PocketCastsUtils
-import MessageUI
-import UniformTypeIdentifiers
 
 enum LogSource: String, CaseIterable {
     case iOS
     case watchOS
 }
 
-class LogsViewModel: NSObject, ObservableObject, MFMailComposeViewControllerDelegate {
+class LogsViewModel: ObservableObject {
     @Published var logs = ""
     @Published var selectedSource: LogSource = .iOS
-    var presenter: UIViewController?
-
-    init(presenter: UIViewController? = nil) {
-        self.presenter = presenter
-    }
 
     func load() async {
         switch selectedSource {
@@ -26,7 +19,7 @@ class LogsViewModel: NSObject, ObservableObject, MFMailComposeViewControllerDele
                 self.logs = result
             }
         case .watchOS:
-            let result = await FileLog.shared.watchLogFileAsString()
+            let result = await WatchManager.shared.requestLogFile()
             await MainActor.run {
                 self.logs = result ?? L10n.logsWatchOsNotAvailable
             }
@@ -49,29 +42,6 @@ class LogsViewModel: NSObject, ObservableObject, MFMailComposeViewControllerDele
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("pocketcasts-logs-\(dateString).txt")
         try? data.write(to: tempURL)
         return tempURL
-    }
-
-    @MainActor
-    func mailLogs() {
-        guard MFMailComposeViewController.canSendMail() else {
-            Toast.show(L10n.logsNoEmailAccountConfigured)
-            return
-        }
-        let mailVC = MFMailComposeViewController()
-        mailVC.mailComposeDelegate = self
-        mailVC.setSubject("iOS Logs \(Settings.appVersion())")
-        mailVC.setToRecipients(["support@pocketcasts.com"])
-        mailVC.setMessageBody("Please find attached my logs", isHTML: false)
-        if let data = logs.data(using: .utf8) {
-            mailVC.addAttachmentData(data, mimeType: UTType.plainText.preferredMIMEType ?? "plain/text", fileName: "logs.txt")
-        }
-        presenter?.present(mailVC, animated: true)
-    }
-
-    func mailComposeController(_ controller: MFMailComposeViewController,
-                                       didFinishWith result: MFMailComposeResult,
-                               error: Error?) {
-        presenter?.dismiss(animated: true)
     }
 }
 
@@ -97,14 +67,6 @@ struct LogsView: View {
         .navigationTitle(L10n.logs)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                if MFMailComposeViewController.canSendMail() {
-                    Button(action: {
-                        model.mailLogs()
-                    }, label: {
-                        Image(systemName: "envelope")
-                            .bold()
-                    })
-                }
                 if let url = model.shareURL {
                     ShareLink(item: url, preview: SharePreview("logs.txt")) {
                         Image(systemName: "square.and.arrow.up")

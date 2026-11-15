@@ -10,8 +10,6 @@ class PodcastEffectsViewController: PCViewController {
         }
     }
 
-    var playbackSpeedDebouncer: Debounce = .init(delay: 1)
-
     var podcast: Podcast
 
     init(podcast: Podcast) {
@@ -39,7 +37,6 @@ class PodcastEffectsViewController: PCViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        addCustomObserver(Constants.Notifications.podcastColorsDownloaded, selector: #selector(podcastUpdated(_:)))
         addCustomObserver(Constants.Notifications.podcastUpdated, selector: #selector(podcastUpdated(_:)))
     }
 
@@ -72,11 +69,5 @@ class PodcastEffectsViewController: PCViewController {
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
         AppTheme.defaultStatusBarStyle()
-    }
-}
-
-extension PodcastEffectsViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .podcastSettings
     }
 }

@@ -167,14 +167,6 @@ public class UserEpisode: NSObject, BaseEpisode {
         uploadStatus == UploadStatus.uploading.rawValue
     }
 
-    public func uploadQueued() -> Bool {
-        uploadStatus == UploadStatus.queued.rawValue
-    }
-
-    public func uploadWaitingForWifi() -> Bool {
-        uploadStatus == UploadStatus.waitingForWifi.rawValue
-    }
-
     // MARK: - GRDB
 
     public static let databaseTableName = "SJUserEpisode"

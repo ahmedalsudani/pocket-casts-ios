@@ -28,7 +28,6 @@ class NewPlaylistViewController: PCViewController {
     }
 
     private let creationType: CreationType
-    private let analyticsSource: String?
 
     private var creationView: UIView?
     private var smartPlaylistsTip: UIViewController? = nil
@@ -84,9 +83,8 @@ class NewPlaylistViewController: PCViewController {
         }
     }
 
-    init(creationType: CreationType = .default, analyticsSource: String? = nil) {
+    init(creationType: CreationType = .default) {
         self.creationType = creationType
-        self.analyticsSource = analyticsSource
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -107,20 +105,10 @@ class NewPlaylistViewController: PCViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        Analytics.track(.filterCreateShown)
-
         showSmartPlaylistTooltip()
 
         playlistNameTextField.becomeFirstResponder()
         playlistNameTextField.selectAll(nil)
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-
-        if isMovingFromParent {
-            Analytics.track(.filterCreateCancelled)
-        }
     }
 
     private func setupNavBar() {
@@ -250,12 +238,9 @@ class NewPlaylistViewController: PCViewController {
                 return
             }
 
-            Analytics.track(.addToPlaylistsCreateNewPlaylistTapped, properties: ["source": analyticsSource ?? "unknown"])
-
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
 
-            Analytics.track(.filterCreated)
-            Analytics.track(.filterCreateAsManualPlaylistTapped)
+            NotificationsCoordinator.shared.handle(.filterCreated)
 
             if Settings.firstTimePlaylistCreated {
                 Settings.shouldShowDragAndDropTip = true
@@ -290,12 +275,9 @@ class NewPlaylistViewController: PCViewController {
                 return
             }
 
-            Analytics.track(.addToPlaylistsCreateNewPlaylistTapped, properties: ["source": analyticsSource ?? "unknown"])
-
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: playlist)
 
-            Analytics.track(.filterCreated)
-            Analytics.track(.filterCreateAsManualPlaylistTapped)
+            NotificationsCoordinator.shared.handle(.filterCreated)
 
             if Settings.firstTimePlaylistCreated {
                 Settings.shouldShowDragAndDropTip = true
@@ -319,8 +301,7 @@ class NewPlaylistViewController: PCViewController {
             return
         }
 
-        Analytics.track(.filterCreated)
-        Analytics.track(.filterCreateAsManualPlaylistTapped)
+        NotificationsCoordinator.shared.handle(.filterCreated)
 
         if Settings.firstTimePlaylistCreated {
             Settings.shouldShowDragAndDropTip = true
@@ -330,8 +311,6 @@ class NewPlaylistViewController: PCViewController {
     }
 
     private func createSmartPlaylist() {
-        Analytics.track(.filterCreateAsSmartPlaylistTapped)
-
         let playlistName = self.playlistName.isEmpty ? L10n.playlistsDefaultNewPlaylist : self.playlistName
         let createPlaylistVC = PlaylistPreviewViewController(playlistName: playlistName)
         createPlaylistVC.delegate = delegate
@@ -340,7 +319,6 @@ class NewPlaylistViewController: PCViewController {
     }
 
     @objc private func closeTapped(_ sender: Any) {
-        Analytics.track(.filterCreateCancelled)
         delegate?.presentingPlaylistDetail = false
         dismiss(animated: true, completion: nil)
     }

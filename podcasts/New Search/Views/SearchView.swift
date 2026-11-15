@@ -5,7 +5,6 @@ class SearchVisibilityModel: ObservableObject {
 }
 
 struct SearchView: View {
-    @EnvironmentObject var searchAnalyticsHelper: SearchAnalyticsHelper
     @EnvironmentObject var displaySearch: SearchVisibilityModel
     @EnvironmentObject var searchResults: SearchResultsModel
     @EnvironmentObject var searchHistory: SearchHistoryModel

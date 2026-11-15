@@ -9,25 +9,6 @@
             attributedText = attributedString
         }
 
-        func setLineSpacing(lineSpacing: CGFloat = 0.0, lineHeightMultiple: CGFloat = 0.0) {
-            guard let labelText = text else { return }
-
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineSpacing = lineSpacing
-            paragraphStyle.lineHeightMultiple = lineHeightMultiple
-
-            let attributedString: NSMutableAttributedString
-            if let labelattributedText = attributedText {
-                attributedString = NSMutableAttributedString(attributedString: labelattributedText)
-            } else {
-                attributedString = NSMutableAttributedString(string: labelText)
-            }
-
-            attributedString.addAttribute(NSAttributedString.Key.paragraphStyle, value: paragraphStyle, range: NSMakeRange(0, attributedString.length))
-
-            attributedText = attributedString
-        }
-
         func updateNumberOfLines(regular: Int, accessibility: Int) {
             self.numberOfLines = traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? accessibility : regular
         }

@@ -1,6 +1,5 @@
 import Combine
 import Foundation
-import PocketCastsServer
 
 extension Publishers {
     enum Notification {
@@ -24,7 +23,6 @@ extension Publishers {
         static let episodePlayStatusChanged = NotificationCenter.default.publisher(for: Constants.Notifications.episodePlayStatusChanged, object: nil)
         static let episodeStarredChanged = NotificationCenter.default.publisher(for: Constants.Notifications.episodeStarredChanged, object: nil)
         static let userEpisodeDeleted = NotificationCenter.default.publisher(for: Constants.Notifications.userEpisodeDeleted, object: nil)
-        static let userEpisodesRefreshed = NotificationCenter.default.publisher(for: ServerNotifications.userEpisodesRefreshed, object: nil)
 
         // Episode Download
         static let downloadProgress = NotificationCenter.default.publisher(for: Constants.Notifications.downloadProgress)

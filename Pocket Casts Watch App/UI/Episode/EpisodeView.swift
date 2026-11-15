@@ -96,12 +96,6 @@ struct EpisodeView: View {
                     }
                 }
             }
-
-            if viewModel.supportsPodcastNavigation, let podcast = viewModel.parentPodcast {
-                NavigationLink(destination: PodcastEpisodeListView(viewModel: .init(podcast: podcast))) {
-                    EpisodeActionView(iconName: "episode_goto", title: L10n.goToPodcast)
-                }
-            }
         }
     }
 

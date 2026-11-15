@@ -70,14 +70,6 @@ struct Top5Podcasts2025Story: ShareableStory {
         }
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
-    }
-
     func sharingAssets() -> [Any] {
         [
             StoryShareableProvider.new(AnyView(self)),

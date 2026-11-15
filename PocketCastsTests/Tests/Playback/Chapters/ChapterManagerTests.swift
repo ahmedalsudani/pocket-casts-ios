@@ -3,25 +3,13 @@ import XCTest
 
 @testable import podcasts
 @testable import PocketCastsDataModel
-@testable import PocketCastsServer
 @testable import PocketCastsUtils
 
 class ChapterManagerTests: XCTestCase {
     let featureFlagMock = FeatureFlagMock()
-    var previousSubscriptionPaidStatus: Int!
-    var previousSubscriptionTier: SubscriptionTier!
-
-    override func setUp() {
-        previousSubscriptionPaidStatus = SubscriptionHelper.hasActiveSubscription() ? 1 : 0
-        previousSubscriptionTier = SubscriptionHelper.subscriptionTier
-        SubscriptionHelper.setSubscriptionPaid(1)
-        SubscriptionHelper.subscriptionTier = .patron
-    }
 
     override func tearDown() {
         featureFlagMock.reset()
-        SubscriptionHelper.setSubscriptionPaid(previousSubscriptionPaidStatus)
-        SubscriptionHelper.subscriptionTier = previousSubscriptionTier
     }
 
     /// Update the current chapter given a TimeInterval
@@ -150,18 +138,18 @@ private class ShowInfoCoordinatorMock: ShowInfoCoordinating {
         nil
     }
 
-    func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> ([PocketCastsDataModel.Episode.Metadata.EpisodeChapter]?, [podcasts.PodcastIndexChapter]?, [GeneratedChapter]?) {
-        (nil, nil, nil)
+    func loadChapters(podcastUuid: String, episodeUuid: String) async throws -> ([PocketCastsDataModel.Episode.Metadata.EpisodeChapter]?, [podcasts.PodcastIndexChapter]?) {
+        (nil, nil)
     }
 
-    func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
-        return (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
+    func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> [PocketCastsDataModel.Episode.Metadata.Transcript] {
+        []
     }
 }
 
 private class EpisodeMock: Episode {
     override var downloadUrl: String? {
-        get { "https://pocketcasts.com/" }
+        get { "https://example.com/" }
         set {}
     }
 }

@@ -31,6 +31,4 @@ import PocketCastsDataModel
     var internalPlayerForVideoPlayback: AVPlayer? { get }
 
     func setVolume(_ volume: Float)
-
-    var currentAudioLevel: Float { get }
 }

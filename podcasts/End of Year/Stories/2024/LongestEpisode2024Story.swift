@@ -93,20 +93,12 @@ struct LongestEpisode2024Story: ShareableStory {
         }
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
     func onPause() {
         animationViewModel.pause()
     }
 
     func onResume() {
         animationViewModel.play()
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
     }
 
     func sharingAssets() -> [Any] {

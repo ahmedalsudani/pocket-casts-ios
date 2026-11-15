@@ -59,7 +59,6 @@ extension PodcastViewController {
         }
 
         optionPicker.present(from: self)
-        Analytics.track(.podcastScreenOptionsTapped)
     }
 
     private func makeDownloadAllPicker() -> OptionsPicker? {
@@ -116,7 +115,6 @@ extension PodcastViewController {
         PodcastEpisodeSortOrder.allCases.forEach { order in
             let newestToOldestAction = OptionAction(label: order.description, selected: sortOrder == order) { [weak self] in
                 self?.setSortSetting(order)
-                Analytics.track(.podcastsScreenSortOrderChanged, properties: ["sort_by": order])
             }
 
             optionPicker.addAction(action: newestToOldestAction)
@@ -143,7 +141,6 @@ extension PodcastViewController {
         groupings.forEach { label, grouping in
             let action = OptionAction(label: label, selected: episodeGrouping == grouping) { [weak self] in
                 self?.setGroupingSetting(grouping)
-                Analytics.track(.podcastsScreenEpisodeGroupingChanged, properties: ["value": grouping])
             }
             optionPicker.addAction(action: action)
         }

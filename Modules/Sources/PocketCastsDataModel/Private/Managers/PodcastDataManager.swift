@@ -215,45 +215,6 @@ class PodcastDataManager {
         }
     }
 
-    func allPaidPodcasts(dbQueue: GRDBQueue) -> [Podcast] {
-        var allPaid = [Podcast]()
-        cachedPodcasts.withLock { cachedPodcasts in
-            for podcast in cachedPodcasts.values {
-                if !podcast.isPaid { continue }
-
-                allPaid.append(podcast)
-            }
-        }
-
-        return allPaid
-    }
-
-    func allUnsynced(dbQueue: GRDBQueue) -> [Podcast] {
-        var unsyncedPodcasts = [Podcast]()
-        cachedPodcasts.withLock { cachedPodcasts in
-            for podcast in cachedPodcasts.values {
-                if podcast.syncStatus == SyncStatus.notSynced.rawValue {
-                    unsyncedPodcasts.append(podcast)
-                }
-            }
-        }
-
-        return unsyncedPodcasts
-    }
-
-    func allOverrideGlobalArchivePodcasts(dbQueue: GRDBQueue) -> [Podcast] {
-        var podcastsOverrideArchive = [Podcast]()
-        cachedPodcasts.withLock { cachedPodcasts in
-            for podcast in cachedPodcasts.values {
-                if podcast.isSubscribed(), podcast.overrideGlobalArchive {
-                    podcastsOverrideArchive.append(podcast)
-                }
-            }
-        }
-
-        return podcastsOverrideArchive
-    }
-
     func find(uuid: String, includeUnsubscribed: Bool, dbQueue: GRDBQueue) -> Podcast? {
         cachedPodcasts.withLock { cachedPodcasts in
             guard let podcast = cachedPodcasts[uuid] else { return nil }
@@ -262,34 +223,6 @@ class PodcastDataManager {
 
             return podcast
         }
-    }
-
-    func searchPodcasts(term: String, dbQueue: GRDBQueue) -> [Podcast] {
-        let trimmedTerm = term.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTerm.isEmpty else { return [] }
-
-        let locale = Locale.current
-        let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
-
-        var matchingPodcasts = [Podcast]()
-        cachedPodcasts.withLock { cachedPodcasts in
-            for podcast in cachedPodcasts.values {
-                guard podcast.isSubscribed() else { continue }
-
-                if podcast.title?.range(of: trimmedTerm, options: options, range: nil, locale: locale) != nil {
-                    matchingPodcasts.append(podcast)
-                    continue
-                }
-
-                if podcast.author?.range(of: trimmedTerm, options: options, range: nil, locale: locale) != nil {
-                    matchingPodcasts.append(podcast)
-                }
-            }
-        }
-
-        return matchingPodcasts.sorted(by: { lhs, rhs in
-            PodcastSorter.sortByNameAndUUID(item1: lhs, item2: rhs)
-        })
     }
 
     func count(dbQueue: GRDBQueue) -> Int {
@@ -429,21 +362,6 @@ class PodcastDataManager {
         refreshCacheAfterWrite(dbQueue: dbQueue)
     }
 
-    func markAllSynced(dbQueue: GRDBQueue) {
-        setOnAllPodcasts(value: SyncStatus.synced.rawValue, propertyName: "syncStatus", subscribedOnly: false, dbQueue: dbQueue)
-    }
-
-    func markAllUnsynced(dbQueue: GRDBQueue) {
-        setOnAllPodcasts(value: SyncStatus.notSynced.rawValue, propertyName: "syncStatus", subscribedOnly: true, dbQueue: dbQueue)
-    }
-
-    func markAllUnsyncedWhereLastSyncAtNot(_ lastSyncAt: String, dbQueue: GRDBQueue) {
-        let query = "UPDATE \(DataManager.podcastTableName) SET syncStatus = \(SyncStatus.notSynced.rawValue) WHERE subscribed = 1 AND fullSyncLastSyncAt <> ?"
-        DataHelper.run(query: query, values: [lastSyncAt], methodName: "PodcastDataManager.markAllUnsyncedWhereLastSyncAtNot", onQueue: dbQueue)
-
-        refreshCacheAfterWrite(dbQueue: dbQueue)
-    }
-
     func setPushForAllPodcasts(pushEnabled: Bool, dbQueue: GRDBQueue) {
         setOnAllPodcasts(value: pushEnabled, propertyName: "pushEnabled", subscribedOnly: true, dbQueue: dbQueue)
     }
@@ -511,12 +429,6 @@ class PodcastDataManager {
         refreshCacheAfterWrite(dbQueue: dbQueue)
     }
 
-    func removeAllPodcastsFromAllFolders(dbQueue: GRDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.podcastTableName) SET folderUuid = NULL", values: nil, methodName: "PodcastDataManager.removeAllPodcastsFromAllFolders", onQueue: dbQueue)
-
-        refreshCacheAfterWrite(dbQueue: dbQueue)
-    }
-
     func updateAllPodcastGrouping(to grouping: PodcastGrouping, dbQueue: GRDBQueue) {
         setOnAllPodcasts(value: grouping.rawValue, propertyName: "episodeGrouping", subscribedOnly: true, dbQueue: dbQueue)
     }
@@ -528,10 +440,6 @@ class PodcastDataManager {
     func setAllPodcastImageVersions(to version: Int, dbQueue: GRDBQueue) {
         setOnAllPodcasts(value: NSNull(), propertyName: "lastColorDownloadDate", subscribedOnly: true, dbQueue: dbQueue)
         setOnAllPodcasts(value: version, propertyName: "colorVersion", subscribedOnly: true, dbQueue: dbQueue)
-    }
-
-    func clearLastUpdatedAtForAllPodcasts(dbQueue: GRDBQueue) {
-        setOnAllPodcasts(value: NSNull(), propertyName: "lastUpdatedAt", subscribedOnly: true, dbQueue: dbQueue)
     }
 
     private func saveSingleValue(name: String, value: Any?, podcastUuid: String, dbQueue: GRDBQueue) {

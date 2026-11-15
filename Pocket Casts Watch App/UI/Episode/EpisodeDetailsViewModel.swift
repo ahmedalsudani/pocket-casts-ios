@@ -8,13 +8,8 @@ class EpisodeDetailsViewModel: EpisodeViewModel {
     @Published var isCurrentlyPlaying = false
     @Published var actionRequiresConfirmation: EpisodeAction?
     @Published var actions: [EpisodeAction] = []
-    @Published var supportsPodcastNavigation = false
 
     var playlist: AutoplayHelper.Playlist?
-
-    var parentPodcast: Podcast? {
-        (episode as? Episode)?.parentPodcast()
-    }
 
     private var playbackChanged: AnyPublisher<BaseEpisode, Never> {
         Publishers.Merge(
@@ -89,13 +84,6 @@ class EpisodeDetailsViewModel: EpisodeViewModel {
             .removeDuplicates()
             .receive(on: RunLoop.main)
             .assign(to: &$actions)
-
-        $episode
-            .map { [unowned self] episode in
-                self.playSourceViewModel.supportsPodcastNavigation(forEpisode: episode)
-            }
-            .receive(on: RunLoop.main)
-            .assign(to: &$supportsPodcastNavigation)
 
         updateEpisode
             .compactMap { [unowned self] _ in

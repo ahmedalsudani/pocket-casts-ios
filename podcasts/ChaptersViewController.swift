@@ -6,11 +6,6 @@ class ChaptersViewController: PlayerItemViewController {
 
     var numberOfDeselectedChapters = 0
 
-    /// The row whose generated chapter is currently being resolved to a real
-    /// playback position via fingerprinting (shows a spinner). Nil when idle.
-    /// Drives the per-row spinner from `cellForRowAt` so it survives cell reuse.
-    var resolvingIndexPath: IndexPath?
-
     @IBOutlet var chaptersTable: UITableView! {
         didSet {
             registerCells()
@@ -50,9 +45,6 @@ class ChaptersViewController: PlayerItemViewController {
 
     override func willBeRemovedFromPlayer() {
         removeAllCustomObservers()
-        // Drop any in-flight chapter resolve so a backgrounded list can't seek later.
-        FingerprintTimingManager.shared.cancelPendingChapterResolve()
-        resolvingIndexPath = nil
     }
 
     override func themeDidChange() {
@@ -78,22 +70,12 @@ class ChaptersViewController: PlayerItemViewController {
         addCustomObserver(Constants.Notifications.podcastChaptersDidUpdate, selector: #selector(update))
         addCustomObserver(Constants.Notifications.podcastChapterChanged, selector: #selector(update))
         addCustomObserver(UIApplication.willEnterForegroundNotification, selector: #selector(update))
-        addCustomObserver(ServerNotifications.iapPurchaseCompleted, selector: #selector(enableOrDisableChapterSelectionIfUserJustPurchased))
     }
 
     @objc private func update() {
         chaptersTable.reloadData()
         updateColors()
         updateHeader()
-    }
-
-    @objc private func enableOrDisableChapterSelectionIfUserJustPurchased() {
-        DispatchQueue.main.async { [weak self] in
-            self?.isTogglingChapters = PaidFeature.deselectChapters.isUnlocked ? true : false
-            self?.header.isTogglingChapters = self?.isTogglingChapters ?? false
-            self?.header.update()
-            self?.chaptersTable.reloadSections([0], with: .automatic)
-        }
     }
 
     private func updateColors() {

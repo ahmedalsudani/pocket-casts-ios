@@ -93,16 +93,5 @@ test_staging: ## Build and run Unit Tests using the StagingDebug configuration
 format: $(SWIFTLINT_BIN) ## Lint and autocorrect linter errors
 	@$(SWIFTLINT) --autocorrect
 
-upload_dsyms: ## Upload dSYMs
-	./scripts/upload-symbols -gsp "$$(a8c-secrets which GoogleService-Info.plist)" -p ios ./podcasts.app.dSYM.zip
-
 install_dependencies: ## Install dependencies to run this project
 	bundle install
-
-update_proto: ## Generates the protobuffer Swift files
-	./scripts/update_proto.sh $(API_PATH)
-
-external_contributor: ## Generates an empty ApiCredentials.swift so the app builds
-	@cp podcasts/Credentials/ApiCredentials.tpl podcasts/Credentials/LocalApiCredentials.swift
-	@sed -i '' 's/%{.*}//' "podcasts/Credentials/LocalApiCredentials.swift"
-	$(info You're ready to build the app, go ahead! 🎙)

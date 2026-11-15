@@ -18,7 +18,6 @@ class ManualPlaylistsChooserViewController: PCViewController {
     private var newSelectedPlaylists: Set<String> = []
     private var searchController: PCSearchBarController?
     private let episodes: [Episode]
-    private let analyticsSource: String
     private let dataManager = DataManager.shared
 
     /// Called once the user is done with the chooser, so a flow that opened it — such as
@@ -57,14 +56,13 @@ class ManualPlaylistsChooserViewController: PCViewController {
         }
     }
 
-    init(episodes: [Episode], analyticsSource: String) {
+    init(episodes: [Episode]) {
         self.episodes = episodes
-        self.analyticsSource = analyticsSource
         super.init(nibName: nil, bundle: nil)
     }
 
-    convenience init(episode: Episode, analyticsSource: String) {
-        self.init(episodes: [episode], analyticsSource: analyticsSource)
+    convenience init(episode: Episode) {
+        self.init(episodes: [episode])
     }
 
     @MainActor required init?(coder: NSCoder) {
@@ -77,12 +75,6 @@ class ManualPlaylistsChooserViewController: PCViewController {
         setupNavBar()
         addCloseButton()
         setupContent()
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        Analytics.track(.addToPlaylistsShown, properties: ["source": analyticsSource])
     }
 
     private func setupNavBar() {
@@ -191,12 +183,10 @@ class ManualPlaylistsChooserViewController: PCViewController {
                     Toast.show(L10n.playlistManualAddEpisodesAlmostFullToast)
                     return
                 }
-                episodes.forEach { track(episode: $0, added: true, to: playlist) }
                 dataManager.add(episodes: episodes, to: playlist)
                 changedPlaylists.insert(playlist)
             }
             if removed.contains(playlist.uuid), let episode = episodes.first, episodes.count == 1 {
-                track(episode: episode, added: false, to: playlist)
                 dataManager.deleteEpisodes([episode.uuid], from: playlist)
             }
         }
@@ -302,7 +292,6 @@ extension ManualPlaylistsChooserViewController: UITableViewDelegate, UITableView
                 isLastRow: indexPath.row == manualPlaylists.count - 1,
                 isSelected: isSelected,
                 canBeDisabled: !episodeIsInPlaylist,
-                analyticsSource: analyticsSource,
                 additionalEpisodesCount: episodes.count - selectedEpisodesCountByPlaylist[playlist.uuid, default: 0]
             )
         }
@@ -318,12 +307,10 @@ extension ManualPlaylistsChooserViewController: UITableViewDelegate, UITableView
 
         tableView.deselectRow(at: indexPath, animated: true)
 
-        Analytics.track(.addToPlaylistsNewPlaylistTapped, properties: ["source": analyticsSource])
-
         let creationType: NewPlaylistViewController.CreationType = episodes.count == 1
             ? .addEpisode(episode: episodes[0])
             : .addEpisodes(episodes: episodes)
-        let createPlaylistViewController = NewPlaylistViewController(creationType: creationType, analyticsSource: analyticsSource)
+        let createPlaylistViewController = NewPlaylistViewController(creationType: creationType)
         navigationController?.pushViewController(createPlaylistViewController, animated: true)
     }
 }
@@ -337,8 +324,6 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
     }
 
     func searchWasCleared() {
-        // TODO: Add analytics
-
         manualPlaylists = allManualPlaylists
         tableView.reload(section: .playlists, with: .automatic)
     }
@@ -346,8 +331,6 @@ extension ManualPlaylistsChooserViewController: PCSearchBarDelegate {
     func searchTermChanged(_ searchTerm: String) { }
 
     func performSearch(searchTerm: String, triggeredByTimer: Bool, completion: @escaping (() -> Void)) {
-        // TODO: Add analytics
-
         manualPlaylists = allManualPlaylists.filter {
             $0.playlistName.localizedCaseInsensitiveContains(searchTerm)
         }
@@ -377,8 +360,3 @@ fileprivate extension UITableView {
     }
 }
 
-extension ManualPlaylistsChooserViewController: PlaylistTypeTrackerProvider {
-    var analyticsSourceType: String {
-        analyticsSource
-    }
-}

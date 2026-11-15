@@ -64,7 +64,6 @@ class SleepTimerManager {
            let setting = Settings.sleepTimerLastSetting {
             if let duration = setting.duration {
                 PlaybackManager.shared.setSleepTimerInterval(duration)
-                Analytics.track(.playerSleepTimerRestarted, properties: ["time": duration])
                 FileLog.shared.addMessage("Sleep Timer: restarting it automatically (\(now.description) - \(sleepTimerFinishedDate.description) <= 5 minutes")
             } else if setting.sleepOnEpisodeEnd == true {
                 observePlaybackEndAndReactivateTime()
@@ -76,7 +75,6 @@ class SleepTimerManager {
         if let setting = Settings.sleepTimerLastSetting {
             if let duration = setting.duration {
                 PlaybackManager.shared.setSleepTimerInterval(duration)
-                Analytics.track(.playerSleepTimerRestarted, properties: ["time": duration, "reason": "device_shake"])
                 FileLog.shared.addMessage("Sleep Timer: restarting it after device shake")
             }
         }
@@ -94,7 +92,6 @@ class SleepTimerManager {
     @objc private func episodeDurationChanged() {
         let numberOfEpisodes = Settings.sleepTimerNumberOfEpisodes
         FileLog.shared.addMessage("Sleep Timer: restarting it automatically to the end of the episode")
-        Analytics.track(.playerSleepTimerRestarted, properties: ["time": "end_of_episode", "number_of_episodes": numberOfEpisodes])
         PlaybackManager.shared.numberOfEpisodesToSleepAfter = numberOfEpisodes
         NotificationCenter.default.removeObserver(self, name: Constants.Notifications.episodeDurationChanged, object: nil)
     }

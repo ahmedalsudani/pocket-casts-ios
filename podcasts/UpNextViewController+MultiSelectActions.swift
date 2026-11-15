@@ -24,10 +24,6 @@ extension UpNextViewController: MultiSelectActionDelegate {
         isMultiSelectEnabled = false
     }
 
-    var multiSelectViewSource: AnalyticsSource {
-        analyticsSource
-    }
-
     // MARK: - Long Press Multi Select Option Picker
 
     func showLongPressSelectOptions(indexPath: IndexPath) {

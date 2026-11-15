@@ -4,8 +4,7 @@ struct VolumeControl: WKInterfaceObjectRepresentable {
     var tint: Color
 
     func makeWKInterfaceObject(context: Self.Context) -> WKInterfaceVolumeControl {
-        let origin: WKInterfaceVolumeControl.Origin = SourceManager.shared.isWatch() ? .local : .companion
-        let view = WKInterfaceVolumeControl(origin: origin)
+        let view = WKInterfaceVolumeControl(origin: .companion)
         view.focus()
         view.setTintColor(UIColor(tint))
         return view

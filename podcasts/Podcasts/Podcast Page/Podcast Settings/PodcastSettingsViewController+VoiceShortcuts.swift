@@ -11,7 +11,6 @@ extension PodcastSettingsViewController: INUIEditVoiceShortcutViewControllerDele
     func editVoiceShortcutViewController(_ controller: INUIEditVoiceShortcutViewController, didDeleteVoiceShortcutWithIdentifier deletedVoiceShortcutIdentifier: UUID) {
         updateExistingSortcutData()
         controller.dismiss(animated: true, completion: nil)
-        Analytics.track(.podcastSettingsSiriShortcutRemoved)
     }
 
     func editVoiceShortcutViewControllerDidCancel(_ controller: INUIEditVoiceShortcutViewController) {
@@ -21,7 +20,6 @@ extension PodcastSettingsViewController: INUIEditVoiceShortcutViewControllerDele
     func addVoiceShortcutViewController(_ controller: INUIAddVoiceShortcutViewController, didFinishWith voiceShortcut: INVoiceShortcut?, error: Error?) {
         updateExistingSortcutData()
         controller.dismiss(animated: true, completion: nil)
-        Analytics.track(.podcastSettingsSiriShortcutAdded)
     }
 
     func addVoiceShortcutViewControllerDidCancel(_ controller: INUIAddVoiceShortcutViewController) {

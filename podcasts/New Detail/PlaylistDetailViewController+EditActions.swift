@@ -10,8 +10,6 @@ extension PlaylistDetailViewController {
     }
 
     @objc func moreTapped() {
-        track(.filterOptionsTapped)
-
         let optionsPicker = OptionsPicker(title: nil)
 
         let chromecastAction = chromecastAction()
@@ -46,7 +44,6 @@ extension PlaylistDetailViewController {
 
     private func multiSelectAction() -> OptionAction {
         OptionAction(label: L10n.selectEpisodes, icon: "option-multiselect") { [weak self] in
-            self?.track(.filterSelectEpisodesTapped)
             self?.isMultiSelectEnabled = true
         }
     }
@@ -55,7 +52,6 @@ extension PlaylistDetailViewController {
 
     private func chromecastAction() -> OptionAction {
         OptionAction(label: "Chromecast", icon: "nav_cast_off") { [weak self] in
-            self?.track(.filterChromeCastTapped)
             self?.castButtonTapped()
         }
     }
@@ -65,7 +61,6 @@ extension PlaylistDetailViewController {
     private func sortAction() -> OptionAction {
         let currentSort = PlaylistSort(rawValue: viewModel.playlist.sortType)?.description ?? ""
         let action = OptionAction(label: L10n.sortBy, secondaryLabel: currentSort, icon: "podcastlist_sort") { [weak self] in
-            self?.track(.filterSortByTapped)
         }
         action.submenu = { [weak self] in self?.makeSortByPicker() }
         return action
@@ -89,7 +84,6 @@ extension PlaylistDetailViewController {
     private func addSortAction(to optionPicker: OptionsPicker, sortOrder: PlaylistSort) {
         let action = OptionAction(label: sortOrder.description, selected: viewModel.playlist.sortType == sortOrder.rawValue) { [weak self] in
             guard let self else { return }
-            self.track(.filterSortByChanged, properties: ["sort_order": sortOrder])
             let playlist = self.viewModel.playlist
             playlist.sortType = sortOrder.rawValue
             self.viewModel.update(playlist: playlist)
@@ -111,7 +105,6 @@ extension PlaylistDetailViewController {
     private func reorderEpisodesAction() -> OptionAction {
         OptionAction(label: L10n.playlistManualEpisodesOrderOption, icon: "filter_manual_episode_order") { [weak self] in
             guard let self else { return }
-            self.track(.filterRearrangeEpisodesTapped)
             self.showCustomOrderList()
         }
     }
@@ -125,7 +118,6 @@ extension PlaylistDetailViewController {
 
     private func downloadAllOption() -> OptionAction {
         let action = OptionAction(label: L10n.downloadAll, icon: "filter_downloaded") { [weak self] in
-            self?.track(.filterDownloadAllTapped)
         }
         action.submenu = { [weak self] in self?.makeDownloadAllPicker() }
         return action
@@ -216,12 +208,10 @@ extension PlaylistDetailViewController {
 
         if unarchivedCount > 0 {
             return OptionAction(label: L10n.podcastArchiveAll, icon: "podcast-archiveall") { [weak self] in
-                self?.track(.filterArchiveAllTapped)
                 self?.archiveAllPlaylistEpisodes()
             }
         }
         return OptionAction(label: L10n.podcastUnarchiveAll, icon: "list_unarchive") { [weak self] in
-            self?.track(.filterUnarchiveAllTapped)
             self?.unarchiveAllPlaylistEpisodes()
         }
     }
@@ -244,7 +234,6 @@ extension PlaylistDetailViewController {
 
     private func editAction() -> OptionAction {
         OptionAction(label: L10n.playlistOptions, icon: "profile-settings") { [weak self] in
-            self?.track(.filterOptionsButtonTapped)
             self?.playlistOptionsTapped()
         }
     }

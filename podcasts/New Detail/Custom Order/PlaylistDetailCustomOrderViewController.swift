@@ -120,10 +120,6 @@ extension PlaylistDetailCustomOrderViewController: UITableViewDataSource, UITabl
             tableView.beginUpdates()
             tableView.deleteRows(at: [indexPath], with: .top)
             tableView.endUpdates()
-
-            if let viewModel {
-                track(episode: episode.episode, added: false, to: viewModel.playlist, source: "playlist_rearrange")
-            }
         }
     }
 
@@ -139,13 +135,6 @@ extension PlaylistDetailCustomOrderViewController: UITableViewDataSource, UITabl
         episodes.insert(movedObject, at: destinationIndexPath.row)
 
         viewModel?.move(episode: movedObject, toIndex: destinationIndexPath.row)
-
-        track(.filterManualEpisodesRearranged)
     }
 }
 
-extension PlaylistDetailCustomOrderViewController: PlaylistTypeTrackerProvider {
-    var analyticsSourceType: String {
-        viewModel?.isManualPlaylist == true ? "manual" : "smart"
-    }
-}

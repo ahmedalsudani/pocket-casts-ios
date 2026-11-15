@@ -12,12 +12,6 @@ class TroubleshootingViewModel: ObservableObject {
     @Published private(set) var orphanedEpisodesState: OrphanedEpisodesState = .checking
     @Published private(set) var lastRemovedCount: Int?
 
-    private let source: OnlineSupportController.Source
-
-    init(source: OnlineSupportController.Source) {
-        self.source = source
-    }
-
     func checkOrphanedEpisodes() {
         orphanedEpisodesState = .checking
 
@@ -31,8 +25,6 @@ class TroubleshootingViewModel: ObservableObject {
         let countBefore = episodeCount
         orphanedEpisodesState = .removing
         lastRemovedCount = nil
-
-        Analytics.track(.troubleshootingOrphanedEpisodesRemoveConfirmed, properties: ["source": source.rawValue])
 
         Task.detached(priority: .userInitiated) { [weak self] in
             PodcastManager.shared.deleteOrphanedEpisodesIfNeeded()
@@ -56,7 +48,5 @@ class TroubleshootingViewModel: ObservableObject {
         let removedCount = max(0, countBefore - remaining.count)
         lastRemovedCount = removedCount
         orphanedEpisodesState = .found(episodes: remaining)
-
-        Analytics.track(.troubleshootingOrphanedEpisodesRemoved, properties: ["source": source.rawValue, "removed": removedCount, "remaining": remaining.count])
     }
 }

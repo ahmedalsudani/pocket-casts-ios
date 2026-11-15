@@ -6,26 +6,18 @@ import PocketCastsUtils
 actor ShowInfoCoordinator: ShowInfoCoordinating {
     static let shared = ShowInfoCoordinator()
 
-    private let dataRetriever: ShowInfoDataRetriever
-    private let podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever
-    private let generatedEpisodeMetadataRetriever: GeneratedEpisodeMetadataRetriever
-    private let dataManager: DataManager
-    private let transcriptDataRetriever: TranscriptsDataRetriever
+    /// Shown in place of show notes when an episode's feed entry had none
+    static let noShowNotesMessage = "Unable to find show notes for this episode."
 
-    private var requestingShowInfo: [String: Task<Episode.Metadata?, Error>] = [:]
+    private let podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever
+    private let dataManager: DataManager
 
     init(
-        dataRetriever: ShowInfoDataRetriever = ShowInfoDataRetriever(),
         podcastIndexChapterRetriever: PodcastIndexChapterDataRetriever = PodcastIndexChapterDataRetriever(),
-        generatedEpisodeMetadataRetriever: GeneratedEpisodeMetadataRetriever = GeneratedEpisodeMetadataRetriever(),
-        dataManager: DataManager = .shared,
-        transcriptDataRetriever: TranscriptsDataRetriever = TranscriptsDataRetriever()
+        dataManager: DataManager = .shared
     ) {
-        self.dataRetriever = dataRetriever
         self.podcastIndexChapterRetriever = podcastIndexChapterRetriever
-        self.generatedEpisodeMetadataRetriever = generatedEpisodeMetadataRetriever
         self.dataManager = dataManager
-        self.transcriptDataRetriever = transcriptDataRetriever
     }
 
     func loadShowNotes(
@@ -33,7 +25,7 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
         episodeUuid: String
     ) async throws -> String {
         let metadata = try await loadShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
-        return metadata?.showNotes ?? CacheServerHandler.noShowNotesMessage
+        return metadata?.showNotes ?? Self.noShowNotesMessage
     }
 
     func loadEpisodeArtworkUrl(
@@ -47,62 +39,27 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
     public func loadChapters(
         podcastUuid: String,
         episodeUuid: String
-    ) async throws -> ([Episode.Metadata.EpisodeChapter]?, [PodcastIndexChapter]?, [GeneratedChapter]?) {
+    ) async throws -> ([Episode.Metadata.EpisodeChapter]?, [PodcastIndexChapter]?) {
         let metadata = try await loadShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
 
         if let podcastIndexChapterUrl = metadata?.chaptersUrl,
            let chapters = try? await podcastIndexChapterRetriever.loadChapters(podcastIndexChapterUrl) {
-            return (nil, chapters.chapters, nil)
+            return (nil, chapters.chapters)
         }
 
         if let chapters = metadata?.chapters, !chapters.isEmpty {
-            return (chapters, nil, nil)
+            return (chapters, nil)
         }
 
-        if FeatureFlag.generatedChapters.enabled,
-           !Settings.disableAiChapters,
-           let chapters = try? await generatedEpisodeMetadataRetriever.loadMetadata(podcastUuid: podcastUuid, episodeUuid: episodeUuid).chapters,
-           !chapters.isEmpty {
-            return (nil, nil, chapters)
-        }
-
-        return (nil, nil, nil)
+        return (nil, nil)
     }
 
-    private func buildGeneratedTranscript(podcastUuid: String, episodeUuid: String) -> Episode.Metadata.Transcript {
-        let format = TranscriptFormat.vtt
-        let urlString = "\(ServerConstants.Urls.generatedTranscripts)\(podcastUuid)/\(episodeUuid).\(format.fileExtension)"
-        return Episode.Metadata.Transcript(url: urlString, type: format.rawValue, language: nil)
-    }
-
-    public func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> EpisodeTranscriptData {
+    public func loadTranscriptsMetadata(podcastUuid: String, episodeUuid: String) async throws -> [Episode.Metadata.Transcript] {
 #if os(watchOS)
-        return (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
+        return []
 #else
         let metadata = try await loadShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
-
-        if FeatureFlag.generatedTranscripts.enabled {
-            let externalTranscripts = metadata?.transcripts ?? []
-            var pocketCastsTranscripts: [Episode.Metadata.Transcript] = []
-            if let episode = dataManager.findEpisode(uuid: episodeUuid),
-               let hasTranscript = episode.hasGeneratedTranscript {
-                if hasTranscript {
-                    let transcript = buildGeneratedTranscript(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
-                    pocketCastsTranscripts = [transcript]
-                }
-            } else {
-                pocketCastsTranscripts = metadata?.pocketCastsTranscripts ?? []
-            }
-
-            let isDisplayingGenerated = externalTranscripts.isEmpty && !pocketCastsTranscripts.isEmpty
-            let transcripts = externalTranscripts.isEmpty ? pocketCastsTranscripts : externalTranscripts
-            return (transcripts: transcripts, hasGeneratedTranscripts: !pocketCastsTranscripts.isEmpty, isDisplayingGeneratedTranscript: isDisplayingGenerated)
-        }
-
-        guard let transcripts = metadata?.transcripts else {
-            return (transcripts: [], hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
-        }
-        return (transcripts: transcripts, hasGeneratedTranscripts: false, isDisplayingGeneratedTranscript: false)
+        return metadata?.transcripts ?? []
 #endif
     }
 
@@ -114,48 +71,28 @@ actor ShowInfoCoordinator: ShowInfoCoordinating {
         try await requestShowInfo(podcastUuid: podcastUuid, episodeUuid: episodeUuid)
     }
 
+    /// Builds episode metadata from the episode's database row: descriptions and Podcasting 2.0
+    /// chapter/transcript URLs are captured from the feed when it's read and stored on the episode.
     @discardableResult
     func requestShowInfo(
         podcastUuid: String,
         episodeUuid: String
     ) async throws -> Episode.Metadata? {
-        if let task = requestingShowInfo[episodeUuid] {
-            return try await task.value
+        guard let episode = dataManager.findEpisode(uuid: episodeUuid) else { return nil }
+
+        let showNotes = episode.detailedDescription?.isEmpty == false
+            ? episode.detailedDescription
+            : episode.episodeDescription
+
+        var transcripts = [Episode.Metadata.Transcript]()
+        if let transcriptUrl = episode.transcriptUrl, let transcriptType = episode.transcriptType {
+            transcripts = [Episode.Metadata.Transcript(url: transcriptUrl, type: transcriptType, language: nil)]
         }
 
-        let task = Task<Episode.Metadata?, Error> { [weak self] in
-            guard let self else { throw TaskError.nilSelf }
-
-            do {
-                let data = try await dataRetriever.loadEpisodeDataFromCache(for: podcastUuid, episodeUuid: episodeUuid)
-                await setRequestingShowInfoToNil(for: episodeUuid)
-                return await getShowInfo(for: data?.data(using: .utf8))
-            } catch {
-                await setRequestingShowInfoToNil(for: episodeUuid)
-                throw error
-            }
-        }
-
-        requestingShowInfo[episodeUuid] = task
-
-        return try await task.value
-    }
-
-    private func setRequestingShowInfoToNil(for episodeUuid: String) {
-        requestingShowInfo[episodeUuid] = nil
-    }
-
-    private func getShowInfo(for data: Data?) async -> Episode.Metadata? {
-        guard let data else {
-            return nil
-        }
-
-        do {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            return try decoder.decode(Episode.Metadata.self, from: data)
-        } catch {
-            return nil
-        }
+        return Episode.Metadata(
+            showNotes: showNotes,
+            chaptersUrl: episode.chaptersUrl,
+            transcripts: transcripts
+        )
     }
 }

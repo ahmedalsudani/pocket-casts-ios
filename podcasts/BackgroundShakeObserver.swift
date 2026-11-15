@@ -1,13 +1,5 @@
 import UIKit
 
-#if os(tvOS)
-class BackgroundShakeObserver {
-    var whenShook: (() -> Void)?
-
-    func stopObserving() {
-    }
-}
-#else
 import CoreMotion
 
 class BackgroundShakeObserver {
@@ -17,7 +9,7 @@ class BackgroundShakeObserver {
     var whenShook: (() -> Void)?
 
     init() {
-        #if !os(watchOS) && !APPCLIP
+        #if !os(watchOS)
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(appMovedToForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(sleepTimerChanged), name: Constants.Notifications.sleepTimerChanged, object: nil)
@@ -65,4 +57,3 @@ class BackgroundShakeObserver {
         manager.stopDeviceMotionUpdates()
     }
 }
-#endif

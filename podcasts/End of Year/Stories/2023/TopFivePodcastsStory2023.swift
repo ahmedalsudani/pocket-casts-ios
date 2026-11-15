@@ -122,14 +122,6 @@ struct TopFivePodcastsStory2023: ShareableStory {
         .opacity(topPodcasts[safe: index]?.podcast != nil ? 1 : 0)
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
-    }
-
     func sharingAssets() -> [Any] {
         [
             StoryShareableProvider.new(AnyView(self)),

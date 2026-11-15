@@ -33,7 +33,6 @@ enum SwipeSourceType {
 }
 
 protocol SwipeHandler: AnyObject {
-    var swipeSource: String { get }
     var swipeSourceType: SwipeSourceType { get }
 
     func archivingRemovesFromList() -> Bool
@@ -170,21 +169,6 @@ enum SwipeActionsHelper {
     }
 
     fileprivate static func performAction(_ action: SwipeActions, handler: SwipeHandler, willBeRemoved: Bool) {
-        let source = handler.swipeSource
-        var properties = ["action": action, "source": source] as [String: Any]
-        let playlistSourceType = switch handler.swipeSourceType {
-        case .manualPlaylistDetail:
-            "manual"
-        case .smartPlaylistDetail:
-            "smart"
-        default:
-            ""
-        }
-        if !playlistSourceType.isEmpty {
-            properties["filter_type"] = playlistSourceType
-        }
-        Analytics.track(.episodeSwipeActionPerformed, properties: properties)
-
         guard action != .delete else {
             return
         }
@@ -192,7 +176,7 @@ enum SwipeActionsHelper {
         handler.actionPerformed(willBeRemoved: willBeRemoved)
     }
 
-    fileprivate enum SwipeActions: String, AnalyticsDescribable {
+    fileprivate enum SwipeActions {
         case upNextRemove
         case upNextAddTop
         case upNextAddBottom
@@ -202,29 +186,6 @@ enum SwipeActionsHelper {
         case share
         case addToManualPlaylist
         case removeFromManualPlaylist
-
-        var analyticsDescription: String {
-            switch self {
-            case .upNextRemove:
-                return "up_next_remove"
-            case .upNextAddTop:
-                return "up_next_add_top"
-            case .upNextAddBottom:
-                return "up_next_add_bottom"
-            case .delete:
-                return "delete"
-            case .unarchive:
-                return "unarchive"
-            case .archive:
-                return "archive"
-            case .share:
-                return "share"
-            case .addToManualPlaylist:
-                return "add_to_playlist"
-            case .removeFromManualPlaylist:
-                return "remove_from_playlist"
-            }
-        }
     }
 }
 

@@ -81,8 +81,6 @@ class CastToViewController: PCViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(multiZoneDevicesChanged), name: Constants.Notifications.googleCastMultiZoneStatusChanged, object: nil)
 
         GoogleCastManager.shared.startDeviceDiscovery()
-
-        Analytics.track(.chromecastViewShown, properties: ["is_connected": connected])
     }
 
     deinit {
@@ -91,18 +89,15 @@ class CastToViewController: PCViewController {
     }
 
     @IBAction func playPauseTapped(_ sender: Any) {
-        AnalyticsPlaybackHelper.shared.currentSource = .chromecast
         PlaybackManager.shared.playPause()
     }
 
     @objc private func cancelTapped() {
         dismiss(animated: true, completion: nil)
-        Analytics.track(.chromecastViewDismissed)
     }
 
     @IBAction func stopCastingTapped(_ sender: Any) {
         GoogleCastManager.shared.stopCasting()
-        Analytics.track(.chromecastStoppedCasting)
 
         dismiss(animated: true, completion: nil)
     }
@@ -172,11 +167,5 @@ class CastToViewController: PCViewController {
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         .portrait
-    }
-}
-
-extension CastToViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .chromecast
     }
 }

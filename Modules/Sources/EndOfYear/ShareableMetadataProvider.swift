@@ -1,7 +1,5 @@
 import UIKit
 import UniformTypeIdentifiers
-import PocketCastsServer
-import PocketCastsDataModel
 
 public protocol ShareableMetadataDataSource: AnyObject {
     /// Create a provider to handle the additional meta data needed

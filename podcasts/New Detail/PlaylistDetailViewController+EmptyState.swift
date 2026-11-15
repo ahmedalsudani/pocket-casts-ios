@@ -65,16 +65,13 @@ extension PlaylistDetailViewController {
 
     private func emptyStateAction() {
         if !viewModel.isManualPlaylist {
-            track(.filterEditRulesCtaEmptyTapped)
             editPlaylist()
             return
         }
         if viewModel.hasSubscribedPodcasts {
-            track(.filterAddEpisodesCtaEmptyTapped)
             addEpisodes()
             return
         }
-        track(.filterBrowseShowsCtaEmptyTapped)
         NavigationManager.shared.navigateTo(NavigationManager.discoverPageKey)
     }
 }

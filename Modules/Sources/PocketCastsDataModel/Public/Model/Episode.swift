@@ -50,6 +50,12 @@ public class Episode: NSObject, BaseEpisode {
     @objc public var deselectedChaptersModified = 0 as Int64
     @objc public var wasDeleted = false
     public var hasGeneratedTranscript: Bool? = nil
+    /// Podcasting 2.0 <podcast:chapters> URL from the feed item, if any.
+    @objc public var chaptersUrl: String?
+    @objc public var chaptersType: String?
+    /// Podcasting 2.0 <podcast:transcript> URL from the feed item, if any.
+    @objc public var transcriptUrl: String?
+    @objc public var transcriptType: String?
 
     public var hasBookmarks: Bool {
         // This wil cause a regression in which the bookmarks won't be displayed
@@ -215,6 +221,15 @@ public class Episode: NSObject, BaseEpisode {
         public let transcripts: [Transcript]
         public let pocketCastsTranscripts: [Transcript]?
 
+        public init(showNotes: String?, image: String? = nil, chapters: [EpisodeChapter]? = nil, chaptersUrl: String? = nil, transcripts: [Transcript] = [], pocketCastsTranscripts: [Transcript]? = nil) {
+            self.showNotes = showNotes
+            self.image = image
+            self.chapters = chapters
+            self.chaptersUrl = chaptersUrl
+            self.transcripts = transcripts
+            self.pocketCastsTranscripts = pocketCastsTranscripts
+        }
+
         public struct Transcript: Decodable {
             public let url: String
             public let type: String
@@ -276,6 +291,10 @@ public class Episode: NSObject, BaseEpisode {
         case deselectedChaptersModified
         case wasDeleted
         case hasGeneratedTranscript
+        case chaptersUrl
+        case chaptersType
+        case transcriptUrl
+        case transcriptType
     }
 
     public required init(from decoder: Decoder) throws {
@@ -324,6 +343,10 @@ public class Episode: NSObject, BaseEpisode {
         deselectedChaptersModified = try container.decodeIfPresent(Int64.self, forKey: .deselectedChaptersModified) ?? 0
         wasDeleted = try container.decodeIfPresent(Bool.self, forKey: .wasDeleted) ?? false
         hasGeneratedTranscript = try container.decodeIfPresent(Bool.self, forKey: .hasGeneratedTranscript)
+        chaptersUrl = try container.decodeIfPresent(String.self, forKey: .chaptersUrl)
+        chaptersType = try container.decodeIfPresent(String.self, forKey: .chaptersType)
+        transcriptUrl = try container.decodeIfPresent(String.self, forKey: .transcriptUrl)
+        transcriptType = try container.decodeIfPresent(String.self, forKey: .transcriptType)
     }
 
     public func encode(to container: inout PersistenceContainer) {
@@ -370,6 +393,10 @@ public class Episode: NSObject, BaseEpisode {
         container["deselectedChaptersModified"] = deselectedChaptersModified
         container["wasDeleted"] = wasDeleted
         container["hasGeneratedTranscript"] = hasGeneratedTranscript
+        container["chaptersUrl"] = chaptersUrl
+        container["chaptersType"] = chaptersType
+        container["transcriptUrl"] = transcriptUrl
+        container["transcriptType"] = transcriptType
     }
 
     public enum Columns {
@@ -416,6 +443,10 @@ public class Episode: NSObject, BaseEpisode {
         public static let deselectedChaptersModified = Column(CodingKeys.deselectedChaptersModified)
         public static let wasDeleted = Column(CodingKeys.wasDeleted)
         public static let hasGeneratedTranscript = Column(CodingKeys.hasGeneratedTranscript)
+        public static let chaptersUrl = Column(CodingKeys.chaptersUrl)
+        public static let chaptersType = Column(CodingKeys.chaptersType)
+        public static let transcriptUrl = Column(CodingKeys.transcriptUrl)
+        public static let transcriptType = Column(CodingKeys.transcriptType)
     }
 }
 

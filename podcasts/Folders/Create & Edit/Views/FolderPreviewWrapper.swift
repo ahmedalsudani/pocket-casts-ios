@@ -35,16 +35,3 @@ struct SearchFolderPreviewWrapper: UIViewRepresentable {
         }
     }
 }
-
-struct SuggestedFolderPreviewWrapper: UIViewRepresentable {
-    var folder: SuggestedFolder
-
-    func makeUIView(context: Context) -> FolderPreviewView {
-        FolderPreviewView()
-    }
-
-    func updateUIView(_ folderView: FolderPreviewView, context: Context) {
-        folderView.showFolderName = true
-        folderView.populateFrom(suggestedFolder: folder)
-    }
-}

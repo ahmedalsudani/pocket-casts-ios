@@ -163,19 +163,6 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     // MARK: - allUnsyncedPodcasts Tests
 
-    func testAllUnsyncedPodcastsReturnsUnsyncedPodcasts() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestPodcast(title: "Unsynced 1", syncStatus: SyncStatus.notSynced.rawValue, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Unsynced 2", syncStatus: SyncStatus.notSynced.rawValue, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Synced", syncStatus: SyncStatus.synced.rawValue, dataManager: dataManager)
-
-            let podcasts = dataManager.allUnsyncedPodcasts()
-
-            XCTAssertEqual(podcasts.count, 2, "Should return only unsynced podcasts")
-            XCTAssertTrue(podcasts.allSatisfy { $0.syncStatus == SyncStatus.notSynced.rawValue }, "All should be unsynced")
-        }
-    }
-
     // MARK: - podcastUnfinishedCounts Tests
 
     func testPodcastUnfinishedCountsReturnsCorrectCounts() throws {
@@ -268,32 +255,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     // MARK: - markAllPodcastsSynced Tests
 
-    func testMarkAllPodcastsSyncedMarksAllAsSynced() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestPodcast(title: "Podcast 1", syncStatus: SyncStatus.notSynced.rawValue, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Podcast 2", syncStatus: SyncStatus.notSynced.rawValue, dataManager: dataManager)
-
-            dataManager.markAllPodcastsSynced()
-
-            let unsynced = dataManager.allUnsyncedPodcasts()
-            XCTAssertTrue(unsynced.isEmpty, "All podcasts should be synced")
-        }
-    }
-
     // MARK: - markAllPodcastsUnsynced Tests
-
-    func testMarkAllPodcastsUnsyncedMarksSubscribedAsUnsynced() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestPodcast(title: "Subscribed", subscribed: 1, syncStatus: SyncStatus.synced.rawValue, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Unsubscribed", subscribed: 0, syncStatus: SyncStatus.synced.rawValue, dataManager: dataManager)
-
-            dataManager.markAllPodcastsUnsynced()
-
-            let unsynced = dataManager.allUnsyncedPodcasts()
-            XCTAssertEqual(unsynced.count, 1, "Only subscribed podcast should be unsynced")
-            XCTAssertEqual(unsynced.first?.title, "Subscribed", "Subscribed podcast should be unsynced")
-        }
-    }
 
     // MARK: - updateAllPodcastGrouping Tests
 
@@ -481,45 +443,7 @@ final class PodcastDataManagerTests: DataManagerTestCase {
 
     // MARK: - allPaidPodcasts Tests
 
-    func testAllPaidPodcastsReturnsPaidOnly() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestPodcast(title: "Free Podcast", isPaid: false, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Paid Podcast 1", isPaid: true, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Paid Podcast 2", isPaid: true, dataManager: dataManager)
-
-            let podcasts = dataManager.allPaidPodcasts()
-
-            XCTAssertEqual(podcasts.count, 2, "Should return 2 paid podcasts")
-            XCTAssertTrue(podcasts.allSatisfy { $0.isPaid }, "All should be paid")
-        }
-    }
-
     // MARK: - allOverrideGlobalArchivePodcasts Tests
-
-    func testAllOverrideGlobalArchivePodcastsReturnsOverridingPodcasts() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestPodcast(title: "No Override", overrideGlobalArchive: false, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Override 1", overrideGlobalArchive: true, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Override 2", overrideGlobalArchive: true, dataManager: dataManager)
-
-            let podcasts = dataManager.allOverrideGlobalArchivePodcasts()
-
-            XCTAssertEqual(podcasts.count, 2, "Should return 2 podcasts with override")
-            XCTAssertTrue(podcasts.allSatisfy { $0.overrideGlobalArchive }, "All should have override")
-        }
-    }
-
-    func testAllOverrideGlobalArchivePodcastsExcludesUnsubscribed() throws {
-        try runWithDataManager { dataManager in
-            _ = self.createTestPodcast(title: "Subscribed Override", subscribed: 1, overrideGlobalArchive: true, dataManager: dataManager)
-            _ = self.createTestPodcast(title: "Unsubscribed Override", subscribed: 0, overrideGlobalArchive: true, dataManager: dataManager)
-
-            let podcasts = dataManager.allOverrideGlobalArchivePodcasts()
-
-            XCTAssertEqual(podcasts.count, 1, "Should exclude unsubscribed")
-            XCTAssertEqual(podcasts.first?.title, "Subscribed Override", "Should only include subscribed")
-        }
-    }
 
     // MARK: - searchPodcasts Tests
 
@@ -868,24 +792,6 @@ final class PodcastDataManagerTests: DataManagerTestCase {
     }
 
     // MARK: - markAllPodcastsUnsyncedWhereLastSyncAtNot Tests
-
-    func testMarkAllPodcastsUnsyncedWhereLastSyncAtNotDoesNotCrash() throws {
-        try runWithDataManager { dataManager in
-            // Create some synced podcasts
-            _ = self.createTestPodcast(uuid: "podcast-1", title: "Podcast 1", syncStatus: SyncStatus.synced.rawValue, dataManager: dataManager)
-            _ = self.createTestPodcast(uuid: "podcast-2", title: "Podcast 2", syncStatus: SyncStatus.synced.rawValue, dataManager: dataManager)
-
-            // Call the method with a sync time - it should not crash
-            dataManager.markAllPodcastsUnsyncedWhereLastSyncAtNot("1000")
-
-            // Verify podcasts still exist
-            let found1 = dataManager.findPodcast(uuid: "podcast-1")
-            let found2 = dataManager.findPodcast(uuid: "podcast-2")
-
-            XCTAssertNotNil(found1, "Podcast 1 should still exist")
-            XCTAssertNotNil(found2, "Podcast 2 should still exist")
-        }
-    }
 
     // MARK: - allPodcastsOrderedByNewestEpisodes Tests
 

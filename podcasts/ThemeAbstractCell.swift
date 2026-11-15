@@ -45,26 +45,8 @@ class ThemeAbstractCell: UICollectionViewCell {
         }
     }
 
-    var isLocked: Bool = true {
-        didSet {
-            imageView.alpha = isLocked ? 0.5 : 1
-            nameLabel.style = isLocked ? .primaryText02 : .primaryText01
-            setCornerImage()
-        }
-    }
-
-    var lockImage: UIImage? = nil {
-        didSet {
-            setCornerImage()
-        }
-    }
-
     private func setCornerImage() {
-        if isCellSelected {
-            cornerImage.image = UIImage(named: "tickBlueCircle")
-        } else {
-            cornerImage.image = isLocked ? lockImage : nil
-        }
+        cornerImage.image = isCellSelected ? UIImage(named: "tickBlueCircle") : nil
     }
 
     override func awakeFromNib() {

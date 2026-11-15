@@ -79,16 +79,11 @@ class BadgeSettingsViewController: PCViewController, UITableViewDelegate, UITabl
         if indexPath.section == optionsSection {
             Settings.appBadge = AppBadge(rawValue: Int32(indexPath.row))
             Settings.appBadgeFilterUuid = nil
-
-            if let badge = AppBadge(rawValue: Int32(indexPath.row)) {
-                Settings.trackValueChanged(.settingsNotificationsAppBadgeChanged, value: badge)
-            }
         } else if indexPath.section == filtersSection {
             Settings.appBadge = AppBadge.filterCount
             if let filter = playlists[safe: indexPath.row] {
                 Settings.appBadgeFilterUuid = filter.uuid
             }
-            Settings.trackValueChanged(.settingsNotificationsAppBadgeChanged, value: AppBadge.filterCount)
         }
 
         optionsTable.reloadData()

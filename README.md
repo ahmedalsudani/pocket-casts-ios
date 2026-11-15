@@ -5,8 +5,6 @@
 </p>
 
 <p align="center">
-    <!-- Badge: "build: {trunk CI status}" -->
-    <a href="https://buildkite.com/automattic/pocket-casts-ios"><img src="https://badge.buildkite.com/6c995de3d1584006341cc4dfda1312619f375385f5c0319dfe.svg?branch=trunk" /></a>
     <!-- Badge: "license: MPL" -->
     <a href="https://github.com/Automattic/pocket-casts-ios/blob/trunk/LICENSE.md"><img src="https://img.shields.io/badge/license-MPL-black" /></a>
     <!-- Badge: "platform: ios|watchos" -->
@@ -29,20 +27,6 @@ Next you'll need to install all the dependencies needed for [_fastlane_](https:/
 
 `make install_dependencies`
 
-### Secrets
-
-Internal contributors need to install and set up [`a8c-secrets`](https://github.com/Automattic/a8c-secrets), then decrypt the project secrets before building:
-
-`a8c-secrets decrypt`
-
-Re-run it whenever the secrets are rotated; the build does not decrypt them for you.
-
-External contributors don't need the secrets; see [below](#external-contributors).
-
-## External contributors
-
-If you're an external contributor run `make external_contributor`. After that you should be able to build and run the project.
-
 ## Swift Formatting
 
 We use [SwiftLint](https://github.com/realm/SwiftLint) to ensure code is spaced and formatted the same way and follows the same [general conventions](https://github.com/Automattic/swiftlint-config). We have a script that will run it over the whole project.
@@ -61,44 +45,21 @@ Open the `.xcodeproj` file, select the Pocket Casts project and the Simulator De
 
 You can learn more about localization at [docs/Localization.md](./docs/localization.md)
 
-## Protocol Buffers
-
-The app uses [Google Protocol Buffers](https://developers.google.com/protocol-buffers) to define our server objects.
-
-To update server objects you'll need to install the protobuf command line tool as well as the [Swift Protobuf](https://github.com/apple/swift-protobuf) translators. This can be done via Homebrew with:
-
-```
-brew install protobuf
-brew install swift-protobuf
-```
-
-To update the protobuf files you can then run:
-
-Replace the `{API_PATH}` with the full path to the `pocketcasts-api/api/modules/protobuf/src/main/proto` folder
-
-```
-make update_proto API_PATH={API_PATH}
-```
-
 ## Debugging
 
 ### Logs
 
-Logs can be found in the app as a view and shared from there through the system sheet or mail:
-* Profile > Help & Feedback > ⋯ > Logs
-
-When debugging analytics, the `tracksLogging` feature flag will enable logging for these events.
+Logs can be found in the app as a view and shared from there through the system share sheet:
+* Profile > Settings > Logs
 
 ### Export Files
 
 An export can be created with the database, settings plist, and logs for debugging purposes:
-* Profile > Help & Feedback > ⋯ > Export Database - the export will include all log files and settings
-* Profile > Settings > Developer > Export Bundle
+* Profile > Settings > Export Database - the export will include all log files and settings
 
 These exports can also be imported to the app, replacing the database and settings with the ones from the file. This will prompt the user before replacement.
 * Open the file with Pocket Casts directly from Files
 * Drag and drop the file on the Simulator
-* Profile > Settings > Developer > Import Bundle
 
 ### Crash Log Symbolication
 

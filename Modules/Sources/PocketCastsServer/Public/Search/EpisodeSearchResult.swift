@@ -40,21 +40,6 @@ public struct EpisodeSearchResult: Codable, Hashable {
         self.videoURL = try? container.decodeIfPresent(URL.self, forKey: .videoURL)
     }
 
-    public init?(from combinedResult: CombinedSearchResult) {
-        guard combinedResult.type == "episode" else {
-            return nil
-        }
-        self.uuid = combinedResult.uuid
-        self.title = combinedResult.title
-        self.publishedDate = combinedResult.publishedDate ?? Date()
-        self.state = .normal
-        self.duration = combinedResult.duration
-        self.podcastUuid = combinedResult.podcastUuid ?? ""
-        self.podcastTitle = combinedResult.podcastTitle ?? ""
-        self.hasVideo = combinedResult.hasVideo ?? false
-        self.videoURL = combinedResult.videoUrl.flatMap { URL(string: $0) }
-    }
-
     public enum State: Codable {
         case normal
         case archived

@@ -114,20 +114,6 @@ class PodcastHeartView: UIView {
         bringSubviewToFront(heartImageView)
     }
 
-    func setDefaultGreen() {
-        greyGradientLayer.removeFromSuperlayer()
-        colorGradientLayer.removeFromSuperlayer()
-        colorGradientLayer.colors = [ThemeColor.gradient04A().cgColor, ThemeColor.gradient04E().cgColor]
-        colorGradientLayer.locations = [0, 1.0]
-        colorGradientLayer.startPoint = CGPoint(x: 0.25, y: 0.25)
-        colorGradientLayer.endPoint = CGPoint(x: 0.75, y: 0.75)
-        colorGradientLayer.frame = bounds
-        colorGradientLayer.opacity = 1
-        circleView.layer.addSublayer(colorGradientLayer)
-        heartImageView.tintColor = ThemeColor.contrast01()
-        bringSubviewToFront(heartImageView)
-    }
-
     @objc func handleThemeDidChange() {
         updateColors()
     }

@@ -37,12 +37,6 @@ class EndOfYear2024StoriesModel: StoryModel {
             data.listeningTime = listeningTime
         }
 
-        // Ratings
-        if let ratings = dataManager.summarizedRatings(in: Self.year) {
-            data.ratings = ratings
-        }
-        stories.append(.ratings) // Gets added regardless of the count since we have a fallback empty screen
-
         // Longest episode
         if let longestEpisode = dataManager.longestEpisode(in: Self.year),
            let podcast = longestEpisode.parentPodcast() {
@@ -85,16 +79,14 @@ class EndOfYear2024StoriesModel: StoryModel {
             return TopSpotStory2024(topPodcast: data.topPodcasts.first!)
         case .top5Podcasts:
             return Top5Podcasts2024Story(top5Podcasts: data.topPodcasts)
-        case .ratings:
-            return Ratings2024Story(ratings: data.ratings)
         case .listeningTime:
             return ListeningTime2024Story(listeningTime: data.listeningTime)
         case .longestEpisode:
             return LongestEpisode2024Story(episode: data.longestEpisode, podcast: data.longestEpisodePodcast)
         case .yearOverYearListeningTime:
-            return YearOverYearCompare2024Story(subscriptionTier: SubscriptionHelper.activeTier, listeningTime: data.yearOverYearListeningTime)
+            return YearOverYearCompare2024Story(listeningTime: data.yearOverYearListeningTime)
         case .completionRate:
-            return CompletionRate2024Story(subscriptionTier: SubscriptionHelper.activeTier, startedAndCompleted: data.episodesStartedAndCompleted)
+            return CompletionRate2024Story(startedAndCompleted: data.episodesStartedAndCompleted)
         case .epilogue:
             return EpilogueStory2024()
         }
@@ -106,17 +98,9 @@ class EndOfYear2024StoriesModel: StoryModel {
             return true
         case .top5Podcasts:
             return true
-        case .ratings:
-            return true
         default:
             return false
         }
-    }
-
-    func shouldLoadData(in dataManager: DataManager) -> Bool {
-        // Load data if our `ratings` property is empty
-        // Other data is handled in `EndOfYearStoriesBuilder`
-        dataManager.ratings.ratings == nil
     }
 
     func isReady() -> Bool {
@@ -134,10 +118,6 @@ class EndOfYear2024StoriesModel: StoryModel {
 
     var numberOfStories: Int {
         stories.count
-    }
-
-    func paywallView() -> AnyView {
-        AnyView(PaidStoryWallView2024(subscriptionTier: SubscriptionHelper.activeTier))
     }
 
     func overlaidShareView() -> AnyView? {
@@ -188,5 +168,4 @@ class EndOfYear2024StoriesData {
 
     var yearOverYearListeningTime: YearOverYearListeningTime!
 
-    var ratings: [UInt32: Int] = [:]
 }

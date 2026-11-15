@@ -221,10 +221,6 @@ class EpisodesDataManager {
     func uploadedEpisodes() -> [UserEpisode] {
         let sortBy = UploadedSort(rawValue: Settings.userEpisodeSortBy) ?? UploadedSort.newestToOldest
 
-        if SubscriptionHelper.hasActiveSubscription() {
-            return DataManager.shared.allUserEpisodes(sortedBy: sortBy)
-        } else {
-            return DataManager.shared.allUserEpisodesDownloaded(sortedBy: sortBy)
-        }
+        return DataManager.shared.allUserEpisodesDownloaded(sortedBy: sortBy)
     }
 }

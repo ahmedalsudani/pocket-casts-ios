@@ -34,10 +34,6 @@ extension PodcastViewController: SwipeTableViewCellDelegate, SwipeHandler {
 
     // MARK: - SwipeActionsHandler
 
-    var swipeSource: String {
-        "podcast_details"
-    }
-
     var swipeSourceType: SwipeSourceType {
         .podcast
     }

@@ -37,7 +37,6 @@ extension FolderViewController {
             let sourceRect = cell.map { self.mainGrid.convert($0.frame, to: self.view) } ?? .zero
             SharingHelper.shared.shareLinkTo(podcast: podcast,
                                              fromController: self,
-                                             fromSource: .folder,
                                              sourceRect: sourceRect,
                                              sourceView: self.view)
         }
@@ -49,13 +48,11 @@ extension FolderViewController {
         let notificationsOn = podcast.pushEnabled
         let onAction = UIAction(title: L10n.on, state: notificationsOn ? .on : .off) { _ in
             if !notificationsOn {
-                Analytics.track(.podcastsListNotificationsTapped, properties: ["enabled": true])
                 NotificationsHelper.shared.setNotificationsEnabled(true, for: podcast)
             }
         }
         let offAction = UIAction(title: L10n.off, state: notificationsOn ? .off : .on) { _ in
             if notificationsOn {
-                Analytics.track(.podcastsListNotificationsTapped, properties: ["enabled": false])
                 NotificationsHelper.shared.setNotificationsEnabled(false, for: podcast)
             }
         }
@@ -86,8 +83,6 @@ extension FolderViewController {
         DataManager.shared.updateFolderSyncModified(folderUuid: folder.uuid, syncModified: TimeFormatter.currentUTCTimeInMillis())
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
-
-        Analytics.track(.folderPodcastModalOptionTapped, properties: ["option": "remove"])
     }
 
     private func confirmUnsubscribe(podcast: Podcast) {
@@ -95,7 +90,6 @@ extension FolderViewController {
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         alert.addAction(UIAlertAction(title: L10n.unfollow, style: .destructive) { _ in
             PodcastManager.shared.unsubscribe(podcast: podcast)
-            Analytics.track(.podcastUnsubscribed, properties: ["source": AnalyticsSource.folder, "uuid": podcast.uuid])
         })
         present(alert, animated: true)
     }

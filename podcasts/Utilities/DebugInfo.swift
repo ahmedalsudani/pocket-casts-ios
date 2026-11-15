@@ -1,5 +1,4 @@
 import Foundation
-import PocketCastsServer
 import PocketCastsUtils
 
 struct DebugInfo {
@@ -12,32 +11,19 @@ struct DebugInfo {
         return capacity.formatted(.byteCount(style: .file))
     }
 
-    static func string(optOut: Bool) -> String {
-        let syncEmail: String
-        if SyncManager.isUserLoggedIn(), let email = ServerSettings.syncingEmail() {
-            syncEmail = email
-        } else {
-            syncEmail = "Not logged in"
-        }
-
+    static func string() -> String {
         let now = Date()
         let localTime = DateFormatHelper.shared.localTimeJsonDateFormatter.string(from: now)
         let gmtTime = DateFormatHelper.shared.jsonFormat(now)
 
-        var debugString = """
+        return """
         App Version: \(Settings.appVersion())
         Device: \(DeviceUtil.identifier)
         OS: \(DeviceUtil.systemVersion ?? "Unknown")
         Local Time: \(localTime)
         UTC Time: \(gmtTime)
         Watch App Installed: \(WatchManager.shared.isWatchAppInstalled ? "yes" : "no")
-        Free Disk Space: \(formattedFreeDiskSpace())\n
-        """
-
-        guard !optOut else { return debugString }
-        debugString += """
-        Sync Email: \(syncEmail)
-        App ID: \(Settings.uniqueAppId() ?? "Unknown")
+        Free Disk Space: \(formattedFreeDiskSpace())
 
         Auto Download On: \(Settings.autoDownloadEnabled() ? "yes" : "no")
         Auto Download Only on Wifi: \(Settings.autoDownloadMobileDataAllowed() ? "no" : "yes")
@@ -46,9 +32,6 @@ struct DebugInfo {
         Auto Archive Played Episodes after: \(ArchiveHelper.archiveTimeToText(Settings.autoArchivePlayedAfter()))
         Auto Archive Inactive Episodes after: \(ArchiveHelper.archiveTimeToText(Settings.autoArchiveInactiveAfter()))
         Auto Archive Starred Episodes: \(Settings.archiveStarredEpisodes())
-        Uploaded Episode Count: \(ServerSettings.customStorageNumFiles())
         """
-
-        return debugString
     }
 }

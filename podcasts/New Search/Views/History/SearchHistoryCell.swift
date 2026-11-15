@@ -5,7 +5,6 @@ import PocketCastsUtils
 
 struct SearchHistoryCell: View {
     @EnvironmentObject var theme: Theme
-    @EnvironmentObject var searchAnalyticsHelper: SearchAnalyticsHelper
     @EnvironmentObject var searchHistory: SearchHistoryModel
     @EnvironmentObject var searchResults: SearchResultsModel
     @EnvironmentObject var displaySearch: SearchVisibilityModel
@@ -42,7 +41,6 @@ struct SearchHistoryCell: View {
                     searchResults.search(term: searchTerm)
                     NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastSearchRequest, object: searchTerm)
                 }
-                searchAnalyticsHelper.historyItemTapped(entry)
                 searchHistory.moveEntryToTop(entry)
             }) {
                 Rectangle()
@@ -82,7 +80,6 @@ struct SearchHistoryCell: View {
                     Button(action: {
                         withAnimation {
                             searchHistory.remove(entry: entry)
-                            searchAnalyticsHelper.historyItemDeleted(entry)
                         }
                     }) {
                         ZStack {

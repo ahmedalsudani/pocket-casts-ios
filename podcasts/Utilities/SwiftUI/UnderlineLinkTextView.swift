@@ -28,10 +28,10 @@ struct UnderlineLinkTextView: View {
 #Preview {
     VStack {
         UnderlineLinkTextView("Hello **World**!")
-        UnderlineLinkTextView("Hel[lo, Wor](https://pocketcasts.com)ld!")
-        UnderlineLinkTextView("[Hello](https://pocketcasts.com), World!")
-        UnderlineLinkTextView("Hello, [World](https://pocketcasts.com)!")
-        UnderlineLinkTextView("I have [multiple](https://pocketcasts.com) [links](https://pocketcasts.com)!")
-        UnderlineLinkTextView("Look [how](https://pocketcasts.com) cool [I](https://pocketcasts.com) [am](https://pocketcasts.com)! :)")
+        UnderlineLinkTextView("Hel[lo, Wor](https://example.com)ld!")
+        UnderlineLinkTextView("[Hello](https://example.com), World!")
+        UnderlineLinkTextView("Hello, [World](https://example.com)!")
+        UnderlineLinkTextView("I have [multiple](https://example.com) [links](https://example.com)!")
+        UnderlineLinkTextView("Look [how](https://example.com) cool [I](https://example.com) [am](https://example.com)! :)")
     }
 }

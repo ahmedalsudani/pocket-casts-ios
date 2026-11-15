@@ -30,9 +30,6 @@ protocol StoriesDataSource {
     /// return `true`.
     func refresh() async -> Bool
 
-    /// A view to show when paywall should be presented
-    func paywallView() -> AnyView
-
     /// Overlaid on top of the story
     func overlaidShareView() -> AnyView?
     /// Shown at the bottom of the story as an additional safe area
@@ -73,9 +70,6 @@ protocol Story {
     /// A string that identifies the story
     var identifier: String { get }
 
-    /// If the story is available only for Plus users
-    var plusOnly: Bool { get }
-
     var shouldPause: Bool { get }
 
     /// Called when the story actually appears.
@@ -99,10 +93,6 @@ extension Story {
 
     var identifier: String {
         "unknown"
-    }
-
-    var plusOnly: Bool {
-        false
     }
 
     var shouldPause: Bool {
@@ -130,10 +120,6 @@ extension EnvironmentValues {
 class PauseState: ObservableObject {
     @Published private(set) var isPaused: Bool = false
 
-    func togglePause() {
-        isPaused.toggle()
-    }
-
     func pause() {
         isPaused = true
     }
@@ -159,9 +145,6 @@ extension EnvironmentValues {
 typealias ShareableStory = StoryView & StorySharing
 
 protocol StorySharing {
-    /// Called when the story will be shared
-    func willShare()
-
     /// Called to get the story shareable assets
     ///
     /// This will be given to `UIActivityViewController` as the `activityItems`
@@ -172,8 +155,6 @@ protocol StorySharing {
 }
 
 extension StorySharing {
-    func willShare() {}
-
     func sharingAssets() -> [Any] {
         return []
     }

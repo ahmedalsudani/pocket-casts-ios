@@ -9,13 +9,6 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
     private let createdDate = Date()
 
-    private lazy var apiQueue: OperationQueue = {
-        let queue = OperationQueue()
-        queue.maxConcurrentOperationCount = 1
-
-        return queue
-    }()
-
     init(result: RefreshResult, completionHandler: ((RefreshFetchResult) -> Void)?) {
         refreshResult = result
         self.completionHandler = completionHandler
@@ -25,14 +18,12 @@ class RefreshOperation: Operation, @unchecked Sendable {
     override func main() {
         autoreleasepool {
             if isCancelled {
-                cleanupAfterCancel()
-
                 return
             }
 
             FileLog.shared.addMessage("Refresh - Processing response after waiting \(createdDate.elapsedTimeDescription) in the queue")
 
-            // look for new podcasts from the server
+            // save any new episodes the feeds had
             let refreshResult = performRefresh()
 
             // if this operation fails, or our operation was cancelled, let the completion handler know and stop
@@ -47,95 +38,32 @@ class RefreshOperation: Operation, @unchecked Sendable {
             ServerNotificationsHelper.shared.firePodcastRefreshSucceeded()
 
             if isCancelled {
-                cleanupAfterCancel()
-
                 return
             }
 
-            // refresh is done, now perform a sync if the user has a sync account
-            if SyncManager.isUserLoggedIn() {
-                NotificationCenter.default.post(name: ServerNotifications.syncStarted, object: nil)
-                let syncStartDate = Date()
+            // we use the refresh to indicate to iOS whether we found new stuff or not
+            completionHandler?(refreshResult == .successNewData ? .newData : .noData)
 
-                if SubscriptionHelper.hasActiveSubscription() { addTimedOperation(RetrieveCustomFilesTask()) }
-                let syncTask = SyncTask()
-                let upNextAndSyncTasks = Self.upNextAndSyncTasks(
-                    upNextSyncTask: UpNextSyncTask(),
-                    syncTask: syncTask,
-                    isFullSyncPending: SyncTask.isFullSyncPending(),
-                    isUpNextEmpty: DataManager.shared.playlistEpisodeCount() == 0
-                )
-                for task in upNextAndSyncTasks {
-                    addTimedOperation(task)
-                }
-
-                addTimedOperation(SyncHistoryTask())
-
-                addTimedOperation(SyncSettingsTask())
-
-                #if !os(watchOS)
-                    ServerSettings.iapUnverifiedPurchaseReceiptDate() == nil ? addTimedOperation(SubscriptionStatusTask()) : addTimedOperation(PurchaseReceiptTask())
-                #endif
-
-                #if !os(watchOS)
-                    // update our local copy of the remote stats. Doesn't really matter if this fails or succeeds
-                    StatsManager.shared.loadRemoteStats(completion: nil)
-                #endif
-
-                apiQueue.waitUntilAllOperationsAreFinished()
-
-                // we use the sync task as the main indication of whether the sync has failed
-                let syncResult = syncTask.status
-                if syncResult == .failed || syncResult == .cancelled {
-                    FileLog.shared.addMessage("Sync failed in \(syncStartDate.elapsedTimeDescription)")
-                    completionHandler?(.failed)
-                } else {
-                    // however we use the refresh to indicate to iOS whether we found new stuff or not
-                    completionHandler?(refreshResult == .successNewData ? .newData : .noData)
-
-                    FileLog.shared.addMessage("Sync succeeded in \(syncStartDate.elapsedTimeDescription)")
-
-                    ServerNotificationsHelper.shared.fireSyncCompleted()
-                    ServerConfig.shared.syncDelegate?.playlistChanged()
-                }
-            } else { // no sync required, we're done
-                completionHandler?(refreshResult == .successNewData ? .newData : .noData)
-            }
-
-            let afterSyncStartDate = Date()
+            let afterRefreshStartDate = Date()
 
             ServerConfig.shared.syncDelegate?.applyAutoArchivingToAllPodcasts()
 
             processAutoAddUpNextCandidates()
 
-            ServerConfig.shared.syncDelegate?.performActionsAfterSync()
+            ServerConfig.shared.syncDelegate?.performActionsAfterRefresh()
 
-            FileLog.shared.addMessage("Refresh - Finished the work after sync in \(afterSyncStartDate.elapsedTimeDescription)")
+            FileLog.shared.addMessage("Refresh - Finished the work after refresh in \(afterRefreshStartDate.elapsedTimeDescription)")
         }
-    }
-
-    private func addTimedOperation(_ task: ApiBaseTask) {
-        task.logsDuration = true
-        apiQueue.addOperation(task)
-    }
-
-    /// `UpNextSyncTask` and `SyncTask`, in the order they run
-    static func upNextAndSyncTasks(upNextSyncTask: UpNextSyncTask, syncTask: SyncTask, isFullSyncPending: Bool, isUpNextEmpty: Bool) -> [ApiBaseTask] {
-        if FeatureFlag.syncUpNextAfterFullSync.enabled, isFullSyncPending, isUpNextEmpty {
-            return [syncTask, upNextSyncTask]
-        }
-        return [upNextSyncTask, syncTask]
     }
 
     func performRefresh() -> UpdateStatus {
         if isCancelled {
-            cleanupAfterCancel()
-
             return .cancelled
         }
 
         let startDate = Date()
         var newEpisodesAdded = 0
+        var newEpisodeNotifications = [NewEpisodeNotificationInfo]()
 
         // the returned dictionary is indexed by podcast UUID and contains all the new episodes for that podcast
         let podcasts = DataManager.shared.allPodcasts(includeUnsubscribed: false)
@@ -160,14 +88,18 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
             DataManager.shared.bulkSave(episodes: episodes)
 
+            if podcast.pushEnabled {
+                newEpisodeNotifications.append(contentsOf: episodes.map {
+                    NewEpisodeNotificationInfo(podcastTitle: podcast.title ?? "", episodeUuid: $0.uuid, episodeTitle: $0.title ?? "")
+                })
+            }
+
             for episode in episodes {
                 if isCancelled {
-                    cleanupAfterCancel()
-
                     return .cancelled
                 }
 
-                // store episodes that we might possibly add to Up Next for processing after a sync
+                // store episodes that we might possibly add to Up Next for processing once the refresh is saved
                 if podcast.autoAddToUpNextOn() {
                     DataManager.shared.autoAddCandidates.add(podcastUUID: podcast.uuid, episodeUUID: episode.uuid)
                 }
@@ -193,17 +125,20 @@ class RefreshOperation: Operation, @unchecked Sendable {
 
         UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshEndTime)
 
+        if !newEpisodeNotifications.isEmpty {
+            let notifications = newEpisodeNotifications
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: ServerNotifications.newEpisodesDetected, object: notifications)
+            }
+        }
+
         FileLog.shared.addMessage("Refresh complete found \(newEpisodesAdded) new episodes in \(startDate.elapsedTimeDescription)")
 
         return (newEpisodesAdded > 0) ? .successNewData : .successNoNewData
     }
 
-    private func cleanupAfterCancel() {
-        apiQueue.cancelAllOperations()
-    }
-
     private func processAutoAddUpNextCandidates() {
-        // look through our candidate episodes that are new and should be added to Up Next, and add any that haven't been played or archived as part of the sync
+        // look through our candidate episodes that are new and should be added to Up Next, and add any that haven't been played or archived
         let upNextLimit = ServerSettings.autoAddToUpNextLimit()
 
         let autoAddCandidates = DataManager.shared.autoAddCandidates.candidates()

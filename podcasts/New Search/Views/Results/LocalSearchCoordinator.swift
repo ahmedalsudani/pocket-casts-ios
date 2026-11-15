@@ -156,8 +156,6 @@ final class LocalSearchCoordinator {
                 return
             }
 
-            Analytics.track(.filterAddEpisodesEpisodeTapped, properties: ["is_playlist_full": result.isFull])
-
             guard result.didAdd else {
                 let theme: any ToastTheme = ToastIconTheme(iconName: "option-alert", iconColor: Theme.shared.primaryIcon01)
                 Toast.show(L10n.playlistManualAddEpisodeFullPlaylistToast, theme: theme)
@@ -165,19 +163,6 @@ final class LocalSearchCoordinator {
             }
 
             PlaylistManager.checkForAutoDownloads(in: playlist)
-
-            // For now let's track the event directly here to avoid swift concurrency warning using the PlaylistTypeTrackerProvider
-            Analytics.track(
-                .episodeAddedToList,
-                properties:
-                    [
-                        "source": "playlist_editor",
-                        "playlist_name": playlist.playlistName,
-                        "playlist_uuid": playlist.uuid,
-                        "episode_uuid": episode.uuid,
-                        "podcast_uuid": episode.podcastUuid
-                    ]
-            )
 
             await MainActor.run {
                 self.playlistEpisodeUUIDs.insert(searchResult.uuid)

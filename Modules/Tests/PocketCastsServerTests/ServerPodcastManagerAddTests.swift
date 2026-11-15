@@ -39,7 +39,7 @@ final class ServerPodcastManagerAddTests: XCTestCase {
 
         let added = expectation(description: "added")
         var result = false
-        ServerPodcastManager.shared.addFromJson(podcastUuid: "podcast-1", lastModified: nil, podcastInfo: podcastInfo, subscribe: true, autoDownloads: 0, fromSync: true) {
+        ServerPodcastManager.shared.addFromJson(podcastUuid: "podcast-1", lastModified: nil, podcastInfo: podcastInfo, subscribe: true, autoDownloads: 0) {
             result = $0
             added.fulfill()
         }

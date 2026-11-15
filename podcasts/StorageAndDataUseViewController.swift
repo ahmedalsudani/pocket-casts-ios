@@ -24,7 +24,6 @@ class StorageAndDataUseViewController: PCViewController, UITableViewDelegate, UI
         super.viewDidLoad()
 
         title = L10n.settingsStorage
-        Analytics.track(.settingsStorageShown)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -39,7 +38,7 @@ class StorageAndDataUseViewController: PCViewController, UITableViewDelegate, UI
         super.viewDidAppear(animated)
         if firstAppear {
             firstAppear = false
-            ManageDownloadsCoordinator.showModalIfNeeded(from: self, source: "storage_and_data_usage")
+            ManageDownloadsCoordinator.showModalIfNeeded(from: self)
         }
     }
 

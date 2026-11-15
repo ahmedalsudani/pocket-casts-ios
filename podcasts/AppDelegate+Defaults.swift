@@ -9,22 +9,10 @@ extension AppDelegate {
         let defaults = UserDefaults.standard
         let dataManager = DataManager.shared
 
-        // Check if protected data is available before running migrations that touch keychain
-        // This prevents the v5Run migration from incorrectly clearing tokens when the app
-        // launches in the background before the device has been unlocked after a reboot.
-        if FeatureFlag.checkProtectedDataBeforeMigration.enabled {
-            guard UIApplication.shared.isProtectedDataAvailable else {
-                FileLog.shared.addMessage("AppDelegate.checkDefaults skipped - protected data not available")
-                return
-            }
-        }
-
         performUpdateIfRequired(updateKey: "v5Run") {
             // these are considered defaults for a new app install
-            SyncManager.clearTokensFromKeyChain()
-            FileLog.shared.addMessage("AppDelegate.checkDefaults v5Run clearTokensFromKeyChain")
-            ServerSettings.setSkipBackTime(10, syncChange: false)
-            ServerSettings.setSkipForwardTime(45, syncChange: false)
+            ServerSettings.setSkipBackTime(10)
+            ServerSettings.setSkipForwardTime(45)
 
             Settings.setShouldDeleteWhenPlayed(true)
             Settings.homeFolderSortOrder = .dateAddedNewestToOldest
@@ -35,7 +23,6 @@ extension AppDelegate {
             // Disable dark up next theme for new users
             Settings.darkUpNextTheme = false
             Settings.setAutoDownloadOnFollow(true)
-            setWhatsNewAcknowledgeToLatest()
         }
 
         performUpdateIfRequired(updateKey: "v6Run") {
@@ -65,20 +52,8 @@ extension AppDelegate {
         performUpdateIfRequired(updateKey: "v7_3Run") {
             ImageManager.shared.upgradeV2ToV3ArtworkFolder()
             ServerSettings.setLastRefreshSucceeded(true)
-            ServerSettings.setLastSyncSucceeded(true)
         }
 
-        performUpdateIfRequired(updateKey: "TTFRunFinal") {
-            ServerSettings.setUserEpisodeOnlyOnWifi(true)
-        }
-
-        performUpdateIfRequired(updateKey: "v7_11Run") {
-            if let email = ServerSettings.syncingEmailLegacy() {
-                FileLog.shared.addMessage("Migrating email address from preferences to Keychain")
-                ServerSettings.setSyncingEmail(email: email)
-                ServerSettings.removeLegacySyncingEmail()
-            }
-        }
         performUpdateIfRequired(updateKey: "v7_12Run") {
             Settings.setMultiSelectGestureEnabled(true)
         }
@@ -95,22 +70,11 @@ extension AppDelegate {
                 Theme.setPreferredDarkTheme(.dark, systemIsDark: false)
             }
         }
-        performUpdateIfRequired(updateKey: "FoldersInitialRun") {
-            // here we are upgrading to folders, since it's possible we've already been syncing with the server and ignoring folder information, we'll need to re-request it
-            if SyncManager.isUserLoggedIn() {
-                ApiServerHandler.shared.reloadFoldersFromServer()
-            }
-        }
 
         // Clean up any Ghost episodes in users filters
         // https://github.com/Automattic/pocket-casts-ios/issues/135
         performUpdateIfRequired(updateKey: "v7_20_1_Ghost_Fix") {
             PodcastManager.shared.deleteGhostEpisodesIfNeeded()
-        }
-
-        // Check if we're missing the stored local userId and retrieve it if needed
-        performUpdateIfRequired(updateKey: "MissingUserIdCheck") {
-            retrieveUserIdIfNeeded()
         }
 
         performUpdateIfRequired(updateKey: "UpdateFileProtection") {
@@ -138,12 +102,6 @@ extension AppDelegate {
             Settings.setMobileDataAllowed(false)
         }
 
-        if FeatureFlag.networkDiscovery.enabled {
-            performUpdateIfRequired(updateKey: "RefreshPodcastMetadataForExplicitAndNetworkList") {
-                dataManager.clearLastUpdatedAtForAllPodcasts()
-            }
-        }
-
         defaults.synchronize()
     }
 
@@ -154,9 +112,4 @@ extension AppDelegate {
         UserDefaults.standard.set(true, forKey: updateKey)
     }
 
-    private func setWhatsNewAcknowledgeToLatest() {
-        if let whatsNewInfo = WhatsNewHelper.extractWhatsNewInfo() {
-            Settings.whatsNewLastAcknowledged = whatsNewInfo.versionCode
-        }
-    }
 }

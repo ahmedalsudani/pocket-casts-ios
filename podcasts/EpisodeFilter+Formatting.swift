@@ -3,7 +3,7 @@ import UIKit
 #endif
 import Foundation
 import PocketCastsDataModel
-#if !os(watchOS) && !APPCLIP && !os(tvOS)
+#if !os(watchOS)
 import EndOfYear
 #endif
 
@@ -20,7 +20,7 @@ extension EpisodeFilter {
         return EpisodeFilter.imageName(forPlaylistIcon: icon)
     }
 
-    #if !os(watchOS) && !APPCLIP && !os(tvOS)
+    #if !os(watchOS)
     @MainActor func grid() -> UIImage {
         let episodes = DataManager.shared.playlistEpisodes(for: self)
 

@@ -15,7 +15,6 @@ class BookmarkDetailsViewModel: ObservableObject {
     /// bookmark synced from a podcast this device isn't subscribed to
     @Published private(set) var podcastTitle: String?
 
-    @Published private(set) var isLoadingPodcastTitle = false
 
     /// The full episode transcript with the passage located in it, so the passage can be
     /// shown in place. Fetched by `loadTranscript`; nil while loading or when the
@@ -74,10 +73,6 @@ class BookmarkDetailsViewModel: ObservableObject {
                   episode: episode,
                   podcastTitle: Self.localPodcastTitle(for: bookmark, episode: episode),
                   bookmarkManager: bookmarkManager)
-
-        if podcastTitle == nil {
-            loadPodcastTitle()
-        }
     }
 
     /// Fetches the episode transcript and locates the passage in it
@@ -118,21 +113,6 @@ class BookmarkDetailsViewModel: ObservableObject {
         transcriptSnippet = passage.flatMap { passage in
             BookmarkTranscriptSnippetExtractor.passageRange(for: passage, at: bookmark.passageLocation, in: transcript.attributedText)
                 .map { BookmarkTranscriptSnippet(transcript: transcript, range: $0) }
-        }
-    }
-
-    private func loadPodcastTitle() {
-        guard let podcastUuid = Self.podcastUuid(for: bookmark, episode: episode) else { return }
-
-        isLoadingPodcastTitle = true
-
-        CacheServerHandler.shared.loadPodcastInfo(podcastUuid: podcastUuid) { [weak self] podcastInfo, _ in
-            let title = (podcastInfo?["podcast"] as? [String: Any])?["title"] as? String
-
-            Task { @MainActor [weak self] in
-                self?.podcastTitle = title
-                self?.isLoadingPodcastTitle = false
-            }
         }
     }
 

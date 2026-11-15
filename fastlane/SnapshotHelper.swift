@@ -210,9 +210,6 @@ open class Snapshot: NSObject {
     }
 
     class func waitForLoadingIndicatorToDisappear(within timeout: TimeInterval) {
-        #if os(tvOS)
-            return
-        #endif
 
         guard let app = self.app else {
             NSLog("XCUIApplication is not set. Please call setupSnapshot(app) before snapshot().")

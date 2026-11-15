@@ -33,11 +33,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     @objc func reloadShelfActions() {
         guard let playingEpisode = PlaybackManager.shared.currentEpisode else { return }
 
-        #if APPCLIP
-        let actions: [PlayerAction] = [.effects, .sleepTimer, .routePicker]
-        #else
         let actions = Settings.playerActions()
-        #endif
 
         // don't reload the actions unless we need to
         if !lastShelfLoadState.updateRequired(shelfActions: actions, episodeUuid: playingEpisode.uuid, effectsOn: PlaybackManager.shared.effects.effectsEnabled(), sleepTimerOn: PlaybackManager.shared.isSleepTimerActive, episodeStarred: playingEpisode.keepEpisode, episodeStatus: playingEpisode.episodeStatus, videoToggleAvailable: PlaybackManager.shared.canToggleVideoRendering, videoRendering: PlaybackManager.shared.shouldRenderVideo) { return }
@@ -119,10 +115,8 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
             addToShelf(on: gotoPodcastBtn)
         case .chromecast:
-            #if !APPCLIP
             playerControlsStackView.addArrangedSubview(chromecastBtn)
             addToShelf(on: chromecastBtn)
-            #endif
         case .starEpisode:
             if playingEpisode is Episode {
                 let starBtn = UIButton(frame: CGRect.zero)
@@ -166,7 +160,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             smartBookmarksTipAnchor = button
 
         case .transcript:
-            #if !APPCLIP
             let button = TranscriptShelfButton(frame: CGRect.zero)
             button.isPointerInteractionEnabled = true
             button.imageView?.tintColor = ThemeColor.playerContrast02()
@@ -175,7 +168,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             button.accessibilityLabel = L10n.transcript
 
             addToShelf(on: button)
-            #endif
 
         case .download:
             let button = UIButton(frame: CGRect.zero)
@@ -188,7 +180,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             addToShelf(on: button)
 
         case .addToPlaylist:
-#if !APPCLIP
             let button = UIButton(frame: CGRect.zero)
             button.isPointerInteractionEnabled = true
             button.imageView?.tintColor = ThemeColor.playerContrast02()
@@ -197,7 +188,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             button.accessibilityLabel = L10n.playlistManualEpisodeAddToPlaylist
 
             addToShelf(on: button)
-#endif
         case .videoToggle:
             let renderingVideo = PlaybackManager.shared.shouldRenderVideo
             let button = UIButton(frame: CGRect.zero)
@@ -242,41 +232,31 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     }
 
     func shareTapped() {
-        #if !APPCLIP
         shareEpisode(sender: playerControlsStackView)
-        #endif
     }
 
     func goToTapped() {
-        #if !APPCLIP
         if PlaybackManager.shared.currentEpisode is Episode {
             goToPodcast()
         } else if PlaybackManager.shared.currentEpisode is UserEpisode {
             goToFiles()
         }
-        #endif
     }
 
     func chromecastTapped() {
-        #if !APPCLIP
         googleCastTapped()
-        #endif
     }
 
     func markPlayedTapped() {
-        #if !APPCLIP
         markPlayed()
-        #endif
     }
 
     func archiveTapped() {
-        #if !APPCLIP
         if PlaybackManager.shared.currentEpisode is UserEpisode {
             delete()
         } else {
             archive()
         }
-        #endif
     }
 
     func sharedRoutePicker(largeSize: Bool) -> PCRoutePickerView {
@@ -293,15 +273,11 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     }
 
     func bookmarkTapped() {
-        #if !APPCLIP
-        PlaybackManager.shared.bookmark(source: .player)
-        #endif
+        PlaybackManager.shared.bookmark()
     }
 
     func transcriptTapped() {
-        #if !APPCLIP
         openTranscript()
-        #endif
     }
 
     func videoToggleTapped() {
@@ -309,10 +285,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     }
 
     func downloadTapped() {
-        #if !APPCLIP
         guard let episode = PlaybackManager.shared.currentEpisode as? Episode else { return }
-
-        AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
 
         if episode.downloaded(pathFinder: DownloadManager.shared) {
             let confirmation = OptionsPicker(title: L10n.podcastDetailsRemoveDownload)
@@ -331,13 +304,10 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
             PlaybackActionHelper.download(episodeUuid: episode.uuid)
             Toast.show(L10n.playerEpisodeQueuedForDownload)
         }
-        #endif
     }
 
     private func deleteDownloadedFile() {
         guard let episode = PlaybackManager.shared.currentEpisode as? Episode else { return }
-
-        EpisodeManager.analyticsHelper.currentSource = analyticsSource
 
         PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true, userInitiated: false)
         EpisodeManager.deleteDownloadedFiles(episode: episode, userInitated: true)
@@ -363,88 +333,58 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     }
 
     @objc func overflowTapped() {
-        #if !APPCLIP
         let shelfController = ShelfActionsViewController()
         shelfController.playerActionsDelegate = self
 
         presentUsingSheet(shelfController, forceLarge: true)
-        #endif
     }
 
     @objc private func sleepBtnTapped(_ sender: UIButton) {
-        shelfButtonTapped(.sleepTimer)
         showSleepPanel()
     }
 
     @objc private func effectsBtnTapped(_ sender: UIButton) {
-        shelfButtonTapped(.effects)
         showEffectsPanel()
     }
 
     @objc private func starTapped(_ sender: UIButton) {
-        shelfButtonTapped(.starEpisode)
         performStarAction(starBtn: sender)
     }
 
     @objc private func goToTapped(_ sender: UIButton) {
-        shelfButtonTapped(.goToPodcast)
         goToTapped()
     }
 
     @objc private func markPlayedTapped(_ sender: UIButton) {
-        #if !APPCLIP
-        shelfButtonTapped(.markPlayed)
         markPlayed()
-        #endif
     }
 
     @objc private func archiveTapped(_ sender: UIButton) {
-        shelfButtonTapped(.archive)
         archiveTapped()
     }
 
     @objc private func shareTapped(_ sender: UIButton) {
-        #if !APPCLIP
-        shelfButtonTapped(.shareEpisode)
         shareEpisode(sender: sender)
-        #endif
     }
 
     @objc private func bookmarkTapped(_ sender: UIButton) {
-        #if !APPCLIP
-        let action = PlayerAction.addBookmark
-        shelfButtonTapped(action)
-
-        guard action.isUnlocked else {
-            action.paidFeature?.presentUpgradeController(from: self, source: .bookmarksShelfAction)
-            return
-        }
-
         bookmarkTapped()
-        #endif
     }
 
     @objc private func transcriptTapped(_ sender: UIButton) {
-        #if !APPCLIP
         guard let transcriptButton = sender as? TranscriptShelfButton, transcriptButton.isTranscriptEnabled else {
             Toast.show(TranscriptError.notAvailable.localizedDescription)
             return
         }
-        shelfButtonTapped(.transcript)
 
         openTranscript()
-        #endif
     }
 
     @objc private func downloadTapped(_ sender: UIButton) {
-        #if !APPCLIP
-        shelfButtonTapped(.download)
         downloadTapped()
-        #endif
     }
 
     @objc private func videoToggleBtnTapped(_ sender: UIButton) {
-        shelfButtonTapped(.videoToggle)
         videoToggleTapped()
     }
 
@@ -457,29 +397,22 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     // MARK: - Manual Playlists
 
     @objc func presentManualPlaylistsChooser(_ sender: UIButton) {
-#if !APPCLIP
-        shelfButtonTapped(.addToPlaylist)
         presentManualPlaylistsChooser()
-#endif
     }
 
     @objc func presentManualPlaylistsChooser() {
-#if !APPCLIP
         guard let episode = PlaybackManager.shared.currentEpisode else { return }
 
         NavigationManager.shared.navigateTo(
             NavigationManager.manualPlaylistsChooserKey,
             data: [
-                NavigationManager.manualPlaylistsChooserEpisodeKey: episode,
-                NavigationManager.manualPlaylistsChooserSourceKey: "shelf"
+                NavigationManager.manualPlaylistsChooserEpisodeKey: episode
             ]
         )
-#endif
     }
 
     // MARK: - Actions Implementation
 
-    #if !APPCLIP
     private func goToFiles() {
         NavigationManager.shared.navigateTo(NavigationManager.filesPageKey, data: nil)
     }
@@ -487,7 +420,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     private func goToPodcast() {
         guard let episode = PlaybackManager.shared.currentEpisode as? Episode else { return }
 
-        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: episode.podcastUuid, NavigationManager.podcastSourceKey: PodcastScreenSource.bottomShelf])
+        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: episode.podcastUuid])
     }
 
     private func markPlayed() {
@@ -496,7 +429,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         let alert = UIAlertController(title: L10n.playerMarkAsPlayedConfirmation, message: L10n.playerMarkAsPlayedConfirmationMessage, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         alert.addAction(UIAlertAction(title: L10n.markPlayedShort, style: .destructive) { _ in
-            AnalyticsEpisodeHelper.shared.currentSource = self.analyticsSource
             EpisodeManager.markAsPlayed(episode: episode, fireNotification: true)
         })
         present(alert, animated: true)
@@ -504,15 +436,12 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
 
     private func delete() {
         guard let episode = PlaybackManager.shared.currentEpisode as? UserEpisode else { return }
-        AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
 
         UserEpisodeManager.presentDeleteOptions(episode: episode, from: self)
     }
 
     private func archive() {
         guard let episode = PlaybackManager.shared.currentEpisode as? Episode else { return }
-
-        AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
 
         let alert = UIAlertController(title: L10n.playerArchivedConfirmation, message: L10n.playerArchivedConfirmationMessage, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
@@ -521,7 +450,6 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         })
         present(alert, animated: true)
     }
-    #endif
 
     private func showSleepPanel() {
         let sleepController = SleepTimerViewController()
@@ -538,9 +466,7 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     private func performStarAction(starBtn: UIButton? = nil) {
         guard let episode = PlaybackManager.shared.currentEpisode as? Episode else { return }
 
-        AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
-
-        EpisodeManager.setStarred(!episode.keepEpisode, episode: episode, updateSyncStatus: SyncManager.isUserLoggedIn())
+        EpisodeManager.setStarred(!episode.keepEpisode, episode: episode, updateSyncStatus: false)
 
         if let starBtn {
             let starImage = episode.keepEpisode ? UIImage(named: "player_star_filled") : UIImage(named: "player_star_empty")
@@ -552,23 +478,21 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
         }
     }
 
-    #if !APPCLIP
     private func shareEpisode(sender: UIView) {
         guard let episode = PlaybackManager.shared.currentEpisode as? Episode else { return }
 
-        SharingModal.showModal(episode: episode, from: analyticsSource, in: self)
+        SharingModal.showModal(episode: episode, in: self)
     }
 
     private func shareEpisode(source: UIView, episode: Episode, fromTime: TimeInterval) {
         guard let _ = source.superview else { return }
 
         if fromTime == 0 {
-            SharingModal.show(option: .episode(episode), from: analyticsSource, in: self)
+            SharingModal.show(option: .episode(episode), in: self)
         } else {
-            SharingModal.show(option: .currentPosition(episode, fromTime), from: analyticsSource, in: self)
+            SharingModal.show(option: .currentPosition(episode, fromTime), in: self)
         }
     }
-    #endif
 
     // MARK: - Private Helpers
 
@@ -582,15 +506,8 @@ extension NowPlayingPlayerItemViewController: NowPlayingActionsDelegate {
     }
 }
 
-extension NowPlayingPlayerItemViewController {
-    func shelfButtonTapped(_ button: PlayerAction) {
-        Analytics.track(.playerShelfActionTapped, properties: ["action": button.analyticsDescription, "from": "shelf"])
-    }
-}
-
 // MARK: - Smart Bookmarks tip
 
-#if !APPCLIP
 extension NowPlayingPlayerItemViewController {
     /// Shows the one-time tip that points at the action used to add a bookmark, for the release that introduces Smart Bookmarks.
     func showSmartBookmarksTipIfNeeded() {
@@ -631,7 +548,6 @@ extension NowPlayingPlayerItemViewController {
         }
     }
 }
-#endif
 
 extension NowPlayingPlayerItemViewController: @preconcurrency AVRoutePickerViewDelegate {
     func routePickerViewWillBeginPresentingRoutes(_ routePickerView: AVRoutePickerView) {
@@ -643,7 +559,5 @@ extension NowPlayingPlayerItemViewController: @preconcurrency AVRoutePickerViewD
                 FileLog.shared.addMessage("Route selection prepared: shouldStartPlayback=\(shouldStartPlayback), type=\(routeSelection.rawValue)")
             }
         }
-
-        shelfButtonTapped(.routePicker)
     }
 }

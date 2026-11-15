@@ -3,7 +3,6 @@ import Foundation
 public enum WatchConstants {
     public enum Keys {
         public static let messageVersion = "id"
-        public static let loginChanged = "loginChanged"
         public static let featureFlags = "featureFlags"
 
         public static let filters = "filters"
@@ -11,7 +10,6 @@ public enum WatchConstants {
         public static let nowPlayingEpisode = "episode"
         public static let nowPlayingStatus = "status"
         public static let nowPlayingCurrentTime = "upto"
-        public static let nowPlayingPlayedUpToModified = "uptoModified"
         public static let nowPlayingDuration = "duration"
         public static let nowPlayingColor = "color"
         public static let nowPlayingUpNextCount = "upcount"
@@ -32,17 +30,6 @@ public enum WatchConstants {
 
         public static let episodeTypeKey = "type"
         public static let episodeSerialisedKey = "serialized"
-
-        public static let podcastSettings = "podcastSettings"
-        public static let podcastUuid = "uuid"
-        public static let podcastAutoArchivePlayedAfter = "podcastAutoArchivePlayedAfter"
-        public static let podcastOverrideGlobalArchive = "podcastOverrideGlobalArchive"
-
-        public static let autoArchivePlayedAfter = "autoArchivePlayedAfter"
-        public static let autoArchiveStarredEpisodes = "autoArchiveStarredEpisodes"
-
-        public static let upNextDownloadEpisodeCount = "upNextDownloadEpisodeCount"
-        public static let upNextAutoDeleteEpisodeCount = "upNextAutoDeleteEpisodeCount"
     }
 
     public enum PlayingStatus {
@@ -59,17 +46,11 @@ public enum WatchConstants {
         public static let data = "data"
         public static let lastPage = "lastPage_v2"
         public static let lastContext = "lastContext_v2"
-        public static let lastSubscriptionStatusTime = "lastSubscriptionStatusTime"
         public static let lastDataTime = "lastDataTime"
     }
 
     public enum Notifications {
         public static let dataUpdated = NSNotification.Name(rawValue: "dataUpdated")
-        public static let loginStatusUpdated = NSNotification.Name(rawValue: "loginStatusUpdated")
-    }
-
-    public enum Interface {
-        public static let podcastIconSize: CGFloat = 23
     }
 
     public enum Messages {
@@ -82,21 +63,6 @@ public enum WatchConstants {
 
         enum LogFileTransfer {
             public static let type = "logFileTransfer"
-        }
-
-        enum SignificantSyncableUpdate {
-            public static let type = "sigSyncUpdate"
-        }
-
-        enum MinorSyncableUpdate {
-            public static let type = "minSyncUpdate"
-        }
-
-        enum PlaybackProgressUpdate {
-            public static let type = "playbackProgressUpdate"
-            public static let episodeUuid = "uuid"
-            public static let playedUpTo = "playedUpTo"
-            public static let modifiedAt = "modifiedAt" // playedUpToModified (UTC millis)
         }
 
         enum DataRequest {
@@ -227,16 +193,6 @@ public enum WatchConstants {
         enum VolumeBoostRequest {
             public static let type = "volumeBoostRequest"
             public static let enabled = "enabled"
-        }
-
-        enum LoginDetailsRequest {
-            public static let type = "loginDetailsRequest"
-        }
-
-        enum LoginDetailsResponse {
-            public static let username = "username"
-            public static let password = "password"
-            public static let refreshToken = "refreshToken"
         }
 
         enum StateUpdate {

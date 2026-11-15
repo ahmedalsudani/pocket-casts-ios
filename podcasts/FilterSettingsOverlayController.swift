@@ -1,11 +1,7 @@
 import PocketCastsDataModel
 import UIKit
 
-class FilterSettingsOverlayController: LargeNavBarViewController, AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .unknown
-    }
-
+class FilterSettingsOverlayController: LargeNavBarViewController {
     var filterToEdit: EpisodeFilter!
     @IBOutlet open var tableView: ThemeableTable! {
         didSet {
@@ -38,10 +34,6 @@ class FilterSettingsOverlayController: LargeNavBarViewController, AnalyticsSourc
         filterToEdit.syncStatus = SyncStatus.notSynced.rawValue
         DataManager.shared.save(playlist: filterToEdit)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: filterToEdit)
-
-        if !filterToEdit.isNew {
-            Analytics.track(.filterUpdated, properties: ["group": analyticsSource, "source": "filters"])
-        }
     }
 
     override func handleThemeChanged() {

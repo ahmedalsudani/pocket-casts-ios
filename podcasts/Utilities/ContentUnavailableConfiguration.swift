@@ -9,12 +9,6 @@ struct ContentUnavailableConfiguration {
         }
     }
 
-    static func noNetwork(tryAgainHandler: @escaping () -> Void) -> UIContentConfiguration {
-        return UIHostingConfiguration {
-            NoNetworkView(tryAgainHandler: tryAgainHandler).environmentObject(Theme.shared)
-        }
-    }
-
     static func noResults() -> UIContentConfiguration {
         return UIHostingConfiguration {
             NoResultsView().environmentObject(Theme.shared)
@@ -51,30 +45,6 @@ struct LoadingView: View {
                 .tint(theme.primaryIcon01)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-struct NoNetworkView: View {
-    let tryAgainHandler: () -> Void
-
-    @EnvironmentObject private var theme: Theme
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Image("discover_nointernet", label: Text("No Internet"))
-            VStack(spacing: 10) {
-                Text(L10n.discoverUnableToLoad)
-                    .font(Font.system(size: 17))
-                Text(L10n.checkInternetConnection)
-                    .font(Font.system(size: 14))
-            }
-            .foregroundStyle(theme.primaryText01)
-            Button(L10n.tryAgain) {
-                tryAgainHandler()
-            }
-            .font(Font.system(size: 15))
-            .foregroundStyle(theme.primaryInteractive01)
-        }
     }
 }
 

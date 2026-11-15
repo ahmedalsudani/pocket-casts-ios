@@ -5,7 +5,7 @@ import SwiftUI
 
 struct PlaySourceHelper {
     static var playSourceViewModel: PlaySourceViewModel {
-        SourceManager.shared.isWatch() ? WatchSourceViewModel() : PhoneSourceViewModel()
+        PhoneSourceViewModel()
     }
 }
 
@@ -24,7 +24,6 @@ protocol PlaySourceViewModel {
     func isPlaying(forEpisode: BaseEpisode) -> Bool
     func inUpNext(forEpisode: BaseEpisode) -> Bool
     func isCurrentlyPlaying(episode: BaseEpisode) -> Bool
-    func supportsPodcastNavigation(forEpisode: BaseEpisode) -> Bool
 
     // MARK: Playback
 

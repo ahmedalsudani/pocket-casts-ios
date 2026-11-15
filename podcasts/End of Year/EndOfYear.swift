@@ -4,12 +4,6 @@ import PocketCastsDataModel
 import EndOfYear
 import PocketCastsUtils
 
-enum EndOfYearPresentationSource: String {
-    case modal = "modal"
-    case profile = "profile"
-    case userLogin = "user_login"
-}
-
 struct EndOfYear {
     enum Year: CaseIterable {
         case y2022
@@ -33,19 +27,6 @@ struct EndOfYear {
         var year: Int? {
             modelType?.year
         }
-
-        var literalValue: String {
-            switch self {
-            case .y2022:
-                return "2022"
-            case .y2023:
-                return "2023"
-            case .y2024:
-                return "2024"
-            case .y2025:
-                return "2025"
-            }
-        }
     }
 
     static var isEligible: Bool { eligibilityChecker?.isEligible ?? false }
@@ -66,10 +47,6 @@ struct EndOfYear {
         }
     }()
 
-    /// Internal state machine to determine how we should react to login changes
-    /// and when to show the modal vs go directly to the stories
-    private static var state: EndOfYearState = .showModalIfNeeded
-
     static var currentYear: Year {
         if FeatureFlag.endOfYear2025.enabled {
             return .y2025
@@ -84,17 +61,6 @@ struct EndOfYear {
 
     private(set) var storyModelType: StoryModel.Type?
 
-    static var requireAccount: Bool = Settings.endOfYearRequireAccount {
-        didSet {
-            // If registration is not needed anymore and this user is logged out
-            // Show the prompt again.
-            if let year = currentYear.year, oldValue && !requireAccount && !SyncManager.isUserLoggedIn() {
-                Settings.setHasShownModalForEndOfYear(false, year: year)
-                NotificationCenter.postOnMainThread(notification: .eoyRegistrationNotRequired, object: nil)
-            }
-        }
-    }
-
     func presentationMode(for traitCollection: UITraitCollection) -> UIModalPresentationStyle {
         traitCollection.horizontalSizeClass == .regular && traitCollection.verticalSizeClass == .regular ? .formSheet : .fullScreen
     }
@@ -104,11 +70,8 @@ struct EndOfYear {
     }
 
     init() {
-        Self.requireAccount = Settings.endOfYearRequireAccount
-
         storyModelType = Self.currentYear.modelType
     }
-
 
     func showPrompt(in viewController: UIViewController) {
         guard Self.isEndOfYearActive,
@@ -136,30 +99,12 @@ struct EndOfYear {
             viewModel = .init(buttonTitle: L10n.playback2025ViewYear, description: L10n.playback2025Description, backgroundImageName: "playback-2025-featured")
         }
 
-        BottomSheetSwiftUIWrapper.present(EndOfYearModal(year: storyModelType.year, model: viewModel), autoSize: true, in: viewController) {
-            Analytics.track(.endOfYearModalDismissed, properties: ["current_year": EndOfYear.currentYear.literalValue])
-        }
+        BottomSheetSwiftUIWrapper.present(EndOfYearModal(year: storyModelType.year, model: viewModel), autoSize: true, in: viewController)
         Settings.setHasShownModalForEndOfYear(true, year: storyModelType.year)
     }
 
     func showPromptBasedOnState(in viewController: UIViewController) {
-        switch Self.state {
-
-        // If we're in the default state, then check to see if we should show the prompt
-        case .showModalIfNeeded:
-            showPrompt(in: viewController)
-
-        // If we were in the waiting state, but the user has logged in, then show stories
-        case .loggedIn:
-            Self.state = .showModalIfNeeded
-            showStories(in: viewController, from: .userLogin)
-
-        // If the user has seen the prompt, and chosen to login, but then has cancelled out of the flow without logging in,
-        // When this code is ran from MainTabController viewDidAppear we will still be in the waiting state
-        // reset the state to the default to restart the process over again
-        case .waitingForLogin:
-            Self.state = .showModalIfNeeded
-        }
+        showPrompt(in: viewController)
     }
 
     var configuration: StoriesConfiguration {
@@ -172,16 +117,8 @@ struct EndOfYear {
         return configuration
     }
 
-    func showStories(in viewController: UIViewController, from source: EndOfYearPresentationSource) {
+    func showStories(in viewController: UIViewController) {
         guard let storyModelType else { return }
-
-        if Self.requireAccount && !SyncManager.isUserLoggedIn() {
-            Self.state = .waitingForLogin
-
-            let onboardingController = OnboardingFlow.shared.begin(flow: .endOfYear, source: .endOfYear, traitCollection: viewController.traitCollection)
-            viewController.present(onboardingController, animated: true)
-            return
-        }
 
         // Don't show the prompt if the user is has already viewed the stories.
         Settings.setHasShownModalForEndOfYear(true, year: storyModelType.year)
@@ -199,11 +136,10 @@ struct EndOfYear {
         }
 
         viewController.present(storiesViewController, animated: true, completion: nil)
-        Analytics.track(.endOfYearStoriesShown, properties: ["source": source.rawValue, "current_year": EndOfYear.currentYear.literalValue])
     }
 
     @MainActor
-    static func share(assets: [Any], model: StoriesModel, storyIdentifier: String = "unknown", onDismiss: (() -> Void)? = nil) {
+    static func share(assets: [Any], model: StoriesModel, onDismiss: (() -> Void)? = nil) {
         let presenter = SceneHelper.rootViewController()
 
         let fakeViewController = FakeViewController()
@@ -218,11 +154,8 @@ struct EndOfYear {
                 fakeViewController.dismiss(animated: false)
             }
 
-            if let activity, success {
-                let properties = ["activity": activity.rawValue, "story": storyIdentifier, "from": "button", "current_year": EndOfYear.currentYear.literalValue]
-                Analytics.track(.endOfYearStoryShared, properties: properties)
+            if activity != nil, success {
                 DispatchQueue.main.async {
-                    model.recordPlaybackShare(properties: properties.merging(["source": "end_of_year"]) { $1 })
                     fakeViewController.dismiss(animated: false)
                 }
             }
@@ -240,21 +173,6 @@ struct EndOfYear {
         }
     }
 
-    func resetStateIfNeeded() {
-        // When a user logs in (or creates an account) we mark the EOY modal as not
-        // shown to show it again.
-        if Self.state == .showModalIfNeeded, let storyModelType {
-            Settings.setHasShownModalForEndOfYear(false, year: storyModelType.year)
-            return
-        }
-
-        guard Self.state == .waitingForLogin else { return }
-
-        // If we're in the waiting for login state (the user has seen the prompt, and chosen to login)
-        // Update the current state based on whether the user is logged in or not
-        // If the user did not login, then just reset the state to the default showModalIfNeeded
-        Self.state = SyncManager.isUserLoggedIn() ? .loggedIn : .showModalIfNeeded
-    }
 }
 
 extension EndOfYear {
@@ -285,10 +203,6 @@ class StoriesHostingController<ContentView: View>: UIHostingController<ContentVi
         // Dark overlay background for iPad
         presentationController?.containerView?.backgroundColor = .black.withAlphaComponent(0.8)
     }
-}
-
-private enum EndOfYearState {
-    case showModalIfNeeded, waitingForLogin, loggedIn
 }
 
 /// When selecting "Save Image" on the share sheet on iOS 15
@@ -334,10 +248,6 @@ extension EndOfYear {
         private func startListening() {
             // The notifications to update the state for
             let notifications: [Notification.Name] = [
-                // Check after a sync succeeds or the user logs into an account
-                ServerNotifications.syncCompleted,
-                .userSignedIn,
-
                 // Check as the user is listening to episodes
                 Constants.Notifications.playbackPaused,
                 Constants.Notifications.playbackEnded,

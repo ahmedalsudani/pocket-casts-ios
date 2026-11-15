@@ -6,27 +6,16 @@ import UserNotifications
 
 enum NotificationType: String {
 
-    case onboardingSignUp
     case onboardingImport
     case onboardingThemes
-    case onboardingStaffPicks
     case onboardingUpNext
     case onboardingFilters
-    case onboardingUpsell
 
     case reengagementWeekly
     case reengagementDownloads
 
-    case recommendationsTrending
-    case recommendationsYouMightLike
-
-    case upsell
-    case newFeatureSuggestedFolders
-
     var title: String {
         switch self {
-        case .onboardingSignUp:
-            return L10n.notificationsOnboardingSignupTitle
         case .onboardingImport:
             return L10n.notificationsOnboardingImportTitle
         case .onboardingThemes:
@@ -35,29 +24,15 @@ enum NotificationType: String {
             return L10n.notificationsOnboardingUpnextTitle
         case .onboardingFilters:
             return L10n.notificationsOnboardingFiltersTitle
-        case .onboardingUpsell:
-            return L10n.notificationsOnboardingUpsellTitle
-        case .onboardingStaffPicks:
-            return L10n.notificationsOnboardingStaffPicksTitle
         case .reengagementWeekly:
             return L10n.notificationsReengagementWeeklyTitle
         case .reengagementDownloads:
                 return L10n.notificationsReengagementDownloadsTitle
-        case .recommendationsTrending:
-            return L10n.notificationsRecommendationsTrendingTitle
-        case .recommendationsYouMightLike:
-            return L10n.notificationsRecommendationsYouMightLikeTitle
-        case .upsell:
-            return L10n.notificationsOffersUpsellTitle
-        case .newFeatureSuggestedFolders:
-            return L10n.notificationsNewFeatureSuggestedFoldersTitle
         }
     }
 
     var body: String {
         switch self {
-        case .onboardingSignUp:
-            return L10n.notificationsOnboardingSignupBody
         case .onboardingImport:
             return L10n.notificationsOnboardingImportBody
         case .onboardingThemes:
@@ -66,22 +41,10 @@ enum NotificationType: String {
             return L10n.notificationsOnboardingUpnextBody
         case .onboardingFilters:
             return L10n.notificationsOnboardingFiltersBody
-        case .onboardingUpsell:
-            return L10n.notificationsOnboardingUpsellBody
-        case .onboardingStaffPicks:
-            return L10n.notificationsOnboardingStaffPicksBody
         case .reengagementWeekly:
             return L10n.notificationsReengagementWeeklyBody
         case .reengagementDownloads:
                 return L10n.notificationsReengagementDownloadsBody(NotificationsCoordinator.shared.numberOfDownloadsAvailable())
-        case .recommendationsTrending:
-            return L10n.notificationsRecommendationsTrendingBody
-        case .recommendationsYouMightLike:
-            return L10n.notificationsRecommendationsYouMightLikeBody
-        case .upsell:
-            return L10n.notificationsOffersUpsellBody
-        case .newFeatureSuggestedFolders:
-            return L10n.notificationsNewFeatureSuggestedFoldersBody
         }
     }
 
@@ -91,8 +54,6 @@ enum NotificationType: String {
 
     var link: String {
         switch self {
-        case .onboardingSignUp:
-            return "pktc://signup"
         case .onboardingImport:
             return "pktc://settings/import"
         case .onboardingThemes:
@@ -101,22 +62,10 @@ enum NotificationType: String {
             return "pktc://upnext/?location=tab"
         case .onboardingFilters:
             return "pktc://filters"
-        case .onboardingUpsell:
-            return "pktc://upsell"
-        case .onboardingStaffPicks:
-            return "pktc://discover/staff-picks"
         case .reengagementWeekly:
             return "pktc://discover"
         case .reengagementDownloads:
             return "pktc://profile/downloads"
-        case .recommendationsTrending:
-            return "pktc://discover/trending"
-        case .recommendationsYouMightLike:
-            return "pktc://discover/recommendations_user"
-        case .upsell:
-            return "pktc://upsell"
-        case .newFeatureSuggestedFolders:
-            return "pktc://features/suggestedFolders"
         }
     }
 
@@ -125,14 +74,6 @@ enum NotificationType: String {
             return false
         }
         switch self {
-            case .onboardingSignUp:
-                return !SyncManager.isUserLoggedIn()
-            case .onboardingUpsell, .upsell:
-                return !SubscriptionHelper.hasActiveSubscription()
-            case .recommendationsYouMightLike:
-                return SyncManager.isUserLoggedIn()
-            case .newFeatureSuggestedFolders:
-                return Settings.suggestedFoldersUpsellCount < 2 && Settings.appVersion() == "7.90"
             case .reengagementDownloads:
                 return NotificationsCoordinator.shared.numberOfDownloadsAvailable() > 0
             default:
@@ -143,10 +84,7 @@ enum NotificationType: String {
     var isRepeatable: Bool {
         switch self {
             case .reengagementWeekly,
-                 .reengagementDownloads,
-                 .recommendationsTrending,
-                 .recommendationsYouMightLike,
-                 .upsell:
+                 .reengagementDownloads:
                 return true
             default:
                 return false
@@ -158,37 +96,27 @@ enum NotificationsGroup: CaseIterable {
 
     case newEpisodes
     case dailyReminders
-    case recommendations
     case newFeaturesAndTips
-    case offers
 
     var notifications: [NotificationType] {
         switch self {
             case .newEpisodes:
-                return [] // New Episodes are notifications sent by the server, so they don't need a local implementation
+                return [] // New episode notifications are raised by `NewEpisodeNotificationScheduler` when a refresh finds episodes
             case .dailyReminders:
-                return [.onboardingSignUp, .onboardingImport, .onboardingUpNext, .onboardingFilters, .onboardingThemes, .onboardingStaffPicks, .onboardingUpsell]
-            case .recommendations:
-                return [.recommendationsTrending, .recommendationsYouMightLike]
+                return [.onboardingImport, .onboardingUpNext, .onboardingFilters, .onboardingThemes]
             case .newFeaturesAndTips:
-                return [.newFeatureSuggestedFolders, .reengagementWeekly, .reengagementDownloads]
-            case .offers:
-                return [.upsell]
+                return [.reengagementWeekly, .reengagementDownloads]
         }
     }
 
     var scheduleHour: Int {
         switch self {
             case .newEpisodes:
-                return 0 // This is determined by the server
+                return 0 // Sent when a refresh finds new episodes, not on a schedule
             case .dailyReminders:
                 return 10
-            case .recommendations:
-                return 11
             case .newFeaturesAndTips:
                 return 16
-            case .offers:
-                return 14
         }
     }
 
@@ -198,12 +126,8 @@ enum NotificationsGroup: CaseIterable {
                 return Settings.notificationsNewEpisodes
             case .dailyReminders:
                 return Settings.notificationsDailyReminders
-            case .recommendations:
-                return Settings.notificationsRecommendations
             case .newFeaturesAndTips:
                 return Settings.notificationsNewFeaturesAndTips
-            case .offers:
-                return Settings.notificationsOffers
         }
     }
 
@@ -220,64 +144,33 @@ enum NotificationsGroup: CaseIterable {
                 Settings.notificationsNewEpisodes = newValue
             case .dailyReminders:
                 Settings.notificationsDailyReminders = newValue
-            case .recommendations:
-                Settings.notificationsRecommendations = newValue
             case .newFeaturesAndTips:
                 Settings.notificationsNewFeaturesAndTips = newValue
-            case .offers:
-                Settings.notificationsOffers = newValue
         }
     }
-
-    // Variable to be used only in debugging/testing to accelarate notifications schedule
-    static var speedUpNotifications: Bool = false
 
     var timeIntervalStep: TimeInterval {
         switch self {
             case .newEpisodes:
                 return 0
             case .dailyReminders:
-                return Self.speedUpNotifications ? 10.seconds: 24.hours
-            case .recommendations:
-                return Self.speedUpNotifications ? 60.seconds: 3.days
+                return 24.hours
             case .newFeaturesAndTips:
-                return Self.speedUpNotifications ? 60.seconds: 1.week
-            case .offers:
-                return Self.speedUpNotifications ? 120.seconds: 2.week
+                return 1.week
         }
     }
 
     func trigger(order: Int, notification: NotificationType) -> UNNotificationTrigger? {
-        if Self.speedUpNotifications {
-            return UNTimeIntervalNotificationTrigger(timeInterval: Double(order + 1) * timeIntervalStep, repeats: notification.isRepeatable)
-        }
         let calendar = Calendar.current
-        let maxWeekDays: Int = calendar.weekdaySymbols.count
         switch self {
             case .newEpisodes:
                 return nil
             case .dailyReminders:
                 let timeIntervalToSchedule: TimeInterval = calculateTimeIntervalToHour(scheduleHour)
                 return UNTimeIntervalNotificationTrigger(timeInterval: timeIntervalToSchedule + (Double(order) * timeIntervalStep), repeats: notification.isRepeatable)
-            case .recommendations:
-                return makeTrigger(
-                    days: (order + 1) * 3,
-                    from: .now,
-                    calendar: calendar,
-                    repeats: notification.isRepeatable
-                )
-
             case .newFeaturesAndTips:
                 return makeTrigger(
                     days: (order + 1) * 2,
-                    from: .now,
-                    calendar: calendar,
-                    repeats: notification.isRepeatable
-                )
-
-            case .offers:
-                return makeTrigger(
-                    days: maxWeekDays - order - 1,
                     from: .now,
                     calendar: calendar,
                     repeats: notification.isRepeatable
@@ -302,9 +195,6 @@ enum NotificationsGroup: CaseIterable {
     }
 
     private func calculateTimeIntervalToHour(_ hour: Int) -> TimeInterval {
-        if Self.speedUpNotifications {
-            return 1
-        }
         guard let date = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date.now, matchingPolicy: .nextTime),
               let nextDate = Calendar.current.date(byAdding: .day, value: 1, to: date)
         else {
@@ -317,8 +207,6 @@ enum NotificationsGroup: CaseIterable {
 class NotificationsCoordinator {
 
     static let shared = NotificationsCoordinator()
-
-    var debugMode: Bool = false
 
     private let notificationCenter: UNUserNotificationCenter
 
@@ -366,28 +254,6 @@ class NotificationsCoordinator {
             scheduleNotification(notification, trigger: trigger)
             order += 1
         }
-        printPendingNotifications()
-    }
-
-    private func printPendingNotifications() {
-        guard debugMode else {
-            return
-        }
-        Task {
-            FileLog.shared.addMessage("\n---- Notification Schedule ----\n")
-            let pendingNotifications = await self.notificationCenter.pendingNotificationRequests()
-            for notificationRequest in pendingNotifications {
-                if let calendarTrigger = notificationRequest.trigger as? UNCalendarNotificationTrigger {
-                    let date = calendarTrigger.nextTriggerDate() ?? Date()
-                    FileLog.shared.addMessage("Notification: \(notificationRequest.identifier) - \(date.formatted())\n")
-                }
-                if let intervalTrigger = notificationRequest.trigger as? UNTimeIntervalNotificationTrigger {
-                    let date = intervalTrigger.nextTriggerDate() ?? Date()
-                    FileLog.shared.addMessage("Notification: \(notificationRequest.identifier) - \(date.formatted())\n")
-                }
-            }
-            FileLog.shared.addMessage("\n---- End ----\n")
-        }
     }
 
     func disableNotifications(for group: NotificationsGroup) {
@@ -426,7 +292,6 @@ class NotificationsCoordinator {
 
     func cancelNotifications(for group: NotificationsGroup) {
         notificationCenter.removePendingNotificationRequests(withIdentifiers: group.notifications.map { $0.identifier })
-        printPendingNotifications()
     }
 
     func cancelNotification(_ type: NotificationType) {

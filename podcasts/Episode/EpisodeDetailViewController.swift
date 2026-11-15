@@ -173,37 +173,32 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
     var podcast: Podcast
     var timestamp: TimeInterval?
 
-    let viewSource: EpisodeDetailViewSource
-
     let fromPlaylist: AutoplayHelper.Playlist?
 
     private var currentTab: Tab = .details
 
     // MARK: - Init
 
-    init(episodeUuid: String, source: EpisodeDetailViewSource, playlist: AutoplayHelper.Playlist? = nil, timestamp: TimeInterval? = nil) {
+    init(episodeUuid: String, playlist: AutoplayHelper.Playlist? = nil, timestamp: TimeInterval? = nil) {
         // it's ok to crash here, an episode card with no episode or podcast is invalid
         episode = DataManager.shared.findEpisode(uuid: episodeUuid)!
         podcast = DataManager.shared.findPodcast(uuid: episode.podcastUuid, includeUnsubscribed: true)!
-        viewSource = source
         fromPlaylist = playlist
         self.timestamp = timestamp
         super.init(nibName: "EpisodeDetailViewController", bundle: nil)
     }
 
-    init(episodeUuid: String, podcast: Podcast, source: EpisodeDetailViewSource, playlist: AutoplayHelper.Playlist? = nil) {
+    init(episodeUuid: String, podcast: Podcast, playlist: AutoplayHelper.Playlist? = nil) {
         episode = DataManager.shared.findEpisode(uuid: episodeUuid)! // it's ok to crash here, an episode card with no episode is invalid
         self.podcast = podcast
-        viewSource = source
         fromPlaylist = playlist
 
         super.init(nibName: "EpisodeDetailViewController", bundle: nil)
     }
 
-    init(episode: Episode, podcast: Podcast, source: EpisodeDetailViewSource, playlist: AutoplayHelper.Playlist? = nil) {
+    init(episode: Episode, podcast: Podcast, playlist: AutoplayHelper.Playlist? = nil) {
         self.episode = episode
         self.podcast = podcast
-        viewSource = source
         fromPlaylist = playlist
 
         super.init(nibName: "EpisodeDetailViewController", bundle: nil)
@@ -231,13 +226,8 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         addBookmarksTabIfNeeded()
 
         closeTapped = { [weak self] in
-            guard let self else { return }
-
-            self.dismiss(animated: true, completion: nil)
-            self.didDismiss()
+            self?.dismiss(animated: true, completion: nil)
         }
-
-        presentationController?.delegate = self
 
         // Hide the scroll title if the tabs are visible
         if tabContainerView == nil {
@@ -250,7 +240,6 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         mainScrollView.contentOffset.y = -100
 
         hideErrorMessage(hide: true)
-        Analytics.track(.episodeDetailShown, properties: ["source": viewSource])
 
         didSwitchToTab(.details, animated: false)
 
@@ -295,8 +284,6 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         addCustomObserver(ServerNotifications.episodeTypeOrLengthChanged, selector: #selector(specificEpisodeEventDidFire(_:)))
 
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(generalEpisodeEventDidFire))
-
-        AnalyticsHelper.episodeOpened(podcastUuid: episode.podcastUuid, episodeUuid: episode.uuid)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -532,22 +519,20 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
     }
 
     @objc private func starTapped(_ sender: UIButton) {
-        EpisodeManager.setStarred(!episode.keepEpisode, episode: episode, updateSyncStatus: SyncManager.isUserLoggedIn())
+        EpisodeManager.setStarred(!episode.keepEpisode, episode: episode, updateSyncStatus: false)
     }
 
     // MARK: - Sharing
 
     @objc private func shareTapped(_ sender: UIButton) {
-        SharingModal.showModal(episode: episode, from: analyticsSource, in: self)
+        SharingModal.showModal(episode: episode, in: self)
     }
 
     @objc private func podcastNameTapped() {
         guard let podcast = episode.parentPodcast() else { return }
 
-        Analytics.track(.episodeDetailPodcastNameTapped, properties: ["source": viewSource])
-
         dismiss(animated: true) {
-            NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast, NavigationManager.podcastSourceKey: PodcastScreenSource.episodeDetails])
+            NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
         }
     }
 
@@ -579,8 +564,6 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         docController?.name = episode.displayableTitle()
         docController?.delegate = self
 
-        Analytics.track(.podcastShared, properties: ["type": "episode_file", "source": analyticsSource])
-
         let canOpen = docController?.presentOpenInMenu(from: sourceRect, in: view, animated: true) ?? false
         if !canOpen {
             let alert = UIAlertController(title: L10n.error, message: L10n.podcastShareEpisodeErrorMsg, preferredStyle: UIAlertController.Style.alert)
@@ -603,11 +586,7 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
         failedToLoadLabel.isHidden = hide
     }
 
-    private func didDismiss() {
-        Analytics.track(.episodeDetailDismissed, properties: ["source": viewSource])
-    }
-
-    private enum Tab: Int, AnalyticsDescribable {
+    private enum Tab: Int {
         case details, bookmarks
 
         // Allow comparing against a raw int to the enum
@@ -615,30 +594,6 @@ class EpisodeDetailViewController: FakeNavViewController, UIDocumentInteractionC
             Tab(rawValue: lhs) == rhs
         }
 
-        var analyticsDescription: String {
-            switch self {
-            case .details:
-                return "details"
-            case .bookmarks:
-                return "bookmarks"
-            }
-        }
-    }
-}
-
-// MARK: - UIAdaptivePresentationControllerDelegate
-
-extension EpisodeDetailViewController: UIAdaptivePresentationControllerDelegate {
-    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        didDismiss()
-    }
-}
-
-// MARK: - Analytics
-
-extension EpisodeDetailViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .episodeDetail
     }
 }
 
@@ -729,10 +684,6 @@ private extension EpisodeDetailViewController {
     }
 
     private func didSwitchToTab(_ tab: Tab, animated: Bool = true) {
-        if currentTab != tab {
-            Analytics.track(.episodeDetailTabChanged, properties: ["value": tab])
-        }
-
         currentTab = tab
         tabViewModel?.selectTabIndex(tab.rawValue)
 
@@ -790,20 +741,6 @@ private extension EpisodeDetailViewController {
 
         self.tabContainerTrailingAnchor = trailingAnchor
     }
-}
-
-enum EpisodeDetailViewSource: String, AnalyticsDescribable {
-    case bookmarks
-    case discover
-    case downloads
-    case listeningHistory = "listening_history"
-    case homeScreenWidget = "home_screen_widget"
-    case filters
-    case podcastScreen = "podcast_screen"
-    case starred
-    case upNext = "up_next"
-
-    var analyticsDescription: String { rawValue }
 }
 
 // MARK: - Constants

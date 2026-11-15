@@ -28,10 +28,6 @@ enum ShareImageStyle: CaseIterable {
         }
     }
 
-    var videoSize: CGSize {
-        CGSize(width: 390, height: 694)
-    }
-
     var previewSize: CGSize {
         switch self {
         case .large:
@@ -202,7 +198,7 @@ extension View {
         return itemProvider
     }
 }
-let previewInfo = ShareImageInfo(name: "This American Life", title: "Dylan Field, Figma Co-founder, Talks Design, Economy, and life after failed Adobe acquisitions", description: Date().formatted(), artwork: URL(string: "https://static.pocketcasts.com/discover/images/280/3782b780-0bc5-012e-fb02-00163e1b201c.jpg")!, gradient: Gradient(colors: [Color.red, Color(hex: "620603")]))
+let previewInfo = ShareImageInfo(name: "This American Life", title: "Dylan Field, Figma Co-founder, Talks Design, Economy, and life after failed Adobe acquisitions", description: Date().formatted(), artwork: URL(string: "https://example.com/artwork.jpg")!, gradient: Gradient(colors: [Color.red, Color(hex: "620603")]))
 
 #Preview("large") {
     ShareImageView(info: previewInfo, style: .large, angle: .constant(0))

@@ -10,7 +10,6 @@ struct SharingFooterView: View {
     let destinations: [ShareDestination]
     let style: ShareImageStyle
     let clipUUID: String
-    let source: AnalyticsSource
 
     @State var shareTask: Task<Void, Error>?
 
@@ -22,7 +21,7 @@ struct SharingFooterView: View {
             buttons
         case .clip(let episode, _):
             VStack(spacing: 12) {
-                MediaTrimBar(clipTime: clipTime, episode: episode, clipUUID: clipUUID, analyticsSource: source)
+                MediaTrimBar(clipTime: clipTime, episode: episode)
                     .frame(height: 72)
                     .tint(color)
                 HStack {
@@ -36,7 +35,6 @@ struct SharingFooterView: View {
                 .foregroundStyle(.white.opacity(0.5))
                 .font(.caption.weight(.semibold))
                 Button(L10n.next, action: {
-                    Analytics.track(.shareScreenNavigationButtonTapped)
                     withAnimation {
                         option = .clipShare(episode, clipTime, style)
                     }
@@ -66,7 +64,7 @@ struct SharingFooterView: View {
     @ViewBuilder var buttons: some View {
         HStack(spacing: 24) {
             ForEach(destinations, id: \.self) { destination in
-                ShareButton(isExporting: $isExporting, shareTask: $shareTask, progress: $progress, option: option, destination: destination, style: style, clipTime: clipTime, clipUUID: clipUUID, source: source)
+                ShareButton(isExporting: $isExporting, shareTask: $shareTask, progress: $progress, option: option, destination: destination, style: style, clipTime: clipTime, clipUUID: clipUUID)
             }
         }
     }

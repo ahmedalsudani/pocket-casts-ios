@@ -1,23 +1,17 @@
 import SwiftUI
-import PocketCastsServer
 
 struct StoryFooter2025: View {
     let title: String?
     let description: String?
-    let subscriptionTier: SubscriptionTier?
 
-    init(title: String? = nil, description: String? = nil, subscriptionTier: SubscriptionTier? = nil) {
+    init(title: String? = nil, description: String? = nil) {
         self.title = title
         self.description = description
-        self.subscriptionTier = subscriptionTier
     }
 
     var body: some View {
         VStack(spacing: 16) {
             HStack { Spacer() }
-            if let subscriptionTier {
-                SubscriptionBadge2025(subscriptionTier: subscriptionTier)
-            }
             if let title {
                 Text(title)
                     .font(.system(size: 31, weight: .semibold))

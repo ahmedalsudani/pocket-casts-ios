@@ -18,8 +18,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
             uploadsTable.allowsMultipleSelectionDuringEditing = true
             uploadsTable.rowHeight = UITableView.automaticDimension
             uploadsTable.estimatedRowHeight = 80
-            uploadsTable.sectionHeaderHeight = UITableView.automaticDimension
-            uploadsTable.estimatedSectionHeaderHeight = 56
+            uploadsTable.sectionHeaderHeight = CGFloat.leastNonzeroMagnitude
+            uploadsTable.estimatedSectionHeaderHeight = CGFloat.leastNonzeroMagnitude
             uploadsTable.sectionHeaderTopPadding = 0
         }
     }
@@ -29,9 +29,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
             setNeedsUpdateContentUnavailableConfiguration()
         }
     }
-    let headerView = UploadedStorageHeaderView()
-
-    private var tableRefreshController: UploadedFilesRefreshController?
     var userEpisodeDetailVC: UserEpisodeDetailViewController?
 
     override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
@@ -69,7 +66,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
             uploadsTable.endUpdates()
 
             if isMultiSelectEnabled {
-                Analytics.track(.uploadedFilesMultiSelectEntered)
                 multiSelectActionBar.setSelectedCount(count: selectedEpisodes.count)
                 multiSelectActionBarBottomConstraint.constant = Constants.effectiveFooterViewPadding
                 if let selectedIndexPath = longPressMultiSelectIndexPath {
@@ -77,7 +73,6 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
                     longPressMultiSelectIndexPath = nil
                 }
             } else {
-                Analytics.track(.uploadedFilesMultiSelectExited)
                 selectedEpisodes.removeAll()
             }
         }
@@ -112,19 +107,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         title = L10n.files
         (view as? ThemeableView)?.style = .primaryUi02
 
-        if SubscriptionHelper.hasActiveSubscription() {
-            let controller = UploadedFilesRefreshController(source: .files)
-            tableRefreshController = controller
-            uploadsTable.refreshControl = controller.refreshControl
-        }
-
-        headerView.controllerForPresenting = self
-
-        updateHeaderView()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: uploadsTable)
         reloadLocalFiles()
-
-        Analytics.track(.uploadedFilesShown)
 
         listenForChangedBookmarks()
     }
@@ -136,7 +120,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.shadowImage = nil
 
-        reloadAllFiles()
+        reloadLocalFiles()
         addUIObservers()
 
         if let fileURL {
@@ -155,7 +139,7 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     // MARK: - App Backgrounding
 
     override func handleAppWillBecomeActive() {
-        reloadAllFiles()
+        reloadLocalFiles()
         addUIObservers()
     }
 
@@ -167,14 +151,11 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private func addUIObservers() {
         // TODO: a table diff might be more efficient here (and have nicer animations)
 
-        addCustomObserver(ServerNotifications.userEpisodesRefreshed, selector: #selector(handleReloadFromNotification))
-        addCustomObserver(ServerNotifications.userEpisodesRefreshFailed, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.userEpisodeDeleted, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.playbackFailed, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.episodePlayStatusChanged, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(handleReloadFromNotification))
         addCustomObserver(Constants.Notifications.manyEpisodesChanged, selector: #selector(handleReloadFromNotification))
-        addCustomObserver(ServerNotifications.userEpisodeUploadStatusChanged, selector: #selector(uploadCompletedRefresh(notification:)))
     }
 
     func setupNavBar() {
@@ -188,31 +169,25 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     @objc private func menuTapped(_ sender: UIBarButtonItem) {
-        Analytics.track(.uploadedFilesOptionsButtonTapped)
-
         let optionsPicker = OptionsPicker(title: nil)
 
         let addFileAction = OptionAction(label: L10n.fileUploadAddFile, icon: "filter_add") { [weak self] in
-            Analytics.track(.uploadedFilesOptionsModalOptionTapped, properties: ["option": "add_file"])
             self?.addFile()
         }
         optionsPicker.addAction(action: addFileAction)
 
         let MultiSelectAction = OptionAction(label: L10n.selectEpisodes, icon: "option-multiselect") { [weak self] in
-            Analytics.track(.uploadedFilesOptionsModalOptionTapped, properties: ["option": "select_episodes"])
             self?.isMultiSelectEnabled = true
         }
         optionsPicker.addAction(action: MultiSelectAction)
 
         let currentSort = UploadedSort(rawValue: Settings.userEpisodeSortBy)
         let sortAction = OptionAction(label: L10n.sortBy, secondaryLabel: currentSort?.description ?? "", icon: "podcastlist_sort") {
-            Analytics.track(.uploadedFilesOptionsModalOptionTapped, properties: ["option": "sort_by"])
         }
         sortAction.submenu = { [weak self] in self?.makeSortByPicker() }
         optionsPicker.addAction(action: sortAction)
 
         let settingsAction = OptionAction(label: L10n.settingsFiles, icon: "podcast-settings") { [weak self] in
-            Analytics.track(.uploadedFilesOptionsModalOptionTapped, properties: ["option": "files_settings"])
             self?.navigationController?.pushViewController(UploadedSettingsViewController(), animated: true)
         }
         optionsPicker.addAction(action: settingsAction)
@@ -233,29 +208,15 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         uploadsTable.isHidden = (uploadedEpisodes.isEmpty)
 
         uploadsTable.reloadData()
-        updateHeaderView()
-    }
-
-    private func reloadAllFiles() {
-        if SubscriptionHelper.hasActiveSubscription() {
-            UserEpisodeManager.updateUserEpisodes()
-            updateHeaderView()
-        } else {
-            reloadLocalFiles()
-        }
     }
 
     func howTo() {
-        Analytics.track(.uploadedFilesHelpButtonTapped)
-
         let howToView = HowToUploadView { [weak self] in self?.dismiss(animated: true) }.environmentObject(Theme.shared)
         let navController = SJUIUtils.navController(for: UIHostingController(rootView: howToView))
         present(navController, animated: true, completion: nil)
     }
 
     func addFile() {
-        Analytics.track(.uploadedFilesAddButtonTapped)
-
         let documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: FileTypeUtil.supportedUserFileTypes, asCopy: true)
         documentPicker.delegate = self
         documentPicker.modalPresentationStyle = .overFullScreen
@@ -276,23 +237,11 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     private func createSortAction(sort: UploadedSort) -> OptionAction {
         let action = OptionAction(label: sort.description, selected: sort.rawValue == Settings.userEpisodeSortBy) {
             Settings.userEpisodeSortBy = sort.rawValue
-            Analytics.track(.uploadedFilesSortByChanged, properties: ["sort_order": sort])
 
             self.reloadLocalFiles()
         }
 
         return action
-    }
-
-    @objc func updateHeaderView() {
-        headerView.update()
-    }
-
-    @objc func uploadCompletedRefresh(notification: Notification) {
-        guard let episodeUuid = notification.object as? String, let episode = DataManager.shared.findUserEpisode(uuid: episodeUuid), episode.uploaded() else {
-            return
-        }
-        UserEpisodeManager.updateUserEpisodes()
     }
 
     // NARK :- UserEpisodeDetailViewControllerDelegate
@@ -302,23 +251,9 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
     }
 
     func showDeleteConfirmation(userEpisode: UserEpisode) {
-        Analytics.track(.userFileDeleteShown)
-        UserEpisodeManager.presentDeleteOptions(episode: userEpisode, from: self, dismissCallback: {
-            Analytics.track(.userFileDeleteDismissed)
-        }) { deletedLocal, deletedRemote in
-            Analytics.track(.userFileDeleted, properties: ["local": deletedLocal, "remote": deletedRemote])
-
-            if deletedRemote {
-                self.removeFromUploadTable(userEpisode: userEpisode)
-            }
-            if deletedLocal {
-                self.reloadLocalFiles()
-            }
+        UserEpisodeManager.presentDeleteOptions(episode: userEpisode, from: self) {
+            self.reloadLocalFiles()
         }
-    }
-
-    func showUpgradeRequired() {
-        NavigationManager.shared.showUpsellView(from: self, source: .files)
     }
 
     func userEpisodeDetailClosed() {
@@ -334,22 +269,8 @@ class UploadedViewController: PCViewController, UserEpisodeDetailProtocol {
         }
     }
 
-    private func removeFromUploadTable(userEpisode: UserEpisode) {
-        guard let index = uploadedEpisodes.firstIndex(where: { $0.uuid == userEpisode.uuid }) else { return }
-        uploadedEpisodes.remove(at: index)
-        uploadsTable.deleteRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
-    }
-
     override func handleThemeChanged() {
         uploadsTable.reloadData()
-    }
-}
-
-// MARK: - Analytics
-
-extension UploadedViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .files
     }
 }
 
@@ -367,13 +288,6 @@ private extension UploadedViewController {
 
         manager.onBookmarksDeleted
             .filter { $0.items.contains(where: { $0.podcast == nil }) }
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.handleReloadFromNotification()
-            }
-            .store(in: &cancellables)
-
-        PaidFeature.bookmarks.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleReloadFromNotification()

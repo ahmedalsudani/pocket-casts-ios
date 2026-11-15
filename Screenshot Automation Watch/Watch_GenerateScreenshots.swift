@@ -4,11 +4,6 @@ import XCTest
 class Watch_GenerateScreenshots: XCTestCase {
     let app = XCUIApplication()
 
-    enum Source: Int {
-        case phone = 0
-        case watch
-    }
-
     override func setUpWithError() throws {
         continueAfterFailure = false
 
@@ -16,16 +11,10 @@ class Watch_GenerateScreenshots: XCTestCase {
         app.launch()
         XCTAssert(app.wait(for: .runningForeground, timeout: 5))
 
-        navigateBackToSourceSelection()
-
-        // Refreshes App Data
-        app.buttons.allElementsBoundByIndex[2].waitForThenTap()
+        navigateBackToMenu()
     }
 
     func test_generateScreenshots() throws {
-        snapshot("08_Source_Options")
-
-        selectSource(.phone)
         snapshot("09_Phone_Source_Options")
 
         app.cells.allElementsBoundByIndex[0].waitForThenTap()
@@ -51,32 +40,15 @@ class Watch_GenerateScreenshots: XCTestCase {
         let _ = app.images["episodegradient"].waitForExistence(timeout: 5)
         snapshot("06_Phone_Source_Filters_Expanded")
 
-        selectSource(.watch)
-        snapshot("03_Watch_Source_Options")
-
-        app.cells.allElementsBoundByIndex[2].waitForThenTap()
-        snapshot("04_Watch_Source_Podcasts")
-
-        selectSource(.phone)
+        navigateBackToMenu()
         app.cells.allElementsBoundByIndex[3].waitForThenTap()
         app.cells.allElementsBoundByIndex[0].waitForThenTap()
         snapshot("07_Phone_Source_Downloaded_Episode")
-
-        selectSource(.watch)
-        app.cells.allElementsBoundByIndex[3].waitForThenTap()
-        app.cells.allElementsBoundByIndex[1].waitForThenTap()
-        app.cells.allElementsBoundByIndex[1].waitForThenTap()
-        snapshot("10_Watch_Source_Filters_Episode")
     }
 }
 
 extension Watch_GenerateScreenshots {
-    private func selectSource(_ source: Source) {
-        navigateBackToSourceSelection()
-        app.buttons.allElementsBoundByIndex[source.rawValue].waitForThenTap()
-    }
-
-    private func navigateBackToSourceSelection() {
+    private func navigateBackToMenu() {
         _ = app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 5)
         while !app.navigationBars.buttons.allElementsBoundByIndex.isEmpty {
             app.navigationBars.buttons.firstMatch.waitForThenTap()

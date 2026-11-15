@@ -22,12 +22,4 @@ extension View {
     func themedTextField(style: ThemeStyle = .primaryUi02, hasErrored: Bool = false) -> some View {
         modifier(ThemedTextField(style: style, hasErrored: hasErrored))
     }
-
-    func requiredStyle(_ hasErrored: Bool) -> some View {
-        textFieldStyle(RequiredFieldStyle(hasErrored: hasErrored))
-    }
-
-    func navThemed() -> some View {
-        buttonStyle(NavButtonStyle())
-    }
 }

@@ -6,8 +6,8 @@ struct TroubleshootingView: View {
     @StateObject private var viewModel: TroubleshootingViewModel
     @State private var showRemoveConfirmation = false
 
-    init(source: OnlineSupportController.Source) {
-        _viewModel = StateObject(wrappedValue: TroubleshootingViewModel(source: source))
+    init() {
+        _viewModel = StateObject(wrappedValue: TroubleshootingViewModel())
     }
 
     var body: some View {
@@ -133,7 +133,7 @@ struct TroubleshootingView: View {
 struct TroubleshootingView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationView {
-            TroubleshootingView(source: .settings)
+            TroubleshootingView()
         }
         .setupDefaultEnvironment()
     }

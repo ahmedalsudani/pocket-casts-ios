@@ -19,7 +19,6 @@ struct IntroStory2025: StoryView {
 
     @State private var openCircle: Bool = false
     @State private var animationFinished = false
-    @EnvironmentObject var syncProgressModel: SyncYearListeningProgress
 
     private let afterLoading: Bool
 
@@ -71,7 +70,7 @@ struct IntroStory2025: StoryView {
                         ZStack {
                             CircularProgressView(value: 1, stroke: .white.opacity(0.33), strokeWidth: 6)
                                 .frame(width: 40, height: 40)
-                            CircularProgressView(value: self.syncProgressModel.progress, stroke: .white, strokeWidth: 6)
+                            CircularProgressView(value: 1, stroke: .white, strokeWidth: 6)
                                 .frame(width: 40, height: 40)
                         }
                         Spacer()
@@ -96,10 +95,6 @@ struct IntroStory2025: StoryView {
         )
         .ignoresSafeArea()
         .background(backgroundColor)
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
     }
 }
 

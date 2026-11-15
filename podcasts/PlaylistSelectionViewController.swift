@@ -9,9 +9,6 @@ class PlaylistSelectionViewController: PCViewController, UITableViewDelegate, UI
     var playlistSelected: ((EpisodeFilter) -> Void)?
     var playlistUnselected: ((EpisodeFilter) -> Void)?
 
-    private var didChange = false
-    var didChangePlaylist: (() -> Void)?
-
     var navigationTitle: String = L10n.settingsSelectFiltersPlural {
         didSet {
             title = navigationTitle
@@ -34,14 +31,6 @@ class PlaylistSelectionViewController: PCViewController, UITableViewDelegate, UI
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: playlistSelectionTable)
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-
-        if didChange {
-            didChangePlaylist?()
-        }
-    }
-
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         allPlaylists.count
     }
@@ -62,8 +51,6 @@ class PlaylistSelectionViewController: PCViewController, UITableViewDelegate, UI
                 self.selectedPlaylists.removeAll { $0 == playlist.uuid }
                 self.playlistUnselected?(playlist)
             }
-
-            self.didChange = true
         }
 
         let isSelected = Binding<Bool>(

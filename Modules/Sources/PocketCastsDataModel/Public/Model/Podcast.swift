@@ -19,7 +19,10 @@ public class Podcast: NSObject, Identifiable {
     @objc public var mediaType: String?
     @objc public var lastThumbnailDownloadDate: Date?
     @objc public var thumbnailStatus = 1 as Int32
+    /// The podcast's website, from the feed's <link>.
     @objc public var podcastUrl: String?
+    /// The RSS/Atom feed this podcast is fetched from.
+    @objc public var feedUrl: String?
     @objc public var author: String?
     @objc public var overrideGlobalEffects = false
     @objc public var playbackSpeed = 1 as Double
@@ -63,10 +66,6 @@ public class Podcast: NSObject, Identifiable {
 
     // transient not saved to database
     public var cachedUnreadCount = 0
-
-    // if set to an episode UUID, all podcast episodes after the given
-    // UUID will be updated
-    public var forceRefreshEpisodeFrom: String? = nil
 
     override public init() {}
 
@@ -177,6 +176,7 @@ public class Podcast: NSObject, Identifiable {
         case isExplicit
         case fundingURL
         case networkListId
+        case feedUrl
     }
 
     public required init(from decoder: Decoder) throws {
@@ -237,6 +237,7 @@ public class Podcast: NSObject, Identifiable {
         isExplicit = try container.decodeIfPresent(Bool.self, forKey: .isExplicit) ?? false
         fundingURL = try container.decodeIfPresent(String.self, forKey: .fundingURL)
         networkListId = try container.decodeIfPresent(String.self, forKey: .networkListId)
+        feedUrl = try container.decodeIfPresent(String.self, forKey: .feedUrl)
     }
 
     public func encode(to container: inout PersistenceContainer) {
@@ -295,6 +296,7 @@ public class Podcast: NSObject, Identifiable {
         container["isExplicit"] = isExplicit
         container["fundingURL"] = fundingURL
         container["networkListId"] = networkListId
+        container["feedUrl"] = feedUrl
     }
 
     public enum Columns {
@@ -353,6 +355,7 @@ public class Podcast: NSObject, Identifiable {
         public static let isExplicit = Column(CodingKeys.isExplicit)
         public static let fundingURL = Column(CodingKeys.fundingURL)
         public static let networkListId = Column(CodingKeys.networkListId)
+        public static let feedUrl = Column(CodingKeys.feedUrl)
     }
 }
 

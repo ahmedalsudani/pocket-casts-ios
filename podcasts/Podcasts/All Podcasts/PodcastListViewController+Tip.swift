@@ -10,9 +10,7 @@ extension PodcastListViewController: UIPopoverPresentationControllerDelegate {
             return
         }
         if let vc = showRecentlyPlayedSortingTip() {
-            present(vc, animated: true) {
-                Analytics.track(.episodeRecentlyPlayedSortOptionTooltipShown)
-            }
+            present(vc, animated: true)
             recentlyPlayedSortingTip = vc
         }
     }
@@ -46,7 +44,6 @@ extension PodcastListViewController: UIPopoverPresentationControllerDelegate {
     }
 
     private func dismissRecentlyPlayedSortingTip() {
-        Analytics.track(.episodeRecentlyPlayedSortOptionTooltipDismissed)
         Settings.shouldShowRecentlyPlayedSortingTip = false
         recentlyPlayedSortingTip?.dismiss(animated: true) { [weak self] in
             self?.recentlyPlayedSortingTip = nil

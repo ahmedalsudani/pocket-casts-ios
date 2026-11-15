@@ -42,8 +42,6 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
         includeStarred = UserDefaults.standard.bool(forKey: Constants.UserDefaults.cleanupStarred)
 
         reloadFileSizes()
-
-        Analytics.track(.downloadsCleanUpShown)
     }
 
     // MARK: - UITableView Methods
@@ -155,7 +153,6 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
     }
 
     private func confirmCleanup() {
-        Analytics.track(.downloadsCleanUpButtonTapped)
         let alert = UIAlertController(
             title: L10n.cleanUp,
             message: L10n.downloadedFilesCleanupConfirmation,
@@ -174,8 +171,6 @@ class DownloadedFilesViewController: PCViewController, UITableViewDelegate, UITa
         UserDefaults.standard.set(deleteInProgress, forKey: Constants.UserDefaults.cleanupInProgress)
         UserDefaults.standard.set(deletePlayed, forKey: Constants.UserDefaults.cleanupPlayed)
         UserDefaults.standard.set(includeStarred, forKey: Constants.UserDefaults.cleanupStarred)
-
-        Analytics.track(.downloadsCleanUpCompleted, properties: ["unplayed": deleteUnplayed, "in_progress": deleteInProgress, "played": deletePlayed, "include_starred": includeStarred])
 
         let formattedUnplayedSize = SizeFormatter.shared.noDecimalFormat(bytes: Int64(unplayedSize))
         let formattedInProgressSize = SizeFormatter.shared.noDecimalFormat(bytes: Int64(inProgressSize))

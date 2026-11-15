@@ -1,6 +1,5 @@
 import XCTest
 import PocketCastsDataModel
-import PocketCastsServer
 @testable import podcasts
 
 final class PodcastManagerTests: DBTestCase {
@@ -30,9 +29,6 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testCleanupKeepsDownloadsInPlaylist() async throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
         let (_, episode) = makeDownloadedPodcastAndEpisode()
         let playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
@@ -50,9 +46,6 @@ final class PodcastManagerTests: DBTestCase {
     }
 
     func testCleanupKeepsDownloadsNotInPlaylist() async throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
         let (_, episode) = makeDownloadedPodcastAndEpisode()
 
         let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
@@ -63,10 +56,7 @@ final class PodcastManagerTests: DBTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: DownloadManager.shared.path(for: refreshedEpisode)))
     }
 
-    func testUnsubscribeRemovesDownloadsInPlaylist() throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
+    func testUnsubscribeRemovesDownloadsInPlaylist() {
         let (podcast, episode) = makeDownloadedPodcastAndEpisode()
         let playlist = EpisodeFilter()
         playlist.uuid = UUID().uuidString
@@ -78,23 +68,20 @@ final class PodcastManagerTests: DBTestCase {
         let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
         podcastManager.unsubscribe(podcast: podcast)
 
-        let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
-        XCTAssertEqual(refreshedEpisode.episodeStatus, DownloadStatus.notDownloaded.rawValue)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: DownloadManager.shared.path(for: refreshedEpisode)))
+        XCTAssertNil(dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true))
+        XCTAssertNil(dataManager.findEpisode(uuid: episode.uuid))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: DownloadManager.shared.path(for: episode)))
     }
 
-    func testUnsubscribeRemovesDownloadsNotInPlaylist() throws {
-        ServerSettings.setSyncingEmail(email: "test@example.com")
-        defer { ServerSettings.setSyncingEmail(email: nil) }
-
+    func testUnsubscribeRemovesDownloadsNotInPlaylist() {
         let (podcast, episode) = makeDownloadedPodcastAndEpisode()
         let podcastManager = PodcastManager(dataManager: dataManager, downloadManager: downloadManager)
 
         podcastManager.unsubscribe(podcast: podcast)
 
-        let refreshedEpisode = try XCTUnwrap(dataManager.findEpisode(uuid: episode.uuid))
-        XCTAssertEqual(refreshedEpisode.episodeStatus, DownloadStatus.notDownloaded.rawValue)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: DownloadManager.shared.path(for: refreshedEpisode)))
+        XCTAssertNil(dataManager.findPodcast(uuid: podcast.uuid, includeUnsubscribed: true))
+        XCTAssertNil(dataManager.findEpisode(uuid: episode.uuid))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: DownloadManager.shared.path(for: episode)))
     }
 
     func testDeleteOrphanedEpisodesIfNeededRepointsInteractedOrphanAndDropsStaleLiveRow() throws {

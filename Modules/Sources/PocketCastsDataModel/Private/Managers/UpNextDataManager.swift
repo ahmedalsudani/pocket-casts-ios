@@ -166,25 +166,6 @@ class UpNextDataManager {
         cacheEpisodes(dbQueue: dbQueue)
     }
 
-    func deleteAllUpNextEpisodesNotIn(uuids: [String], dbQueue: GRDBQueue) {
-        dbQueue.write { db in
-            do {
-                if uuids.isEmpty {
-                    try db.executeUpdate(
-                        "DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE playlist_id = ?",
-                        values: [UpNextDataManager.upNextPlaylistId]
-                    )
-                } else {
-                    try db.executeUpdate("DELETE FROM \(DataManager.playlistEpisodeTableName) WHERE episodeUuid NOT IN (\(DataHelper.convertArrayToInString(uuids))) AND playlist_id = ?", values: [UpNextDataManager.upNextPlaylistId])
-                }
-            } catch {
-                FileLog.shared.addMessage("UpNextDataManager.deleteAllUpNextEpisodesNotIn error: \(error)")
-            }
-        }
-
-        cacheEpisodes(dbQueue: dbQueue)
-    }
-
     func deleteAllUpNextEpisodesIn(uuids: [String], dbQueue: GRDBQueue) {
         guard !uuids.isEmpty else { return }
         dbQueue.write { db in

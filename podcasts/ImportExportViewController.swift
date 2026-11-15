@@ -65,7 +65,7 @@ class ImportExportViewController: PCViewController, UIDocumentInteractionControl
         super.viewDidLoad()
 
         title = L10n.exportPodcastsOption
-        Analytics.track(.settingsImportShown)
+        NotificationsCoordinator.shared.handle(.importShown)
     }
 
     @IBOutlet var mainScrollView: UIScrollView!
@@ -75,31 +75,27 @@ class ImportExportViewController: PCViewController, UIDocumentInteractionControl
         loadingAlert?.showAlert(self, hasProgress: false, completion: {
             self.startExport()
         })
-
-        Analytics.track(.settingsImportExportTapped)
     }
 
     private func startExport() {
-        Analytics.track(.settingsImportExportStarted)
         let podcasts = DataManager.shared.allPodcasts(includeUnsubscribed: false)
 
-        let uuids = podcasts.map(\.uuid)
-
-        MainServerHandler.shared.exportPodcasts(uuids: uuids) { [weak self] exportResponse in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.loadingAlert?.hideAlert(false)
-                self.loadingAlert = nil
-
-                guard let exportResponse, exportResponse.success(), let mapping = exportResponse.result else {
-                    self.presentError()
-                    Analytics.track(.settingsImportExportFailed)
-                    return
-                }
-
-                self.performOpmlExport(podcasts, mappingDictionary: mapping)
+        var mapping = [String: String]()
+        for podcast in podcasts {
+            if let feedUrl = podcast.feedUrl {
+                mapping[podcast.uuid] = feedUrl
             }
         }
+
+        loadingAlert?.hideAlert(false)
+        loadingAlert = nil
+
+        guard !mapping.isEmpty else {
+            presentError()
+            return
+        }
+
+        performOpmlExport(podcasts.filter { mapping[$0.uuid] != nil }, mappingDictionary: mapping)
     }
 
     private func performOpmlExport(_ podcasts: [Podcast], mappingDictionary: [String: String]) {
@@ -117,7 +113,6 @@ class ImportExportViewController: PCViewController, UIDocumentInteractionControl
         }
 
         shareOpmlDocument(exportXML)
-        Analytics.track(.settingsImportExportFinished)
     }
 
     private func shareOpmlDocument(_ document: AEXMLDocument) {

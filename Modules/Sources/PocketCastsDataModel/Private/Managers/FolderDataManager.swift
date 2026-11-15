@@ -43,11 +43,6 @@ class FolderDataManager {
         cacheFolders(dbQueue: dbQueue)
     }
 
-    func deleteAllFolders(dbQueue: GRDBQueue) {
-        DataHelper.run(query: "DELETE FROM \(DataManager.folderTableName)", values: nil, methodName: "FolderDataManager.deleteAllFolders", onQueue: dbQueue)
-        cacheFolders(dbQueue: dbQueue)
-    }
-
     func saveSortOrders(folders: [Folder], syncModified: Int64, dbQueue: GRDBQueue) {
         dbQueue.write { db in
             do {
@@ -76,27 +71,8 @@ class FolderDataManager {
         cacheFolders(dbQueue: dbQueue)
     }
 
-    func allUnsyncedFolders(dbQueue: GRDBQueue) -> [Folder] {
-        var unsyncedFolders = [Folder]()
-        cachedFolders.withLock { cachedFolders in
-            unsyncedFolders = cachedFolders.filter { $0.syncModified > 0 }
-        }
-
-        return unsyncedFolders
-    }
-
-    func markAllFoldersSynced(dbQueue: GRDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = 0", values: nil, methodName: "FolderDataManager.markAllFoldersSynced", onQueue: dbQueue)
-        cacheFolders(dbQueue: dbQueue)
-    }
-
     func markFolderAsDeleted(folderUuid: String, syncModified: Int64, dbQueue: GRDBQueue) {
         DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ?, wasDeleted = 1 WHERE uuid = ?", values: [syncModified, folderUuid], methodName: "FolderDataManager.markFolderAsDeleted", onQueue: dbQueue)
-        cacheFolders(dbQueue: dbQueue)
-    }
-
-    func markAllFolderAsDeleted(syncModified: Int64, dbQueue: GRDBQueue) {
-        DataHelper.run(query: "UPDATE \(DataManager.folderTableName) SET syncModified = ?, wasDeleted = 1", values: [syncModified], methodName: "FolderDataManager.markAllFolderAsDeleted", onQueue: dbQueue)
         cacheFolders(dbQueue: dbQueue)
     }
 

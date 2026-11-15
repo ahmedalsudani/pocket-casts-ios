@@ -4,7 +4,6 @@ import EndOfYear
 
 struct StoriesView: View {
     @ObservedObject private var model: StoriesModel
-    @ObservedObject private var syncProgressModel: SyncYearListeningProgress
 
     @Environment(\.accessibilityShowButtonShapes) var showButtonShapes: Bool
 
@@ -14,10 +13,9 @@ struct StoriesView: View {
 
     @State private var loadAnimationFinished: Bool = false
 
-    init(dataSource: StoriesDataSource, configuration: StoriesConfiguration = StoriesConfiguration(), syncProgressModel: SyncYearListeningProgress = .shared) {
+    init(dataSource: StoriesDataSource, configuration: StoriesConfiguration = StoriesConfiguration()) {
         let model = StoriesModel(dataSource: dataSource, configuration: configuration)
         _model = ObservedObject(initialValue: model)
-        self.syncProgressModel = syncProgressModel
     }
 
     @StateObject private var pauseState = PauseState()
@@ -54,13 +52,6 @@ struct StoriesView: View {
                     .environment(\.animated, true)
                     .environment(\.pauseState, pauseState)
                     .environmentObject(model)
-                    .environmentObject(syncProgressModel)
-
-                if model.shouldShowUpsell() {
-                    model.paywallView().zIndex(6).onAppear {
-                        model.pause()
-                    }
-                }
 
                 // By default the story switcher will appear above the story and override all
                 // interaction, but if the story contains interactive elements then move the
@@ -72,7 +63,7 @@ struct StoriesView: View {
             header
 
             // Hide the share button if needed
-            if model.showShareButton(index: model.currentStoryIndex) && !model.shouldShowUpsell(), let shareView = model.overlaidShareView() {
+            if model.showShareButton(index: model.currentStoryIndex), let shareView = model.overlaidShareView() {
                 VStack {
                     Spacer()
                     shareView
@@ -80,7 +71,7 @@ struct StoriesView: View {
             }
         }
         .modify {
-            if model.showShareButton(index: model.currentStoryIndex) && !model.shouldShowUpsell(), let footerView = model.footerShareView() {
+            if model.showShareButton(index: model.currentStoryIndex), let footerView = model.footerShareView() {
                 $0.safeAreaInset(edge: .bottom) {
                     footerView
                 }
@@ -113,12 +104,10 @@ struct StoriesView: View {
                     loadAnimationFinished = true
                     model.loadingEnded()
                 }
-                .environmentObject(syncProgressModel)
             } else {
                 Spacer()
                 VStack(spacing: 15) {
-                    let progress = syncProgressModel.progress
-                    CircularProgressView(value: progress, stroke: model.indicatorColor(for: model.currentStoryIndex), strokeWidth: 6)
+                    CircularProgressView(value: 1, stroke: model.indicatorColor(for: model.currentStoryIndex), strokeWidth: 6)
                         .frame(width: 40, height: 40)
                     if EndOfYear.currentYear != .y2025 {
                         Text(L10n.loading)
@@ -146,7 +135,6 @@ struct StoriesView: View {
         }
         .background(model.primaryBackgroundColor)
         .onAppear {
-            Analytics.track(.endOfYearStoriesFailedToLoad, properties: ["current_year": EndOfYear.currentYear.literalValue])
             if EndOfYear.currentYear == .y2025 {
                 model.stopAndDismiss()
                 Toast.show(L10n.playback2025FailedToLoad)
@@ -187,7 +175,6 @@ struct StoriesView: View {
                 HStack {
                     Spacer()
                     Button("") {
-                        Analytics.track(.endOfYearStoriesDismissed, properties: ["source": "close_button"])
                         model.stopAndDismiss()
                     }.buttonStyle(CloseButtonStyle(showButtonShapes: showButtonShapes))
                     // Inset the button a bit if we're showing the button shapes
@@ -245,7 +232,6 @@ struct StoriesView: View {
 
                     // If a quick swipe down is performed, dismiss the view
                     if velocity.height > 200 {
-                        Analytics.track(.endOfYearStoriesDismissed, properties: ["source": "swipe_down"])
                         model.stopAndDismiss()
                     } else {
                         model.start()

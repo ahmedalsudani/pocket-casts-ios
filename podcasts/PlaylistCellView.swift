@@ -8,7 +8,6 @@ struct PlaylistCellView: View {
     @Binding private var isSelected: Bool
     @State private var refreshToken = UUID()
     private let canBeDisabled: Bool
-    private let analyticsSource: String?
 
     private var title: String {
         switch viewModel.displayType {
@@ -43,13 +42,11 @@ struct PlaylistCellView: View {
     init(
         viewModel: PlaylistCellViewModel,
         isSelected: Binding<Bool> = .constant(false),
-        canBeDisabled: Bool = false,
-        analyticsSource: String? = nil
+        canBeDisabled: Bool = false
     ) {
         self.viewModel = viewModel
         self._isSelected = isSelected
         self.canBeDisabled = canBeDisabled
-        self.analyticsSource = analyticsSource
     }
 
     var body: some View {
@@ -88,8 +85,6 @@ struct PlaylistCellView: View {
             view
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    trackTapEvent()
-
                     if !shouldDisableRow {
                         isSelected.toggle()
                         refreshToken = UUID()
@@ -147,14 +142,6 @@ struct PlaylistCellView: View {
         }
     }
 
-    private func trackTapEvent() {
-        let event: AnalyticsEvent = !isSelected ? .addToPlaylistsEpisodeAddTapped : .addToPlaylistsRemoveTapped
-        var properties = ["source": self.analyticsSource ?? "unknown"]
-        if !isSelected {
-            properties["is_playlist_full"] = shouldDisableRow ? "true" : "false"
-        }
-        Analytics.track(event, properties: properties)
-    }
 }
 
 #Preview {

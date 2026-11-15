@@ -83,6 +83,10 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
             XCTAssertEqual(loaded.deselectedChaptersModified, original.deselectedChaptersModified, "deselectedChaptersModified should match")
             XCTAssertEqual(loaded.wasDeleted, original.wasDeleted, "wasDeleted should match")
             XCTAssertEqual(loaded.hasGeneratedTranscript, original.hasGeneratedTranscript, "hasGeneratedTranscript should match")
+            XCTAssertEqual(loaded.chaptersUrl, original.chaptersUrl, "chaptersUrl should match")
+            XCTAssertEqual(loaded.chaptersType, original.chaptersType, "chaptersType should match")
+            XCTAssertEqual(loaded.transcriptUrl, original.transcriptUrl, "transcriptUrl should match")
+            XCTAssertEqual(loaded.transcriptType, original.transcriptType, "transcriptType should match")
             XCTAssertEqual(loaded.podcast_id, original.podcast_id, "podcast_id should match")
             self.assertDatesEqual(loaded.addedDate, original.addedDate, "addedDate should match")
             self.assertDatesEqual(loaded.publishedDate, original.publishedDate, "publishedDate should match")
@@ -303,6 +307,10 @@ final class EpisodeColumnConsistencyTests: DataManagerTestCase {
         episode.lastPlaybackInteractionSyncStatus = SyncStatus.notSynced.rawValue
         episode.lastArchiveInteractionDate = Date(timeIntervalSince1970: 1700000300)
         episode.hasGeneratedTranscript = true
+        episode.chaptersUrl = "https://example.com/episode.chapters.json"
+        episode.chaptersType = "application/json+chapters"
+        episode.transcriptUrl = "https://example.com/episode.vtt"
+        episode.transcriptType = "text/vtt"
         return episode
     }
 }

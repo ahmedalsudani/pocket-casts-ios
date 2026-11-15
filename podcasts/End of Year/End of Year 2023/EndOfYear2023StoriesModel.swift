@@ -98,7 +98,7 @@ class EndOfYear2023StoriesModel: StoryModel {
         case .yearOverYearListeningTime:
             return YearOverYearStory2023(data: data.yearOverYearListeningTime)
         case .completionRate:
-            return CompletionRateStory2023(subscriptionTier: SubscriptionHelper.activeTier, startedAndCompleted: data.episodesStartedAndCompleted)
+            return CompletionRateStory2023(startedAndCompleted: data.episodesStartedAndCompleted)
         case .epilogue:
             return EpilogueStory2023()
         }
@@ -111,10 +111,6 @@ class EndOfYear2023StoriesModel: StoryModel {
         default:
             return false
         }
-    }
-
-    func shouldLoadData(in dataManager: DataManager) -> Bool {
-        false // Default data load of episodes is enough and we don't need to load additional data
     }
 
     func isReady() -> Bool {
@@ -132,10 +128,6 @@ class EndOfYear2023StoriesModel: StoryModel {
 
     var numberOfStories: Int {
         stories.count
-    }
-
-    func paywallView() -> AnyView {
-        AnyView(PaidStoryWallView().ignoresSafeArea(edges: .bottom))
     }
 
     func overlaidShareView() -> AnyView? {

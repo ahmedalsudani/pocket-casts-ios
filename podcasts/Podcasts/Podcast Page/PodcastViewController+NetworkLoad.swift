@@ -4,15 +4,6 @@ import PocketCastsUtils
 import UIKit
 
 extension PodcastViewController {
-    func loadPodcastInfoFromiTunesId(_ iTunesId: Int) {
-        loadingStarted()
-        ServerPodcastManager.shared.addFromiTunesId(iTunesId, subscribe: false) { [weak self] added, uuid in
-            guard let strongSelf = self else { return }
-
-            strongSelf.processPodcastAdded(added: added, uuid: uuid)
-        }
-    }
-
     func loadPodcastInfoFromUuid(_ uuid: String) {
         loadingStarted()
         ServerPodcastManager.shared.addFromUuid(podcastUuid: uuid, subscribe: false) { [weak self] added in
@@ -44,11 +35,6 @@ extension PodcastViewController {
 
         forceCollapsingHeaderIfNeeded()
 
-        if SyncManager.isUserLoggedIn() {
-            guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: uuid) else { return }
-
-            DataManager.shared.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-        }
         loadLocalEpisodes(podcast: podcast, animated: false)
 
         loadingEnded(successfully: true)

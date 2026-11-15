@@ -17,8 +17,6 @@ class BookmarkEpisodeListController: ThemedHostingController<BookmarkEpisodeList
         let viewModel = BookmarkEpisodeListViewModel(episode: episode,
                                                       bookmarkManager: bookmarkManager,
                                                       sortOption: Settings.episodeBookmarksSort)
-        viewModel.analyticsSource = (episode is Episode) ? .episodes : .files
-
         self.viewModel = viewModel
 
         if let themeOverride {
@@ -42,15 +40,14 @@ extension BookmarkEpisodeListController: BookmarkListRouter {
     var opensBookmarkEpisode: Bool { false }
 
     func bookmarkPlay(_ bookmark: Bookmark) async throws {
-        try await playbackManager.playBookmark(bookmark, source: viewModel.analyticsSource)
+        try await playbackManager.playBookmark(bookmark)
     }
 
     func bookmarkEdit(_ bookmark: Bookmark) {
         let controller = BookmarkEditTitleViewController(manager: bookmarkManager,
                                                          bookmark: bookmark,
                                                          state: .updating,
-                                                         style: .themed,
-                                                         source: viewModel.analyticsSource)
+                                                         style: .themed)
 
         present(controller, animated: true)
     }
@@ -59,9 +56,8 @@ extension BookmarkEpisodeListController: BookmarkListRouter {
         guard let episode = viewModel.episode as? Episode else {
             return
         }
-        Analytics.track(.bookmarkShareTapped, source: viewModel.analyticsSource, properties: ["podcast_uuid": episode.podcastUuid, "episode_uuid": bookmark.episodeUuid])
 
-        SharingModal.show(option: .bookmark(episode, bookmark.time), from: .episodeDetail, in: self)
+        SharingModal.show(option: .bookmark(episode, bookmark.time), in: self)
     }
 
     func dismissBookmarksList() {

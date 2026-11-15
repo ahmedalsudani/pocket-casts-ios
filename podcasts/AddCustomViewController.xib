@@ -13,7 +13,6 @@
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="AddCustomViewController" customModule="podcasts" customModuleProvider="target">
             <connections>
                 <outlet property="addCustomImageButton" destination="WdT-Xh-gg7" id="zmJ-Xb-i8o"/>
-                <outlet property="addCustomlock" destination="8m8-4r-FCS" id="4YE-Db-e5v"/>
                 <outlet property="backgroundView" destination="i5M-Pr-FkT" id="kAK-Ox-QDo"/>
                 <outlet property="colorPickerView" destination="e03-Xx-SAD" id="2NV-j5-mJY"/>
                 <outlet property="customiseArtworkView" destination="pQg-9V-SPI" id="mkS-7K-f44"/>
@@ -23,7 +22,6 @@
                 <outlet property="fileImageView" destination="baZ-1v-cXz" id="yVj-Sg-qsP"/>
                 <outlet property="imageBackgroundView" destination="Q6p-wE-PtD" id="5wf-kD-gcq"/>
                 <outlet property="imageSaveErrorLabel" destination="Ly7-YU-Ta3" id="n6w-gk-2Y0"/>
-                <outlet property="lockView" destination="I9x-9P-cq0" id="WP2-td-ZS0"/>
                 <outlet property="nameContainerView" destination="ger-DT-mZH" id="FEl-82-VTT"/>
                 <outlet property="nameLabel" destination="rNd-8L-UY3" id="pP7-uI-xrW"/>
                 <outlet property="nameTextfield" destination="IGc-dw-QFR" id="l89-cd-T1u"/>
@@ -147,13 +145,6 @@
                                                                 <action selector="addCustomImageClicked:" destination="-1" eventType="touchUpInside" id="6io-ZC-Ss1"/>
                                                             </connections>
                                                         </button>
-                                                        <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="locked-small-gold" translatesAutoresizingMaskIntoConstraints="NO" id="8m8-4r-FCS">
-                                                            <rect key="frame" x="135" y="7" width="16" height="16"/>
-                                                            <constraints>
-                                                                <constraint firstAttribute="height" constant="16" id="3ZR-bh-noC"/>
-                                                                <constraint firstAttribute="width" constant="16" id="c3S-jV-6A6"/>
-                                                            </constraints>
-                                                        </imageView>
                                                     </subviews>
                                                     <constraints>
                                                         <constraint firstAttribute="height" constant="30" id="adE-VZ-pd7"/>
@@ -179,14 +170,6 @@
                                                 <constraint firstAttribute="height" constant="331" id="jtt-En-y1y"/>
                                             </constraints>
                                             <viewLayoutGuide key="safeArea" id="Wc8-Rt-2nB"/>
-                                        </view>
-                                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="I9x-9P-cq0" customClass="PlusLockedInfoView" customModule="podcasts" customModuleProvider="target">
-                                            <rect key="frame" x="0.0" y="348" width="377" height="161"/>
-                                            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                            <constraints>
-                                                <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="161" id="c0K-hg-JAi"/>
-                                            </constraints>
-                                            <viewLayoutGuide key="safeArea" id="h5x-Dk-PE6"/>
                                         </view>
                                     </subviews>
                                     <constraints>

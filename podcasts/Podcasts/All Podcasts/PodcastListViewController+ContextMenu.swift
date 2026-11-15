@@ -55,7 +55,6 @@ extension PodcastListViewController {
             let sourceRect = cell.map { self.podcastsCollectionView.convert($0.frame, to: self.view) } ?? .zero
             SharingHelper.shared.shareLinkTo(podcast: podcast,
                                              fromController: self,
-                                             fromSource: self.analyticsSource,
                                              sourceRect: sourceRect,
                                              sourceView: self.view)
         }
@@ -67,13 +66,11 @@ extension PodcastListViewController {
         let notificationsOn = podcast.pushEnabled
         let onAction = UIAction(title: L10n.on, state: notificationsOn ? .on : .off) { _ in
             if !notificationsOn {
-                Analytics.track(.podcastsListNotificationsTapped, properties: ["enabled": true])
                 NotificationsHelper.shared.setNotificationsEnabled(true, for: podcast)
             }
         }
         let offAction = UIAction(title: L10n.off, state: notificationsOn ? .off : .on) { _ in
             if notificationsOn {
-                Analytics.track(.podcastsListNotificationsTapped, properties: ["enabled": false])
                 NotificationsHelper.shared.setNotificationsEnabled(false, for: podcast)
             }
         }
@@ -110,17 +107,11 @@ extension PodcastListViewController {
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         alert.addAction(UIAlertAction(title: L10n.unfollow, style: .destructive) { [weak self] _ in
             PodcastManager.shared.unsubscribe(podcast: podcast)
-            Analytics.track(.podcastUnsubscribed, properties: ["source": self?.analyticsSource ?? AnalyticsSource.podcastsList, "uuid": podcast.uuid])
         })
         present(alert, animated: true)
     }
 
     private func showFolderPicker(for podcast: Podcast) {
-        if !SubscriptionHelper.hasActiveSubscription() {
-            NavigationManager.shared.showUpsellView(from: self, source: .folders)
-            return
-        }
-
         let model = ChoosePodcastFolderModel(pickingFor: podcast.uuid, currentFolder: podcast.folderUuid)
         let chooseFolderView = ChoosePodcastFolderView(model: model) { [weak self] _ in
             self?.dismiss(animated: true)

@@ -40,12 +40,9 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.pushEnabled)
     }
 
-    /// Calls registration APIs if push is enabled
-    /// - Parameter checkToken: Whether to check the token before registering. This would be `false` on app launch but could be checked while app is running to avoid extra work.
-    func register(checkToken: Bool) {
-        guard pushEnabled(),
-              checkToken == false || ServerSettings.pushToken() == nil
-        else { return }
+    /// Registers the notification categories and delegate if notifications are enabled
+    func register() {
+        guard pushEnabled() else { return }
         registerForPushNotifications()
     }
 
@@ -54,7 +51,6 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         registerForPushNotifications { granted in
             guard granted || !enabled else {
                 Toast.show(L10n.notificationsPermissionsNeedsAction, actions: [.init(title: L10n.notificationsPermissionsOpenSettings, action: {
-                    Analytics.track(.notificationsPermissionsOpenSystemSettings)
                     UIApplication.shared.openNotificationSettings()
                 })])
                 return
@@ -88,30 +84,21 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         notificationCenter.delegate = self
         notificationCenter.setNotificationCategories([episodeCategory, podcastCategory, deepLinkCategory])
 
+        // Episode notifications are local now (see NewEpisodeNotificationScheduler),
+        // so there's no APNS registration — only the authorization prompt.
         notificationCenter.getNotificationSettings { settings in
             guard settings.authorizationStatus == .notDetermined else {
                 DispatchQueue.main.async {
                     completion?(settings.authorizationStatus != .denied)
-                    UIApplication.shared.registerForRemoteNotifications()
                 }
                 return
             }
 
             notificationCenter.requestAuthorization(options: [.alert, .badge, .sound], completionHandler: { granted, _ in
-                if granted {
-                    Analytics.track(.notificationsOptInAllowed)
-                    DispatchQueue.main.async {
-                        UIApplication.shared.registerForRemoteNotifications()
-                    }
-                } else {
-                    Analytics.track(.notificationsOptInDenied)
-                }
                 DispatchQueue.main.async {
                     completion?(granted)
                 }
             })
-
-            Analytics.track(.notificationsOptInShown)
         }
     }
 
@@ -121,13 +108,10 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         let categoryIdentifier = response.notification.request.content.categoryIdentifier
         let category = NotificationsCategory(rawValue: categoryIdentifier)
 
-        var properties: [String: Any] = ["category": categoryIdentifier]
         let identifier = response.notification.request.identifier
         if let type = NotificationType(rawValue: identifier) {
-            properties["type"] = type.rawValue
             NotificationsCoordinator.shared.markNotification(type)
         }
-        Analytics.track(.notificationOpened, properties: properties)
 
         switch category {
         case .episodes, .podcasts, .none:
@@ -145,7 +129,6 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
         }
 
         if downloadEpisodeActionId == response.actionIdentifier {
-            AnalyticsHelper.downloadFromNotification()
             findEpisode(episodeUuid: episodeUuid) { episode in
                 if let episode {
                     DownloadManager.shared.addToQueue(episodeUuid: episode.uuid)
@@ -155,7 +138,6 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
             }
         } else if addToQueueFirstActionId == response.actionIdentifier || addToQueueLastActionId == response.actionIdentifier {
             let playFirst = addToQueueFirstActionId == response.actionIdentifier
-            AnalyticsHelper.addToUpNextFromNotification(playFirst: playFirst)
 
             findEpisode(episodeUuid: episodeUuid) { episode in
                 if let episode {
@@ -165,7 +147,6 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                 completionHandler()
             }
         } else if playNowActionid == response.actionIdentifier {
-            AnalyticsHelper.playNowFromNotification()
             findEpisode(episodeUuid: episodeUuid) { episode in
                 if let episode {
                     PlaybackManager.shared.load(episode: episode, autoPlay: true, overrideUpNext: false)
@@ -174,7 +155,6 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                 completionHandler()
             }
         } else if archiveActionId == response.actionIdentifier {
-            AnalyticsHelper.archiveFromNotification()
             findEpisode(episodeUuid: episodeUuid) { episode in
                 if let episode = episode as? Episode {
                     EpisodeManager.archiveEpisode(episode: episode, fireNotification: false)
@@ -191,7 +171,7 @@ class NotificationsHelper: NSObject, UNUserNotificationCenterDelegate {
                     self.appDelegate()?.openEpisode(episode.uuid, from: podcast)
                 } else if let podcastUuid = response.notification.request.content.userInfo["podcast_uuid"] as? String, let podcast = DataManager.shared.findPodcast(uuid: podcastUuid) {
                     DispatchQueue.main.async {
-                        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast, NavigationManager.podcastSourceKey: PodcastScreenSource.notification])
+                        NavigationManager.shared.navigateTo(NavigationManager.podcastPageKey, data: [NavigationManager.podcastKey: podcast])
                     }
                 }
 

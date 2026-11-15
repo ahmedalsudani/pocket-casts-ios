@@ -11,8 +11,6 @@ extension UpNextViewController: SwipeTableViewCellDelegate {
             let moveToTopAction = SwipeAction(style: .default, title: nil) { [weak self] _, indexPath in
                 guard let self, let episode = PlaybackManager.shared.queue.episodeAt(index: indexPath.row) else { return }
 
-                Analytics.track(.episodeSwipeActionPerformed, properties: ["action": "up_next_move_up", "source": "up_next"])
-
                 PlaybackManager.shared.queue.move(episode: episode, to: 0, fireNotification: false)
                 self.moveRow(at: indexPath, to: IndexPath(row: 0, section: indexPath.section), in: tableView)
             }
@@ -26,7 +24,6 @@ extension UpNextViewController: SwipeTableViewCellDelegate {
                 let queueCount = PlaybackManager.shared.queue.upNextCount()
                 PlaybackManager.shared.queue.move(episode: episode, to: queueCount - 1, fireNotification: false)
                 self.moveRow(at: indexPath, to: IndexPath(row: queueCount - 1, section: indexPath.section), in: tableView)
-                Analytics.track(.episodeSwipeActionPerformed, properties: ["action": "up_next_move_down", "source": "up_next"])
             }
             moveToBottomAction.image = UIImage(named: "upnext-movetobottom")
             moveToBottomAction.backgroundColor = ThemeColor.support03()
@@ -38,7 +35,6 @@ extension UpNextViewController: SwipeTableViewCellDelegate {
                 guard let self, let episode = PlaybackManager.shared.queue.episodeAt(index: indexPath.row) else { return }
 
                 PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true, userInitiated: true)
-                Analytics.track(.episodeSwipeActionPerformed, properties: ["action": "delete", "source": "up_next"])
                 let remainingEpisodes = PlaybackManager.shared.queue.upNextCount()
                 self.displayedUpNextCount = remainingEpisodes
                 if remainingEpisodes > 0 {
@@ -65,13 +61,6 @@ extension UpNextViewController: SwipeTableViewCellDelegate {
             if let episode = DataManager.shared.episodeInUpNextAt(index: indexPath.row + 1) as? Episode {
                 let shareAction = SwipeAction(style: .default, title: nil) { [weak self] _, _ in
                     guard let self else { return }
-                    Analytics.track(
-                        .episodeSwipeActionPerformed,
-                        properties: [
-                            "action": "add_to_playlist",
-                            "source": "up_next"
-                        ]
-                    )
                     let presentModal: () -> Void = { [weak self] in
                         NavigationManager.shared.navigateTo(
                             NavigationManager.manualPlaylistsChooserKey,

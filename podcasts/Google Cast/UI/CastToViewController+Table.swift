@@ -35,9 +35,6 @@ extension CastToViewController: UITableViewDelegate, UITableViewDataSource {
         let device = devices[indexPath.row]
         GoogleCastManager.shared.connectToDevice(device)
 
-        Analytics.track(.chromecastStartedCasting)
-        AnalyticsPlaybackHelper.shared.currentSource = analyticsSource
-
         dismiss(animated: true, completion: nil)
     }
 }

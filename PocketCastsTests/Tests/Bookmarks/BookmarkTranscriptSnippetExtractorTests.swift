@@ -21,31 +21,6 @@ final class BookmarkTranscriptSnippetExtractorTests: XCTestCase {
         try XCTUnwrap(TranscriptModel.makeModel(from: transcript, format: .vtt))
     }
 
-    func testSnippetCoversTheCuesAroundTheTime() throws {
-        let model = try makeModel()
-        let snippet = try BookmarkTranscriptSnippetExtractor.extractSnippet(from: model, at: 12).get()
-
-        XCTAssertTrue(snippet.text.hasPrefix("that's the thing about selective admissions."))
-        XCTAssertTrue(snippet.text.hasSuffix("floated the lottery idea."))
-    }
-
-    func testSnippetFailsAsTooShortWithoutEnoughWords() throws {
-        let model = try XCTUnwrap(TranscriptModel.makeModel(from: """
-        WEBVTT
-
-        0:00:00.000 --> 0:00:05.000
-        Too short to title.
-        """, format: .vtt))
-
-        XCTAssertEqual(BookmarkTranscriptSnippetExtractor.extractSnippet(from: model, at: 2).failureReason, .passageTooShort)
-    }
-
-    func testSnippetFailsWhenNothingCoversTheTime() throws {
-        let model = try makeModel()
-
-        XCTAssertEqual(BookmarkTranscriptSnippetExtractor.extractSnippet(from: model, at: 600).failureReason, .noTranscriptAtPosition)
-    }
-
     func testTextSkipsSpeakerNamesAndKeepsLineBreaks() throws {
         let model = try makeModel()
         let fullRange = NSRange(location: 0, length: model.attributedText.length)
@@ -80,27 +55,31 @@ final class BookmarkTranscriptSnippetExtractorTests: XCTestCase {
 
     func testPassageRangeRoundTripsACapturedPassageAcrossSpeakerChanges() throws {
         let model = try makeModel()
-        let snippet = try BookmarkTranscriptSnippetExtractor.extractSnippet(from: model, at: 12).get()
+        let fullRange = NSRange(location: 0, length: model.attributedText.length)
+        let passage = BookmarkTranscriptSnippetExtractor.text(in: fullRange, of: model.attributedText)
+        let location = (model.attributedText.string as NSString).range(of: "that's the thing").location
 
-        let range = try XCTUnwrap(BookmarkTranscriptSnippetExtractor.passageRange(for: snippet.text,
-                                                                                  at: snippet.range.location,
+        let range = try XCTUnwrap(BookmarkTranscriptSnippetExtractor.passageRange(for: passage,
+                                                                                  at: location,
                                                                                   in: model.attributedText))
 
-        XCTAssertEqual(BookmarkTranscriptSnippetExtractor.text(in: range, of: model.attributedText), snippet.text)
+        XCTAssertEqual(BookmarkTranscriptSnippetExtractor.text(in: range, of: model.attributedText), passage)
     }
 
     func testPassageRangeMatchesAPassageStoredWithoutItsLineBreaks() throws {
         let model = try makeModel()
-        let snippet = try BookmarkTranscriptSnippetExtractor.extractSnippet(from: model, at: 12).get()
+        let fullRange = NSRange(location: 0, length: model.attributedText.length)
+        let passage = BookmarkTranscriptSnippetExtractor.text(in: fullRange, of: model.attributedText)
+        let location = (model.attributedText.string as NSString).range(of: "that's the thing").location
 
         // Passages captured by earlier versions were flattened to a single line
-        let flattened = snippet.text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        let flattened = passage.split(whereSeparator: \.isWhitespace).joined(separator: " ")
 
         let range = try XCTUnwrap(BookmarkTranscriptSnippetExtractor.passageRange(for: flattened,
-                                                                                  at: snippet.range.location,
+                                                                                  at: location,
                                                                                   in: model.attributedText))
 
-        XCTAssertEqual(BookmarkTranscriptSnippetExtractor.text(in: range, of: model.attributedText), snippet.text)
+        XCTAssertEqual(BookmarkTranscriptSnippetExtractor.text(in: range, of: model.attributedText), passage)
     }
 
     func testPassageRangeSearchesForTheTextWhenTheLocationDoesNotLineUp() throws {
@@ -158,15 +137,5 @@ final class BookmarkTranscriptSnippetExtractorTests: XCTestCase {
         XCTAssertNil(BookmarkTranscriptSnippetExtractor.passageRange(for: "a passage no transcript would ever contain",
                                                                      at: nil,
                                                                      in: model.attributedText))
-    }
-}
-
-// MARK: - Helpers
-
-private extension Result {
-    /// The reason a capture failed, for asserting on which one it was
-    var failureReason: Failure? {
-        if case .failure(let reason) = self { return reason }
-        return nil
     }
 }

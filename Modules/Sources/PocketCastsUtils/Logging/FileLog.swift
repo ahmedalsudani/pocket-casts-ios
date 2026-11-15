@@ -2,10 +2,6 @@ import Foundation
 import os
 
 public final class FileLog {
-    public enum LogError: Error {
-        case logGenerationFailed
-    }
-
     /// The destinations a log message can be written to.
     public struct LogDestination: OptionSet, Sendable {
         public let rawValue: Int
@@ -14,7 +10,7 @@ public final class FileLog {
             self.rawValue = rawValue
         }
 
-        /// The rotating log file, which is what gets uploaded with support requests.
+        /// The rotating log file, which the in-app log viewer shows and the database export includes.
         public static let file = LogDestination(rawValue: 1 << 0)
 
         /// The unified logging system, visible in Console and Xcode.
@@ -89,21 +85,6 @@ public final class FileLog {
 
     public func logFileAsString() async -> String {
         return await logBuffer.loadLogFileAsString()
-    }
-
-    /// Creates a merged file from `mainLogFilePath` and `backupLogFilePath` to be used for enquing the file upload,
-    /// returning the path it was written to.
-    public func logFileForUpload() async throws -> String {
-        let file = LogFilePaths.debugUploadLog
-        let contents = await logBuffer.loadLogFileAsString()
-
-        do {
-            try contents.write(toFile: file, atomically: true, encoding: .utf8)
-        } catch {
-            throw LogError.logGenerationFailed
-        }
-
-        return file
     }
 }
 

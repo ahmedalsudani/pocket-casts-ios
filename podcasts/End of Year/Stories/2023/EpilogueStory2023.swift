@@ -10,10 +10,6 @@ struct EpilogueStory2023: ShareableStory {
 
     var identifier: String = "epilogue"
 
-    var isPlus: Bool {
-        SubscriptionHelper.hasActiveSubscription()
-    }
-
     var body: some View {
         GeometryReader { geometry in
             if visibility.isVisible {
@@ -55,7 +51,6 @@ struct EpilogueStory2023: ShareableStory {
 
                     Button(L10n.eoyStoryReplay) {
                         StoriesController.shared.replay()
-                        Analytics.track(.endOfYearStoryReplayButtonTapped, properties: ["current_year": "2023"])
                     }
                     .buttonStyle(StoriesButtonStyle(color: Constants.backgroundColor, icon: Image("eoy-replay-icon")))
                     .opacity(renderForSharing ? 0 : 1)
@@ -91,18 +86,12 @@ struct EpilogueStory2023: ShareableStory {
         }
     }
 
-    @ViewBuilder
     func background(geometry: GeometryProxy) -> some View {
-        if isPlus {
-            StoryGradient(geometry: geometry, plus: true)
-        } else {
-            StoryGradient(geometry: geometry)
-        }
+        StoryGradient(geometry: geometry, plus: true)
     }
 
     func onAppear() {
         self.visibility.isVisible = true
-        Analytics.track(.endOfYearStoryShown, story: identifier)
     }
 
     func sharingAssets() -> [Any] {

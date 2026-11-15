@@ -74,12 +74,9 @@ class FolderViewController: PCViewController {
             addCustomObserver(Constants.Notifications.episodeArchiveStatusChanged, selector: #selector(reloadFolder))
             addCustomObserver(Constants.Notifications.playbackEnded, selector: #selector(reloadFolder))
             addCustomObserver(ServerNotifications.podcastsRefreshed, selector: #selector(reloadFolderFromBackgroundNotification))
-            addCustomObserver(ServerNotifications.syncCompleted, selector: #selector(reloadFolderFromBackgroundNotification))
         }
         addCustomObserver(Constants.Notifications.miniPlayerDidAppear, selector: #selector(miniPlayerStatusDidChange))
         addCustomObserver(Constants.Notifications.miniPlayerDidDisappear, selector: #selector(miniPlayerStatusDidChange))
-
-        Analytics.track(.folderShown, properties: ["number_of_podcasts": podcasts.count, "sort_order": folder.librarySort()])
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -111,7 +108,6 @@ class FolderViewController: PCViewController {
 
     @IBAction func addPodcastsTapped(_ sender: Any) {
         showPodcastSelectionDialog()
-        Analytics.track(.folderAddPodcastsButtonTapped)
     }
 
     @objc private func reloadFolder() {
@@ -135,7 +131,6 @@ class FolderViewController: PCViewController {
 
         let sortOption = folder.librarySort()
         let sortAction = OptionAction(label: L10n.sortBy, secondaryLabel: sortOption.description, icon: "podcast-sort") {
-            Analytics.track(.folderOptionsModalOptionTapped, properties: ["option": "sort_by"])
         }
         sortAction.submenu = { [weak self] in self?.makeSortOptions() }
         optionsPicker.addAction(action: sortAction)
@@ -157,8 +152,6 @@ class FolderViewController: PCViewController {
             let hostingController = PCHostingController(rootView: editFolderView.environmentObject(Theme.shared))
 
             self?.present(hostingController, animated: true, completion: nil)
-
-            Analytics.track(.folderOptionsModalOptionTapped, properties: ["option": "edit_folder"])
         }
         optionsPicker.addAction(action: editAction)
 
@@ -166,20 +159,15 @@ class FolderViewController: PCViewController {
             guard let self else { return }
 
             self.showPodcastSelectionDialog()
-
-            Analytics.track(.folderOptionsModalOptionTapped, properties: ["option": "add_or_remove_podcasts"])
         }
         optionsPicker.addAction(action: addRemoveAction)
 
         let reorderAction = OptionAction(label: L10n.podcastsEdit, icon: "filter_manual_episode_order") { [weak self] in
             self?.setEditingOrder(true)
-            Analytics.track(.folderOptionsModalOptionTapped, properties: ["option": "edit"])
         }
         optionsPicker.addAction(action: reorderAction)
 
         optionsPicker.present(from: self)
-
-        Analytics.track(.folderOptionsButtonTapped)
     }
 
     private func showPodcastSelectionDialog() {
@@ -236,8 +224,6 @@ class FolderViewController: PCViewController {
         DataManager.shared.save(folder: folder)
 
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: folder.uuid)
-
-        Analytics.track(.folderSortByChanged, properties: ["sort_order": order])
     }
 
     @objc private func miniPlayerStatusDidChange() {

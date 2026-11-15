@@ -65,20 +65,6 @@ extension View {
     }
 }
 
-struct RequiredFieldStyle: TextFieldStyle {
-    let hasErrored: Bool
-    @EnvironmentObject var theme: Theme
-
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .colorScheme(Theme.isDarkTheme ? .dark : .light)
-            .foregroundColor(ThemeColor.primaryText01(for: theme.activeTheme).color)
-            .padding(6)
-            .required(hasErrored)
-            .background(ThemeColor.primaryUi02(for: theme.activeTheme).color.cornerRadius(ViewConstants.cornerRadius))
-    }
-}
-
 struct RequiredInput: ViewModifier {
     @EnvironmentObject var theme: Theme
     let hasErrored: Bool
@@ -227,64 +213,6 @@ struct RoundedButton: ViewModifier {
         .background(destructive ? ThemeColor.support05(for: theme.activeTheme).color : ThemeColor.primaryInteractive01(for: theme.activeTheme).color)
         .cornerRadius(ViewConstants.buttonCornerRadius)
         .frame(height: dynamicTypeSize.isAccessibilitySize ? nil : 44)
-    }
-}
-
-
-struct BorderButton: ViewModifier {
-    @EnvironmentObject var theme: Theme
-
-    func body(content: Content) -> some View {
-        HStack {
-            Spacer()
-            content
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(ThemeColor.primaryInteractive01(for: theme.activeTheme).color)
-            Spacer()
-        }
-        .padding()
-        .background(ThemeColor.primaryUi01(for: theme.activeTheme).color)
-        .cornerRadius(ViewConstants.buttonCornerRadius)
-        .overlay(
-            RoundedRectangle(cornerRadius: ViewConstants.buttonCornerRadius)
-                .stroke(ThemeColor.primaryInteractive01(for: theme.activeTheme).color, lineWidth: ViewConstants.buttonStrokeWidth)
-        )
-        .frame(height: 44)
-    }
-}
-
-/// A button that contains a stroke
-struct StrokeButton: ButtonStyle {
-    let textColor: Color
-    let backgroundColor: Color
-    let strokeColor: Color
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .applyButtonFont()
-            .foregroundColor(textColor)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(backgroundColor)
-            .cornerRadius(ViewConstants.buttonCornerRadius)
-            .overlay(
-                RoundedRectangle(cornerRadius: ViewConstants.buttonCornerRadius)
-                    .stroke(strokeColor, lineWidth: ViewConstants.buttonStrokeWidth)
-            )
-            .applyButtonEffect(isPressed: configuration.isPressed)
-            .contentShape(Rectangle())
-    }
-}
-
-struct NavButtonStyle: ButtonStyle {
-    @EnvironmentObject var theme: Theme
-    @Environment(\.isEnabled) private var isEnabled: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundColor(ThemeColor.secondaryIcon01(for: theme.activeTheme).color)
-            .font(.headline)
-            .opacity(isEnabled ? 1 : 0.4)
     }
 }
 

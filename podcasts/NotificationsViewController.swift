@@ -7,7 +7,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
     private let switchCellId = "SwitchCell"
     private let disclosureCellId = "DisclosureCell"
 
-    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.trendingRecommendations, .dailyReminders], [.newFeaturesAndTips, .pocketCastsOffers]]
+    private var rows: [[Row]] = [[.newEpisodes, .podcastsChosen, .appBadges], [.dailyReminders], [.newFeaturesAndTips]]
 
     private var notificationsDenied = false
 
@@ -17,8 +17,8 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
 
     enum Section: Int, CaseIterable {
         case episodes = 0
-        case recommendationsAndReminders
-        case featuresAndOffers
+        case reminders
+        case featuresAndTips
     }
 
     enum Row: Int {
@@ -26,11 +26,9 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         case podcastsChosen
         case appBadges
 
-        case trendingRecommendations
         case dailyReminders
 
         case newFeaturesAndTips
-        case pocketCastsOffers
 
         var description: String {
             switch self {
@@ -40,14 +38,10 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                 return L10n.filterChoosePodcasts
             case .appBadges:
                 return L10n.appBadge
-            case .trendingRecommendations:
-                return L10n.notificationsTrendingAndRecommendations
             case .dailyReminders:
                 return L10n.notificationsDailyReminders
             case .newFeaturesAndTips:
                 return L10n.notificationsNewFeaturesTips
-            case .pocketCastsOffers:
-                return L10n.notificationsPocketCastOffers
             }
         }
 
@@ -59,31 +53,8 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                 return Settings.notificationsNewEpisodes
             case .newFeaturesAndTips:
                 return Settings.notificationsNewFeaturesAndTips
-            case .trendingRecommendations:
-                return Settings.notificationsRecommendations
-            case .pocketCastsOffers:
-                return Settings.notificationsOffers
             case .podcastsChosen, .appBadges:
                 return false
-            }
-        }
-
-        var analyticsEvent: AnalyticsEvent {
-            switch self {
-                case .dailyReminders:
-                    return .settingsNotificationsDailyRemindersToggle
-                case .newEpisodes:
-                    return .settingsNotificationsNewEpisodesToggled
-                case .newFeaturesAndTips:
-                    return .settingsNotificationsNewFeaturesToggle
-                case .trendingRecommendations:
-                    return .settingsNotificationsTrendingToggle
-                case .podcastsChosen:
-                    return .settingsNotificationsPodcastsChanged
-                case .appBadges:
-                    return .settingsNotificationsAppBadgeChanged
-                case .pocketCastsOffers:
-                    return .settingsNotificationsOffersToggle
             }
         }
 
@@ -95,14 +66,10 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
                     return .newEpisodes
                 case .newFeaturesAndTips:
                     return .newFeaturesAndTips
-                case .trendingRecommendations:
-                    return .recommendations
                 case .podcastsChosen:
                     return nil
                 case .appBadges:
                     return nil
-                case .pocketCastsOffers:
-                    return .offers
             }
         }
     }
@@ -124,8 +91,6 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
 
         title = L10n.settingsNotifications
         NotificationCenter.default.addObserver(self, selector: #selector(podcastUpdated(_:)), name: Constants.Notifications.podcastUpdated, object: nil)
-
-        Analytics.track(.settingsNotificationsShown)
 
         checkNotificationsPermissionBanner()
         addCustomObserver(UIApplication.didBecomeActiveNotification, selector: #selector(checkNotificationsPermissionBanner))
@@ -150,7 +115,7 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         switch sectionType {
         case .episodes:
             return NotificationsGroup.newEpisodes.isEnabled ? 3 : 1
-        case .featuresAndOffers, .recommendationsAndReminders:
+        case .featuresAndTips, .reminders:
             return rows[section].count
         }
     }
@@ -202,7 +167,6 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
             switch rowType {
             case .podcastsChosen: // choose podcasts for push
                 podcastChooserController = PodcastChooserViewController()
-                podcastChooserController?.analyticsSource = .notifications
                 if let podcastsController = podcastChooserController {
                     podcastsController.delegate = self
                     let allPodcasts = DataManager.shared.allPodcasts(includeUnsubscribed: false)
@@ -270,23 +234,18 @@ class NotificationsViewController: PCViewController, UITableViewDataSource, UITa
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastUpdated, object: podcast)
     }
 
-    func didChangePodcasts(numberSelected: Int) {
-        Analytics.track(.settingsNotificationsPodcastsChanged, properties: ["number_selected": numberSelected])
-    }
-
     @objc private func notificationToggled(_ sender: UISwitch) {
         guard let row = Row(rawValue: sender.tag) else {
             return
         }
         switch row {
-        case .dailyReminders, .trendingRecommendations, .newFeaturesAndTips, .pocketCastsOffers, .newEpisodes:
+        case .dailyReminders, .newFeaturesAndTips, .newEpisodes:
             guard let notificationGroup = row.notificationGroup else { return }
             if sender.isOn {
                 notificationsCoordinator.setupNotifications(for: notificationGroup)
             } else {
                 notificationsCoordinator.disableNotifications(for: notificationGroup)
             }
-            Settings.trackValueToggled(row.analyticsEvent, enabled: sender.isOn)
             if row == .newEpisodes {
                 settingsTable.reloadData()
             }
@@ -326,7 +285,6 @@ extension BannerModel {
                            action: L10n.notitificationsPermissionBannerAction,
                            iconName: "settings_notifications",
                            onActionTap: {
-            Analytics.track(.notificationsPermissionsOpenSystemSettings)
             UIApplication.shared.openNotificationSettings()
         })
     }

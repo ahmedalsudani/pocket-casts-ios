@@ -26,12 +26,6 @@
             ])
         }
 
-        func sj_snapshot(afterScreenUpdate: Bool = false, opaque: Bool = true) -> UIImageView {
-            let snapshot = sj_snapshotImage(afterScreenUpdate: afterScreenUpdate, opaque: opaque)
-
-            return UIImageView(image: snapshot)
-        }
-
         func sj_snapshotImage(afterScreenUpdate: Bool = false, opaque: Bool = true) -> UIImage? {
             let renderer = UIGraphicsImageRenderer(bounds: bounds)
             return renderer.image { rendererContext in

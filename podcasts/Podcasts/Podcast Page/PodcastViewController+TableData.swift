@@ -10,42 +10,12 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
     private static let noSearchResultsCell = "NoSearchResults"
     private static let groupHeadingCellId = "GroupHeading"
 
-    private enum YouMightLikeSection {
-        case header
-        case loading
-        case podroll
-        case podcasts
-        case empty
-    }
-
-    private func youMightLikeSectionType(for section: Int) -> YouMightLikeSection {
-        if section == PodcastViewController.headerSection {
-            return .header
-        }
-
-        if isLoadingRecommendations.value {
-            return .loading
-        }
-
-        if section == 1, (recommendations?.podroll?.count ?? 0) > 0 {
-            return .podroll
-        }
-
-        if section == 1, (recommendations?.podroll?.count ?? 0) == 0, (recommendations?.podcasts?.count ?? 0) == 0 {
-            return .empty
-        }
-
-        return .podcasts
-    }
-
     func registerCells() {
-        episodesTable.register(PodcastTableViewCell.self, forCellReuseIdentifier: PodcastTableViewCell.reuseIdentifier)
         episodesTable.register(UINib(nibName: "EpisodeCell", bundle: nil), forCellReuseIdentifier: PodcastViewController.episodeCellId)
         episodesTable.register(UINib(nibName: "EpisodeLimitCell", bundle: nil), forCellReuseIdentifier: PodcastViewController.limitCellId)
         episodesTable.register(UINib(nibName: "HeadingCell", bundle: nil), forCellReuseIdentifier: PodcastViewController.groupHeadingCellId)
         episodesTable.register(UINib(nibName: "NoSearchResultsCell", bundle: nil), forCellReuseIdentifier: PodcastViewController.noSearchResultsCell)
         episodesTable.register(EmptyStateCell.self, forCellReuseIdentifier: EmptyStateCell.reuseIdentifier)
-        episodesTable.register(LoadingCell.self, forCellReuseIdentifier: LoadingCell.reuseIdentifier)
         BookmarkListController.registerCells(in: episodesTable)
     }
 
@@ -84,19 +54,6 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
             return 2
         case .bookmarks:
             return 3 // Header + Search + Bookmarks
-        case .youMightLike:
-            if isLoadingRecommendations.value || !hasSimilarShows.value {
-                return 2 // Header + Loading
-            }
-
-            var sectionCount = 1 // Always show header section
-            if (recommendations?.podroll?.count ?? 0) > 0 {
-                sectionCount += 1 // Add podroll section if it has content
-            }
-            if (recommendations?.podcasts?.count ?? 0) > 0 {
-                sectionCount += 1 // Add podcasts section if it has content
-            }
-            return sectionCount
         }
     }
 
@@ -111,15 +68,6 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                 return 1
             }
             return bookmarkList?.numberOfRows(inSection: section) ?? 0
-        case .youMightLike:
-            switch youMightLikeSectionType(for: section) {
-            case .header, .loading, .empty:
-                return 1
-            case .podroll:
-                return recommendations?.podroll?.count ?? 0
-            case .podcasts:
-                return recommendations?.podcasts?.count ?? 0
-            }
         }
     }
 
@@ -144,7 +92,7 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                 }
 
                 cell.delegate = self
-                cell.populateFrom(episode: listEpisode.episode, tintColor: podcast?.iconTintColor(), podcastUuid: podcast?.uuid, listUuid: listUuid)
+                cell.populateFrom(episode: listEpisode.episode, tintColor: podcast?.iconTintColor(), podcastUuid: podcast?.uuid)
                 cell.shouldShowSelect = isMultiSelectEnabled
                 if isMultiSelectEnabled {
                     cell.showTick = selectedEpisodesContains(uuid: listEpisode.episode.uuid)
@@ -196,53 +144,6 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
             }
 
             return bookmarkList?.cell(tableView, for: indexPath) ?? UITableViewCell()
-
-        case .youMightLike:
-            switch youMightLikeSectionType(for: indexPath.section) {
-            case .header:
-                let cell = podcastHeaderCell
-                return cell
-            case .loading:
-                let cell = tableView.dequeueReusableCell(withIdentifier: LoadingCell.reuseIdentifier, for: indexPath) as! LoadingCell
-                return cell
-            case .empty:
-                let cell = tableView.dequeueReusableCell(withIdentifier: EmptyStateCell.reuseIdentifier, for: indexPath) as! EmptyStateCell
-                cell.configure(title: L10n.failedRecommendations, icon: {
-                    Image(systemName: "exclamationmark.circle")
-                }, actions: [
-                    .init(title: L10n.tryAgain, action: { [weak self] in
-                        Task { [weak self] in
-                            guard !Task.isCancelled else { return }
-                            await self?.loadRecommendations()
-                        }
-                    })
-                ])
-                return cell
-            case .podroll:
-                guard let podcast = recommendations?.podroll?[indexPath.row] else {
-                    assertionFailure("[PodcastViewController] You Might Like Tab - Missing podroll podcast")
-                    return UITableViewCell()
-                }
-                let cell = tableView.dequeueReusableCell(withIdentifier: PodcastTableViewCell.reuseIdentifier, for: indexPath) as! PodcastTableViewCell
-                cell.configure(with: podcast, datetime: nil) { viewModel in
-                    let properties = ["podcast_uuid": viewModel.uuid]
-                    Analytics.track(.podcastScreenPodrollPodcastSubscribed, properties: properties)
-                }
-                return cell
-            case .podcasts:
-                guard let podcast = recommendations?.podcasts?[indexPath.row] else {
-                    assertionFailure("[PodcastViewController] You Might Like Tab - Missing podcast")
-                    return UITableViewCell()
-                }
-                let cell = tableView.dequeueReusableCell(withIdentifier: PodcastTableViewCell.reuseIdentifier, for: indexPath) as! PodcastTableViewCell
-                cell.configure(with: podcast, datetime: recommendations?.datetime, onSubscribe: { viewModel in
-                    var properties = ["podcast_uuid": viewModel.uuid]
-                    properties["list_datetime"] = viewModel.datetime
-                    Analytics.track(.podcastScreenYouMightLikeSubscribed, properties: properties)
-                })
-                cell.separatorInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: .greatestFiniteMagnitude)
-                return cell
-            }
         }
     }
 
@@ -317,7 +218,7 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                         hideSearchKeyboard()
                     }
 
-                    let episodeController = EpisodeDetailViewController(episode: episode, podcast: podcast, source: .podcastScreen, playlist: .podcast(uuid: podcast.uuid))
+                    let episodeController = EpisodeDetailViewController(episode: episode, podcast: podcast, playlist: .podcast(uuid: podcast.uuid))
                     episodeController.modalPresentationStyle = .formSheet
                     present(episodeController, animated: true, completion: nil)
                 }
@@ -335,38 +236,6 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
                 withAnimation(.interpolatingSpring(stiffness: 100, damping: 15)) {
                     headerCell.viewModel.toggleExpanded()
                 }
-            }
-        case .youMightLike:
-            switch youMightLikeSectionType(for: indexPath.section) {
-            case .header:
-                break
-            case .loading, .empty:
-                break // Do nothing for these state cells
-            case .podroll:
-                guard let selectedPodcast = recommendations?.podroll?[indexPath.row] else { return }
-                var properties: [String: Any] = [:]
-                if let uuid = selectedPodcast.uuid {
-                    properties["podcast_uuid"] = uuid
-                }
-                Analytics.track(.podcastScreenPodrollPodcastTapped, properties: properties)
-                let info = PodcastInfo(selectedPodcast)
-                let podcastController = PodcastViewController(podcastInfo: info, existingImage: nil)
-                podcastController.screenSource = .podcastScreen
-                navigationController?.pushViewController(podcastController, animated: true)
-            case .podcasts:
-                guard let selectedPodcast = recommendations?.podcasts?[indexPath.row] else { return }
-                var properties: [String: Any] = [:]
-                if let datetime = recommendations?.datetime {
-                    properties["list_datetime"] = datetime
-                }
-                if let uuid = selectedPodcast.uuid {
-                    properties["podcast_uuid"] = uuid
-                }
-                Analytics.track(.podcastScreenYouMightLikeTapped, properties: properties)
-                let info = PodcastInfo(selectedPodcast)
-                let podcastController = PodcastViewController(podcastInfo: info, existingImage: nil)
-                podcastController.screenSource = .podcastScreen
-                navigationController?.pushViewController(podcastController, animated: true)
             }
         }
     }
@@ -388,60 +257,11 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        guard currentViewMode == .youMightLike else {
-            // Episodes show a UIKit search header; Bookmarks have their own search cell.
-            return currentViewMode == .episodes ? searchController?.view : nil
-        }
-
-        switch youMightLikeSectionType(for: section) {
-        case .podroll:
-            let image = UIImage(systemName: "mic")?.withConfiguration(UIImage.SymbolConfiguration(weight: .bold))
-            let headerView = YouMightLikeSectionHeaderView(image: image, title: L10n.podcastPodrollHeader)
-            headerView.onTapped = { [weak self] in
-                guard let self else { return }
-                BottomSheetSwiftUIWrapper.present(
-                    PodrollInformationModalView(onDismiss: { [weak self] in
-                        self?.presentedViewController?.dismiss(animated: true, completion: nil)
-                    }).environmentObject(Theme.shared),
-                    autoSize: true,
-                    in: self
-                )
-                Analytics.track(.podcastScreenPodrollInformationModelShown)
-            }
-            return headerView
-        case .podcasts:
-            if youMightLikeSectionType(for: section - 1) == .podroll {
-                let title: String
-                if let podcastTitle = podcast?.title {
-                    title = L10n.podcastSimilarHeader(podcastTitle)
-                } else {
-                    title = L10n.podcastSimilarGenericHeader
-                }
-                let headerView = YouMightLikeSectionHeaderView(image: UIImage(named: "stacked_squares"), title: title)
-                return headerView
-            }
-            return nil
-        default:
-            return nil
-        }
+        // Episodes show a UIKit search header; Bookmarks have their own search cell.
+        return currentViewMode == .episodes ? searchController?.view : nil
     }
 
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        if currentViewMode == .youMightLike {
-            switch youMightLikeSectionType(for: section) {
-            case .header:
-                switch youMightLikeSectionType(for: section + 1) {
-                case .podroll:
-                    return 10 // Only the podroll needs extra spacing for the header
-                default:
-                    return CGFloat.leastNonzeroMagnitude
-                }
-            case .podroll:
-                return 15
-            default:
-                return CGFloat.leastNonzeroMagnitude
-            }
-        }
         return CGFloat.leastNonzeroMagnitude
     }
 
@@ -454,22 +274,6 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
         case .bookmarks:
             // Remove default header spacing above Bookmarks list so the search field aligns under tabs
             return .leastNonzeroMagnitude
-        case .youMightLike:
-            switch youMightLikeSectionType(for: section) {
-            case .podroll:
-                return 34
-            case .podcasts:
-                switch youMightLikeSectionType(for: section - 1) {
-                case .header:
-                    return 16 // Padding between header
-                case .podroll:
-                    return 34
-                default:
-                    return .leastNonzeroMagnitude
-                }
-            default:
-                return .leastNonzeroMagnitude
-            }
         case .episodes:
             if PodcastViewController.allEpisodesSection == section {
                 return estimated ? 100 : UITableView.automaticDimension
@@ -486,8 +290,6 @@ extension PodcastViewController: UITableViewDataSource, UITableViewDelegate {
             return indexPath.section == PodcastViewController.allEpisodesSection && episodeAtIndexPath(indexPath) != nil
         case .bookmarks:
             return bookmarkList?.canEditRow(at: indexPath) ?? false
-        case .youMightLike:
-            return false
         }
     }
 

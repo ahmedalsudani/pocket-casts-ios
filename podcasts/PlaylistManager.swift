@@ -67,13 +67,7 @@ class PlaylistManager {
     class func delete(playlist: EpisodeFilter?, fireEvent: Bool) {
         guard let playlist else { return }
 
-        if SyncManager.isUserLoggedIn() {
-            playlist.wasDeleted = true
-            playlist.syncStatus = SyncStatus.notSynced.rawValue
-            DataManager.shared.save(playlist: playlist)
-        } else {
-            DataManager.shared.delete(playlist: playlist)
-        }
+        DataManager.shared.delete(playlist: playlist)
 
         if fireEvent {
             NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged)
@@ -140,7 +134,6 @@ class PlaylistManager {
 
             podcastUuids.remove(at: indexOfUuid)
             playlist.podcastUuids = podcastUuids.joined(separator: ",")
-            if SyncManager.isUserLoggedIn() { playlist.syncStatus = SyncStatus.notSynced.rawValue }
             DataManager.shared.save(playlist: playlist)
         }
     }

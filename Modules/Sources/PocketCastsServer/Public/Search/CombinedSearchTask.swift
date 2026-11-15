@@ -1,88 +1,39 @@
 import Foundation
-
-struct CombinedSearchEnvelope: Decodable {
-    @LossyDecodedArray public var results: [CombinedSearchResult]
-}
+import PocketCastsDataModel
 
 public enum CombinedSearchResultType: Hashable {
     case episode(EpisodeSearchResult)
     case podcast(PodcastFolderSearchResult)
-    case network(NetworkSearchResult)
-}
-
-public struct CombinedSearchResult: Decodable, Hashable {
-    public let type: String
-    public let uuid: String
-    public let title: String
-    public let publishedDate: Date?
-    public let duration: Double?
-    public let podcastUuid: String?
-    public let podcastTitle: String?
-    public let author: String?
-    public let explicit: Bool?
-    public let isVideo: Bool?
-    public let hasVideo: Bool?
-    public let videoUrl: String?
-    public let shortDescription: String?
-    public let collectionImage: String?
-    public let podcastCount: Int?
-
-    public var resolvedResultType: CombinedSearchResultType? {
-        switch type {
-        case "podcast":
-            guard let podcast = PodcastFolderSearchResult(from: self) else {
-                return nil
-            }
-            return .podcast(podcast)
-        case "episode":
-            guard let episode = EpisodeSearchResult(from: self) else {
-                return nil
-            }
-            return .episode(episode)
-        case "network":
-            guard let network = NetworkSearchResult(from: self) else {
-                return nil
-            }
-            return .network(network)
-        default:
-            return nil
-        }
-    }
 }
 
 public class CombinedSearchTask {
-    private let session: URLSession
+    /// How many matching episodes a search returns
+    private static let episodeLimit = 50
 
-    public init(session: URLSession = .shared) {
-        self.session = session
-    }
+    public init() {}
 
+    /// Podcasts come from Apple's podcast directory. Episodes come from the database, so only episodes of
+    /// podcasts that are followed can be found.
     public func search(term: String) async throws -> [CombinedSearchResultType] {
-        let components = URLComponents(string: ServerConstants.Urls.cache() + "v2/search/combined")
-        guard let searchURL = components?.url,
-              let request = ServerHelper.createJsonRequest(url: searchURL, params: ["term": term], timeout: 10, cachePolicy: .reloadIgnoringCacheData)
-        else {
-            throw URL.URLCreationError.invalidURLString
-        }
+        let podcasts = try await iTunesSearchService.shared.search(term: term)
 
-        let (data, _) = try await session.data(for: request)
-
-        let envelope = try Self.decoder.decode(CombinedSearchEnvelope.self, from: data)
-        var seen = Set<CombinedSearchResultType>()
-        return envelope.results
-            .compactMap(\.resolvedResultType)
-            .filter { seen.insert($0).inserted }
+        return podcasts.map { CombinedSearchResultType.podcast($0) } + episodes(matching: term).map { CombinedSearchResultType.episode($0) }
     }
 
-    static let decoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+    private func episodes(matching term: String) -> [EpisodeSearchResult] {
+        let episodes = DataManager.shared.findEpisodes(matching: term, limit: Self.episodeLimit)
+        guard !episodes.isEmpty else { return [] }
 
-        decoder.dateDecodingStrategy = .formatted(dateFormatter)
-        return decoder
-    }()
+        let podcastTitles = DataManager.shared.allPodcasts(includeUnsubscribed: false).reduce(into: [String: String]()) { $0[$1.uuid] = $1.title }
+
+        return episodes.map { episode in
+            EpisodeSearchResult(uuid: episode.uuid,
+                                title: episode.title ?? "",
+                                publishedDate: episode.publishedDate ?? episode.addedDate ?? .distantPast,
+                                state: episode.archived ? .archived : .normal,
+                                duration: episode.duration,
+                                podcastUuid: episode.podcastUuid,
+                                podcastTitle: podcastTitles[episode.podcastUuid] ?? "")
+        }
+    }
 }

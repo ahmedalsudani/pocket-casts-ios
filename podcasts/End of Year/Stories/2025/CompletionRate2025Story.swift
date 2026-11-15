@@ -8,10 +8,6 @@ struct CompletionRate2025Story: ShareableStory {
     @Environment(\.renderForSharing) var renderForSharing: Bool
     @Environment(\.animated) var animated: Bool
 
-    let plusOnly = true
-
-    let subscriptionTier: SubscriptionTier
-
     let startedAndCompleted: EpisodesStartedAndCompleted
 
     let identifier: String = "completion_rate"
@@ -61,8 +57,7 @@ struct CompletionRate2025Story: ShareableStory {
     @ViewBuilder var headerView: some View {
         StoryHeader2025(
             title: L10n.playback2025CompletionRateTitle(formattedPercentage),
-            description: L10n.playback2025CompletionRateMessage(startedAndCompleted.started, startedAndCompleted.completed),
-            subscriptionTier: subscriptionTier
+            description: L10n.playback2025CompletionRateMessage(startedAndCompleted.started, startedAndCompleted.completed)
         )
     }
 
@@ -85,14 +80,6 @@ struct CompletionRate2025Story: ShareableStory {
         }
     }
 
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
-    }
-
     func sharingAssets() -> [Any] {
         [
             StoryShareableProvider.new(AnyView(self)),
@@ -103,19 +90,19 @@ struct CompletionRate2025Story: ShareableStory {
 
 struct CompletionRateStory2025_Previews: PreviewProvider {
     static var previews: some View {
-        CompletionRate2025Story(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 10))
+        CompletionRate2025Story(startedAndCompleted: .init(started: 100, completed: 10))
             .previewDisplayName("10%")
 
-        CompletionRate2025Story(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 37))
+        CompletionRate2025Story(startedAndCompleted: .init(started: 100, completed: 37))
             .previewDisplayName("37%")
 
-        CompletionRate2025Story(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 64))
+        CompletionRate2025Story(startedAndCompleted: .init(started: 100, completed: 64))
             .previewDisplayName("64%")
 
-        CompletionRate2025Story(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 85))
+        CompletionRate2025Story(startedAndCompleted: .init(started: 100, completed: 85))
             .previewDisplayName("85%")
 
-        CompletionRate2025Story(subscriptionTier: .plus, startedAndCompleted: .init(started: 100, completed: 100))
+        CompletionRate2025Story(startedAndCompleted: .init(started: 100, completed: 100))
             .previewDisplayName("100%")
     }
 }

@@ -53,16 +53,13 @@ class PlayerTabsView: UIScrollView {
                 return
             }
 
-            trackTabChanged(tab: tab)
-
             switch tab {
             case .nowPlaying:
                 break
             case .showNotes:
-                AnalyticsHelper.playerShowNotesOpened()
+                break
             case .chapters:
-                AnalyticsHelper.chaptersOpened()
-                trackChaptersShown()
+                break
             case .bookmarks, .transcript:
                 break
             }
@@ -302,42 +299,6 @@ private extension PlayerTabsView {
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
-    }
-}
-
-// MARK: - Private: Analytics
-
-private extension PlayerTabsView {
-    func trackTabChanged(tab: PlayerTabs) {
-        let tabName: String
-        switch tab {
-        case .nowPlaying:
-            tabName = "now_playing"
-        case .showNotes:
-            tabName = "show_notes"
-        case .chapters:
-            tabName = "chapters"
-        case .bookmarks:
-            tabName = "bookmarks"
-        case .transcript:
-            tabName = "transcript"
-        }
-
-        Analytics.track(.playerTabSelected, properties: ["tab": tabName])
-    }
-
-    /// Emitted when the user switches to the Chapters tab and the episode has
-    /// chapters, matching Android's `chapters_shown` (fired from its player
-    /// pager with the same guard against empty chapter lists).
-    private func trackChaptersShown() {
-        guard PlaybackManager.shared.chapterCount() > 0 else { return }
-
-        Analytics.track(.chaptersShown, properties: [
-            "episode_uuid": PlaybackManager.shared.currentEpisode?.uuid ?? "unknown",
-            "podcast_uuid": PlaybackManager.shared.currentPodcast?.uuid ?? "unknown",
-            "origin": PlaybackManager.shared.chaptersOriginAnalyticsValue,
-            "source": "fullscreen_player"
-        ])
     }
 }
 

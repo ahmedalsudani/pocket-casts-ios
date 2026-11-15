@@ -76,10 +76,6 @@ enum WatchDataManager {
         nowPlayingValue(key: WatchConstants.Keys.nowPlayingCurrentTime) as? TimeInterval ?? 0
     }
 
-    static func nowPlayingPlayedUpToModified() -> Int64 {
-        (nowPlayingValue(key: WatchConstants.Keys.nowPlayingPlayedUpToModified) as? NSNumber)?.int64Value ?? 0
-    }
-
     static func duration() -> TimeInterval {
         nowPlayingValue(key: WatchConstants.Keys.nowPlayingDuration) as? TimeInterval ?? 0
     }
@@ -164,32 +160,5 @@ enum WatchDataManager {
         }
 
         return episodes
-    }
-
-    static func upNextAutoDownloadCount() -> Int {
-        guard let data = UserDefaults.standard.object(forKey: WatchConstants.UserDefaults.data) as? [String: Any], let downloadCount = data[WatchConstants.Keys.upNextDownloadEpisodeCount] as? Int else {
-            return 0
-        }
-        return downloadCount
-    }
-
-    static func upNextAutoDeleteCount() -> Int {
-        guard let data = UserDefaults.standard.object(forKey: WatchConstants.UserDefaults.data) as? [String: Any], let deleteCount = data[WatchConstants.Keys.upNextAutoDeleteEpisodeCount] as? Int else {
-            return 25
-        }
-        return deleteCount
-    }
-
-    static func updateLastDataTime(to date: Date = Date()) {
-        if FeatureFlag.watchUpNextSyncFix.enabled {
-            UserDefaults.standard.set(date, forKey: WatchConstants.UserDefaults.lastDataTime)
-        }
-    }
-
-    static func lastDataTime() -> Date {
-        guard let lastTime = UserDefaults.standard.object(forKey: WatchConstants.UserDefaults.lastDataTime) as? Date else {
-            return Date.distantPast
-        }
-        return lastTime
     }
 }

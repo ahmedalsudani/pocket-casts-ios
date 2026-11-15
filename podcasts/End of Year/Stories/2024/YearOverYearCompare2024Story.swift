@@ -6,10 +6,8 @@ import EndOfYear
 struct YearOverYearCompare2024Story: ShareableStory {
     @Environment(\.animated) var animated: Bool
 
-    let subscriptionTier: SubscriptionTier
     let listeningTime: YearOverYearListeningTime
 
-    let plusOnly = true
     let identifier: String = "year_over_year"
 
     private let foregroundColor = Color.black
@@ -77,15 +75,7 @@ struct YearOverYearCompare2024Story: ShareableStory {
     }
 
     @ViewBuilder func footerView() -> some View {
-        StoryFooter2024(title: title, description: description, subscriptionTier: subscriptionTier)
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
+        StoryFooter2024(title: title, description: description)
     }
 
     func sharingAssets() -> [Any] {
@@ -223,16 +213,16 @@ struct YearOverYearCompare2024Story: ShareableStory {
 }
 
 #Preview("Up") {
-    YearOverYearCompare2024Story(subscriptionTier: .patron, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 20, totalPlayedTimeLastYear: 300))
+    YearOverYearCompare2024Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 20, totalPlayedTimeLastYear: 300))
         .body.environment(\.animated, false)
 }
 
 #Preview("Down") {
-    YearOverYearCompare2024Story(subscriptionTier: .patron, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 300, totalPlayedTimeLastYear: 20))
+    YearOverYearCompare2024Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 300, totalPlayedTimeLastYear: 20))
         .body.environment(\.animated, false)
 }
 
 #Preview("Same") {
-    YearOverYearCompare2024Story(subscriptionTier: .patron, listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 30, totalPlayedTimeLastYear: 30))
+    YearOverYearCompare2024Story(listeningTime: YearOverYearListeningTime(totalPlayedTimeThisYear: 30, totalPlayedTimeLastYear: 30))
         .body.environment(\.animated, false)
 }

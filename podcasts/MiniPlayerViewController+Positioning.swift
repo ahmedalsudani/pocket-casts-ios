@@ -92,8 +92,6 @@ extension MiniPlayerViewController {
             self.playerOpenState = .open
             self.rootViewController()?.setNeedsStatusBarAppearanceUpdate()
             self.rootViewController()?.setNeedsUpdateOfHomeIndicatorAutoHidden()
-            AnalyticsHelper.nowPlayingOpened()
-            Analytics.track(.playerShown)
             completion?()
         }
     }
@@ -110,7 +108,6 @@ extension MiniPlayerViewController {
         rootViewController()?.dismiss(animated: true) {
             self.finishedWithFullScreenPlayer()
             self.playerOpenState = .closed
-            Analytics.track(.playerDismissed)
             completion?()
         }
     }

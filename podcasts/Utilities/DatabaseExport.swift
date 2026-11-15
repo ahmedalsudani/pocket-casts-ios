@@ -62,15 +62,13 @@ class DatabaseExport {
 
             try fileManager.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
 
-            let phoneLogFile = try await FileLog.shared.logFileForUpload()
-            try moveFile(phoneLogFile, exportDirectory: exportDirectory, exportFileName: "ios-logs.txt")
+            let phoneLog = await FileLog.shared.logFileAsString()
+            try write(phoneLog, exportDirectory: exportDirectory, exportFileName: "ios-logs.txt")
 
-            let debugInfoFile = exportDirectory.appendingPathComponent("info.txt")
-            fileManager.createFile(atPath: debugInfoFile.path, contents: DebugInfo.string(optOut: UserDefaults.standard.debugOptedOut).data(using: .utf8))
+            try write(DebugInfo.string(), exportDirectory: exportDirectory, exportFileName: "info.txt")
 
-            let watchLogFile = try await FileLog.shared.watchLogFileForUpload()
-            if let watchLogFile {
-                try moveFile(watchLogFile, exportDirectory: exportDirectory, exportFileName: "watchos-logs.txt")
+            if let watchLog = await WatchManager.shared.requestLogFile() {
+                try write(watchLog, exportDirectory: exportDirectory, exportFileName: "watchos-logs.txt")
             }
 
             // Write the bundle document
@@ -85,8 +83,8 @@ class DatabaseExport {
         }
     }
 
-    private func moveFile(_ logFilePath: String, exportDirectory: URL, exportFileName: String) throws {
+    private func write(_ contents: String, exportDirectory: URL, exportFileName: String) throws {
         let exportFilePath = exportDirectory.appendingPathComponent(exportFileName, isDirectory: false)
-        try fileManager.copyItem(at: URL(fileURLWithPath: logFilePath), to: exportFilePath)
+        try contents.write(to: exportFilePath, atomically: true, encoding: .utf8)
     }
 }

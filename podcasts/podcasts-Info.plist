@@ -113,35 +113,11 @@
 				<string>pktc</string>
 			</array>
 		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>GoogleSignIn</string>
-			<key>CFBundleURLSchemes</key>
-			<array/>
-		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>FirebaseScreenReportingEnabled</key>
-	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>instagram-stories</string>
-		<string>org-appextension-feature-password-management</string>
-		<string>fb</string>
-		<string>tweetbot</string>
-		<string>twitterrific</string>
-		<string>twitter</string>
-		<string>bluesky</string>
-		<string>co.supertop.Castro-2</string>
-		<string>overcast</string>
-		<string>breaker</string>
-		<string>wazecastbox</string>
-	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -150,37 +126,13 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>api.pocketcasts.com</key>
-			<dict>
-				<key>NSExceptionAllowInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-			</dict>
-			<key>podcasts.shiftyjelly.com.au</key>
-			<dict>
-				<key>NSExceptionAllowInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-			</dict>
-			<key>refresh.pocketcasts.com</key>
-			<dict>
-				<key>NSExceptionAllowInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-			</dict>
-		</dict>
 	</dict>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>Pocket Casts needs to access your bluetooth in order to detect nearby Google Cast devices.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_googlecast._tcp</string>
-		<string>_2FA4D21B._googlecast._tcp</string>
+		<string>_CC1AD845._googlecast._tcp</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This allows you to add custom images to your files</string>
@@ -245,7 +197,6 @@
 		<string>audio</string>
 		<string>fetch</string>
 		<string>processing</string>
-		<string>remote-notification</string>
 	</array>
 	<key>UIBrowsableContentSupportsSectionedBrowsing</key>
 	<false/>

@@ -52,8 +52,8 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
                     vc?.showNotesHolderTopAnchor?.constant = 0.0
                     vc?.showNotesWebViewTopConstraint?.constant = 20.0
                 }
-                if let metadata = try? await ShowInfoCoordinator.shared.loadTranscriptsMetadata(podcastUuid: parentIdentifier, episodeUuid: episodeUUID), !metadata.transcripts.isEmpty {
-                    let viewModel = TranscriptExcerptViewModel(episodeUUID: episodeUUID, podcastUUID: parentIdentifier, isGeneratedTranscript: metadata.hasGeneratedTranscripts) { [weak self] in
+                if let transcripts = try? await ShowInfoCoordinator.shared.loadTranscriptsMetadata(podcastUuid: parentIdentifier, episodeUuid: episodeUUID), !transcripts.isEmpty {
+                    let viewModel = TranscriptExcerptViewModel(episodeUUID: episodeUUID, podcastUUID: parentIdentifier) { [weak self] in
                         DispatchQueue.main.async {
                             guard let self else { return }
 
@@ -84,7 +84,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
                 }
             }
             downloadingShowNotes = false
-            showNotesDidLoad(showNotes: showNotes ?? CacheServerHandler.noShowNotesMessage)
+            showNotesDidLoad(showNotes: showNotes ?? ShowInfoCoordinator.noShowNotesMessage)
         }
     }
 
@@ -121,8 +121,6 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
                 safariViewController?.delegate = self
 
                 present(safariViewController!, animated: true, completion: nil)
-
-                Analytics.track(.episodeDetailShowNotesLinkTapped, properties: ["episode_uuid": episode.uuid, "source": viewSource])
             } else if let url = navigationAction.request.url, URLHelper.isMailtoScheme(url.scheme), UIApplication.shared.canOpenURL(url) {
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)
             }
@@ -140,8 +138,6 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
     }
 
     private func playEpisode(from time: TimeInterval) {
-        Analytics.track(.episodeDetailShowNotesTimestampTapped, properties: ["episode_uuid": episode.uuid, "source": viewSource])
-
         if PlaybackManager.shared.isCurrentEpisode(uuid: episode.uuid) {
             PlaybackManager.shared.seekTo(time: time, startPlaybackAfterSeek: true)
         } else {
@@ -160,7 +156,7 @@ extension EpisodeDetailViewController: WKNavigationDelegate, SFSafariViewControl
 
     func renderShowNotes() {
         guard let showNotes = rawShowNotes else { return }
-        if showNotes == CacheServerHandler.noShowNotesMessage {
+        if showNotes == ShowInfoCoordinator.noShowNotesMessage {
             failedToLoadLabel.text = showNotes
             hideErrorMessage(hide: false)
         } else {

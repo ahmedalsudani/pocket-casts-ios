@@ -19,7 +19,6 @@ class PodcastGridCell: UICollectionViewCell {
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
 
-        NotificationCenter.default.addObserver(self, selector: #selector(podcastColorsLoaded(_:)), name: Constants.Notifications.podcastColorsDownloaded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(podcastImageCacheCleared), name: Constants.Notifications.podcastImageReCacheRequired, object: nil)
     }
 
@@ -57,14 +56,6 @@ class PodcastGridCell: UICollectionViewCell {
 
     @objc private func podcastImageCacheCleared() {
         setImage()
-    }
-
-    @objc private func podcastColorsLoaded(_ notification: Notification) {
-        guard let uuidLoaded = notification.object as? String else { return }
-
-        if uuidLoaded == podcastUuid, let podcast = DataManager.shared.findPodcast(uuid: uuidLoaded) {
-            setColors(podcast: podcast)
-        }
     }
 
     override func prepareForReuse() {

@@ -6,17 +6,14 @@ import SwiftUI
 class BookmarkDetailsViewController: ThemedHostingController<BookmarkDetailsView> {
     private let bookmarkManager: BookmarkManager
     private let playbackManager: PlaybackManager
-    private let analyticsSource: BookmarkAnalyticsSource
     private let viewModel: BookmarkDetailsViewModel
 
     init(bookmark: Bookmark,
          bookmarkManager: BookmarkManager = PlaybackManager.shared.bookmarkManager,
          playbackManager: PlaybackManager = .shared,
-         source: BookmarkAnalyticsSource = .unknown,
          opensEpisode: Bool = true) {
         self.bookmarkManager = bookmarkManager
         self.playbackManager = playbackManager
-        self.analyticsSource = source
 
         let viewModel = BookmarkDetailsViewModel(bookmark: bookmark, bookmarkManager: bookmarkManager)
         self.viewModel = viewModel
@@ -36,20 +33,6 @@ class BookmarkDetailsViewController: ThemedHostingController<BookmarkDetailsView
 
     @MainActor dynamic required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        var properties: [String: Sendable] = [
-            "has_passage": viewModel.passage?.isEmpty == false,
-            "episode_uuid": bookmark.episodeUuid
-        ]
-        if let podcastUuid = bookmark.podcastUuid {
-            properties["podcast_uuid"] = podcastUuid
-        }
-
-        Analytics.track(.bookmarkDetailsShown, source: analyticsSource, properties: properties)
     }
 
     override func viewDidLoad() {
@@ -74,7 +57,7 @@ private extension BookmarkDetailsViewController {
     func play() {
         Task {
             do {
-                try await playbackManager.playBookmark(bookmark, source: analyticsSource)
+                try await playbackManager.playBookmark(bookmark)
             } catch {
                 HapticsHelper.triggerErrorHaptic()
                 Toast.show(L10n.discoverEpisodeFailToLoad)
@@ -111,8 +94,7 @@ private extension BookmarkDetailsViewController {
         let controller = BookmarkEditTitleViewController(manager: bookmarkManager,
                                                          bookmark: bookmark,
                                                          state: .updating,
-                                                         style: .themed,
-                                                         source: analyticsSource) { [weak self] _ in
+                                                         style: .themed) { [weak self] _ in
             self?.viewModel.refresh()
         }
 
@@ -122,9 +104,7 @@ private extension BookmarkDetailsViewController {
     func share() {
         guard let episode = viewModel.episode as? Episode else { return }
 
-        Analytics.track(.bookmarkShareTapped, source: analyticsSource, properties: ["podcast_uuid": episode.podcastUuid, "episode_uuid": bookmark.episodeUuid])
-
-        SharingModal.show(option: .bookmark(episode, bookmark.time), from: .bookmark, in: self)
+        SharingModal.show(option: .bookmark(episode, bookmark.time), in: self)
     }
 
     func confirmDeletion() {
@@ -132,16 +112,11 @@ private extension BookmarkDetailsViewController {
                                       message: L10n.bookmarkDeleteWarningBodySingular,
                                       preferredStyle: .alert)
 
-        alert.addAction(.init(title: L10n.cancel, style: .cancel, handler: { [analyticsSource] _ in
-            Analytics.track(.bookmarkDeleteFormDismissed, source: analyticsSource)
-        }))
+        alert.addAction(.init(title: L10n.cancel, style: .cancel))
 
-        alert.addAction(.init(title: L10n.delete, style: .destructive, handler: { [weak self, analyticsSource] _ in
-            Analytics.track(.bookmarkDeleteFormSubmitted, source: analyticsSource)
+        alert.addAction(.init(title: L10n.delete, style: .destructive, handler: { [weak self] _ in
             self?.delete()
         }))
-
-        Analytics.track(.bookmarkDeleteFormShown, source: analyticsSource)
 
         present(alert, animated: true)
     }
@@ -149,8 +124,6 @@ private extension BookmarkDetailsViewController {
     func delete() {
         Task {
             guard await bookmarkManager.remove([bookmark]) else { return }
-
-            Analytics.track(.bookmarkDeleted, source: analyticsSource)
 
             close()
         }

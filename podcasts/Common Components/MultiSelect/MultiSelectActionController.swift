@@ -102,8 +102,6 @@ class MultiSelectActionController: UIViewController, UITableViewDelegate, UITabl
         rearrangeLabel.isHidden = true
         doneButton.isHidden = true
         updateColors()
-
-        Analytics.track(.multiSelectViewOverflowMenuShown, properties: ["source": actionDelegate.multiSelectViewSource])
     }
 
     // MARK: - TableView
@@ -163,12 +161,6 @@ class MultiSelectActionController: UIViewController, UITableViewDelegate, UITabl
 
         let action = orderedActions.remove(at: fromRow)
         orderedActions.insert(action, at: toRow)
-
-        let fromName = sourceIndexPath.section == 0 ? "shelf" : "overflow_menu"
-        let toName = destinationIndexPath.section == 0 ? "shelf" : "overflow_menu"
-
-        let source = actionDelegate.multiSelectViewSource
-        Analytics.track(.multiSelectViewOverflowMenuRearrangeActionMoved, properties: ["source": source, "action": action, "moved_from": fromName, "moved_to": toName, "position": destinationIndexPath.row])
 
         // if someone has moved something into the shortcut section, move the bottom item out. Done async so that this method can return first
         if destinationIndexPath.section == shortcutSection, sourceIndexPath.section != shortcutSection {
@@ -251,8 +243,6 @@ class MultiSelectActionController: UIViewController, UITableViewDelegate, UITabl
         if let sheetController = sheetPresentationController {
             sheetController.animateChanges { sheetController.detents = [.large()] }
         }
-
-        Analytics.track(.multiSelectViewOverflowMenuRearrangeStarted, properties: ["source": actionDelegate.multiSelectViewSource])
     }
 
     @IBAction func doneTapped(_ sender: UIButton) {
@@ -260,7 +250,6 @@ class MultiSelectActionController: UIViewController, UITableViewDelegate, UITabl
         filterUnavailableActions()
         delegate.actionOrderChanged()
         dismiss(animated: true, completion: nil)
-        Analytics.track(.multiSelectViewOverflowMenuRearrangeFinished, properties: ["source": actionDelegate.multiSelectViewSource])
     }
 
     func updateColors() {

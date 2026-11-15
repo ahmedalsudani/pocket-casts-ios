@@ -9,8 +9,6 @@ enum MultiSelectHelper {
     // MARK: - Action Helpers
 
     static func performAction(_ action: MultiSelectAction, actionDelegate: MultiSelectActionDelegate, view: UIView? = nil) {
-        AnalyticsEpisodeHelper.shared.currentSource = actionDelegate.multiSelectViewSource
-
         switch action {
         case .star:
             starEpisodes(actionDelegate: actionDelegate, star: true)
@@ -59,7 +57,7 @@ enum MultiSelectHelper {
             actionDelegate.multiSelectActionBegan(status: status)
         }
         Task.detached {
-            EpisodeManager.bulkSetStarred(star, episodes: selectedEpisodes, updateSyncStatus: SyncManager.isUserLoggedIn())
+            EpisodeManager.bulkSetStarred(star, episodes: selectedEpisodes, updateSyncStatus: false)
             await actionDelegate.multiSelectActionCompleted()
         }
     }
@@ -71,49 +69,15 @@ enum MultiSelectHelper {
     private static func delete(actionDelegate: MultiSelectActionDelegate) {
         guard let selectedEpisodes = actionDelegate.multiSelectedBaseEpisodes() as? [UserEpisode] else { return }
 
-        let downloadedEpisodes = selectedEpisodes.filter { $0.downloaded(pathFinder: DownloadManager.shared) }
-        let uploadedEpisodes = selectedEpisodes.filter { $0.uploaded() }
-
-        let alert: UIAlertController
-        if downloadedEpisodes.isEmpty {
-            alert = UIAlertController(title: L10n.deleteFromCloud, message: deleteFileMessage(uploadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromCloud, style: .destructive) { _ in
-                Task.detached {
-                    for episode in uploadedEpisodes {
-                        UserEpisodeManager.deleteFromCloud(episode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
+        let alert = UIAlertController(title: L10n.deleteFromDevice, message: deleteFileMessage(selectedEpisodes.count), preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: L10n.deleteFromDevice, style: .destructive) { _ in
+            Task.detached {
+                for episode in selectedEpisodes {
+                    UserEpisodeManager.deleteFromDevice(userEpisode: episode)
                 }
-            })
-        } else if uploadedEpisodes.isEmpty {
-            alert = UIAlertController(title: L10n.deleteFromDevice, message: deleteFileMessage(downloadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromDeviceOnly, style: .destructive) { _ in
-                Task.detached {
-                    for episode in downloadedEpisodes {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        } else {
-            alert = UIAlertController(title: L10n.deleteFile, message: deleteFileMessage(downloadedEpisodes.count), preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: L10n.deleteFromDeviceOnly, style: .default) { _ in
-                Task.detached {
-                    for episode in downloadedEpisodes {
-                        UserEpisodeManager.deleteFromDevice(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-            alert.addAction(UIAlertAction(title: L10n.deleteEverywhere, style: .destructive) { _ in
-                Task.detached {
-                    for episode in selectedEpisodes {
-                        UserEpisodeManager.deleteFromEverywhere(userEpisode: episode)
-                    }
-                    await actionDelegate.multiSelectActionCompleted()
-                }
-            })
-        }
+                await actionDelegate.multiSelectActionCompleted()
+            }
+        })
 
         alert.addAction(UIAlertAction(title: L10n.cancel, style: .cancel))
         actionDelegate.multiSelectPresentingViewController().present(alert, animated: true)
@@ -125,8 +89,8 @@ enum MultiSelectHelper {
         let status = selectedEpisodes.count == 1 ? L10n.multiSelectArchivingEpisodesSingular : L10n.multiSelectArchivingEpisodesPluralFormat(selectedEpisodes.count.localized())
         actionDelegate.multiSelectActionBegan(status: status)
         Task.detached {
-            EpisodeManager.bulkArchive(episodes: selectedEpisodes, removeFromPlayer: true, updateSyncFlag: SyncManager.isUserLoggedIn())
-            EpisodeManager.bulkMarkAsPlayed(episodes: selectedUserEpisodes, updateSyncFlag: SyncManager.isUserLoggedIn())
+            EpisodeManager.bulkArchive(episodes: selectedEpisodes, removeFromPlayer: true, updateSyncFlag: false)
+            EpisodeManager.bulkMarkAsPlayed(episodes: selectedUserEpisodes, updateSyncFlag: false)
             await actionDelegate.multiSelectActionCompleted()
         }
     }
@@ -175,7 +139,7 @@ enum MultiSelectHelper {
         actionDelegate.multiSelectActionBegan(status: status)
 
         Task.detached {
-            EpisodeManager.bulkMarkAsPlayed(episodes: selectedEpisodes, updateSyncFlag: SyncManager.isUserLoggedIn())
+            EpisodeManager.bulkMarkAsPlayed(episodes: selectedEpisodes, updateSyncFlag: false)
             await actionDelegate.multiSelectActionCompleted()
         }
     }
@@ -254,8 +218,6 @@ enum MultiSelectHelper {
             }
             await actionDelegate.multiSelectActionCompleted()
         }
-
-        AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
     }
 
     private static func queueEpisodes(_ episodes: [BaseEpisode], actionDelegate: MultiSelectActionDelegate) {
@@ -270,8 +232,6 @@ enum MultiSelectHelper {
             }
             await actionDelegate.multiSelectActionCompleted()
         }
-
-        AnalyticsEpisodeHelper.shared.bulkDownloadEpisodes(episodes: episodes)
     }
 
     private static func removeDownload(actionDelegate: MultiSelectActionDelegate) {
@@ -332,8 +292,7 @@ enum MultiSelectHelper {
                                          fromController: actionDelegate.multiSelectPresentingViewController(),
                                          sourceRect: sourceView.bounds,
                                          sourceView: sourceView,
-                                         showArrow: view != nil,
-                                         fromSource: .multiSelect
+                                         showArrow: view != nil
         )
     }
 
@@ -357,7 +316,7 @@ enum MultiSelectHelper {
         }
 
         let presentingVC = actionDelegate.multiSelectPresentingViewController()
-        let chooser = ManualPlaylistsChooserViewController(episodes: episodes, analyticsSource: "multi_select")
+        let chooser = ManualPlaylistsChooserViewController(episodes: episodes)
         chooser.onCompletion = { [weak actionDelegate] in
             actionDelegate?.multiSelectActionCompleted()
         }

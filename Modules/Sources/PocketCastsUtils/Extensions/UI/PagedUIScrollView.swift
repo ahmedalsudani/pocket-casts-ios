@@ -1,4 +1,4 @@
-#if !os(watchOS) && !os(tvOS)
+#if !os(watchOS)
 import UIKit
 
 /// A UIScrollView subclass that provides additional functionality for adding and managing horizontal pages.
@@ -34,14 +34,6 @@ public class PagedUIScrollView: UIScrollView {
         guard isPagingEnabled, offset.isNumeric else { return 0 }
 
         return mirroredPage(Int(offset))
-    }
-
-    public var totalPages: Int {
-        let pages = Double(contentSize.width / pageWidth)
-
-        guard isPagingEnabled, pages.isNumeric else { return 0 }
-
-        return Int(pages)
     }
 
     /// Scrolls the given page into view

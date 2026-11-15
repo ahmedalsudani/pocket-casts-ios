@@ -71,7 +71,6 @@ struct TopListenedCategoriesStory2023: ShareableStory {
                             .foregroundColor(Color(hex: "686C74"))
                     }
 
-
                 Text("\(listenedCategories[safe: index]?.totalPlayedTime.storyTimeDescription ?? "")")
                     .font(.custom("DM Sans", size: geometry.size.height * 0.018))
                     .fontWeight(.medium)
@@ -80,14 +79,6 @@ struct TopListenedCategoriesStory2023: ShareableStory {
 
             Spacer()
         }
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
     }
 
     func sharingAssets() -> [Any] {
@@ -116,7 +107,6 @@ struct CategoryStoryTextGradient: ViewModifier {
         )
     }
 }
-
 
 #if DEBUG
 struct TopListenedCategories2023_Previews: PreviewProvider {

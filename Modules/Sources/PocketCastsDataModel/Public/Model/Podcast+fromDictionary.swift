@@ -22,6 +22,12 @@ extension Podcast {
         if let url = podcastJson["url"] as? String {
             podcast.podcastUrl = url
         }
+        if let feedUrl = podcastJson["feed_url"] as? String {
+            podcast.feedUrl = feedUrl
+        }
+        if let imageUrl = podcastJson["image_url"] as? String {
+            podcast.imageURL = imageUrl
+        }
         if let description = podcastJson["description"] as? String {
             podcast.podcastDescription = description
         }

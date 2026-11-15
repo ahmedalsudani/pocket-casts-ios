@@ -8,8 +8,8 @@ struct SubscribeButtonView: View {
 
     @ObservedObject var model: SubscribeButtonModel
 
-    init(podcastUuid: String, source: AnalyticsSource, onSubscribe: (() -> Void)? = nil) {
-        self.model = SubscribeButtonModel(podcastUuid: podcastUuid, source: source, subscribeBlock: onSubscribe)
+    init(podcastUuid: String, onSubscribe: (() -> Void)? = nil) {
+        self.model = SubscribeButtonModel(podcastUuid: podcastUuid, subscribeBlock: onSubscribe)
     }
 
     var body: some View {
@@ -43,20 +43,17 @@ class SubscribeButtonModel: ObservableObject {
     @Published var isSubscribed: Bool
 
     let podcastUuid: String
-    let source: AnalyticsSource
 
     let subscribeBlock: (() -> Void)?
 
-    init(podcastUuid: String, source: AnalyticsSource, subscribeBlock: (() -> Void)?) {
+    init(podcastUuid: String, subscribeBlock: (() -> Void)?) {
         self.podcastUuid = podcastUuid
-        self.source = source
         self.subscribeBlock = subscribeBlock
         isSubscribed = DataManager.shared.findPodcast(uuid: podcastUuid) != nil
     }
 
     func subscribe() {
         ServerPodcastManager.shared.subscribe(to: podcastUuid, completion: nil)
-        Analytics.track(.podcastSubscribed, properties: ["source": source, "uuid": podcastUuid])
         subscribeBlock?()
     }
 

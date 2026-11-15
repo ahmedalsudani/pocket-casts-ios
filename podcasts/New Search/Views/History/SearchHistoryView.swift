@@ -4,7 +4,6 @@ import PocketCastsUtils
 
 struct SearchHistoryView: View {
     @EnvironmentObject var theme: Theme
-    @EnvironmentObject var searchAnalyticsHelper: SearchAnalyticsHelper
     @EnvironmentObject var searchHistory: SearchHistoryModel
     @EnvironmentObject var searchResults: SearchResultsModel
     @EnvironmentObject var displaySearch: SearchVisibilityModel
@@ -15,7 +14,6 @@ struct SearchHistoryView: View {
                 ThemeableListHeader(title: L10n.searchRecent, actionTitle: L10n.historyClearAll) {
                     withAnimation {
                         searchHistory.removeAll()
-                        searchAnalyticsHelper.trackHistoryCleared()
                     }
                 }
 

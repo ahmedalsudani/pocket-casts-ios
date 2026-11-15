@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+     xmlns:podcast="https://podcastindex.org/namespace/1.0"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Podcasting 2.0 Sample</title>
+    <link>https://example.com/p2</link>
+    <description>A podcast that uses the Podcasting 2.0 namespace.</description>
+    <itunes:author>Show Host</itunes:author>
+    <itunes:image href="https://example.com/p2/cover.jpg"/>
+    <podcast:funding url="https://example.com/p2/donate">Support the show</podcast:funding>
+    <item>
+      <title>P2 Episode One</title>
+      <guid isPermaLink="false">p2-ep1</guid>
+      <description>Episode with transcript and chapters.</description>
+      <pubDate>Wed, 01 Jan 2025 09:00:00 +0000</pubDate>
+      <enclosure url="https://example.com/p2/episodes/one.mp3" length="1000000" type="audio/mpeg"/>
+      <itunes:duration>00:30:00</itunes:duration>
+      <podcast:transcript url="https://example.com/p2/episodes/one.vtt" type="text/vtt" language="en"/>
+      <podcast:transcript url="https://example.com/p2/episodes/one.srt" type="application/x-subrip" language="en"/>
+      <podcast:chapters url="https://example.com/p2/episodes/one.chapters.json" type="application/json+chapters"/>
+    </item>
+  </channel>
+</rss>

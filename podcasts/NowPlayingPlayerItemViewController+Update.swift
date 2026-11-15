@@ -2,7 +2,6 @@ import Foundation
 import PocketCastsServer
 import PocketCastsUtils
 import PocketCastsDataModel
-import SafariServices
 
 extension NowPlayingPlayerItemViewController {
     func addObservers() {
@@ -25,10 +24,8 @@ extension NowPlayingPlayerItemViewController {
 
         addCustomObserver(Constants.Notifications.sleepTimerChanged, selector: #selector(sleepTimerUpdated))
         addCustomObserver(Constants.Notifications.playerActionsUpdated, selector: #selector(reloadShelfActions))
-        #if !APPCLIP
         addCustomObserver(Constants.Notifications.episodeStarredChanged, selector: #selector(reloadShelfActions))
         addCustomObserver(Constants.Notifications.episodeDownloadStatusChanged, selector: #selector(reloadShelfActions))
-        #endif
     }
 
     @objc private func playbackTrackChanged() {
@@ -112,9 +109,7 @@ extension NowPlayingPlayerItemViewController {
         timeSlider.popupColor = ThemeColor.playerContrast06()
         timeSlider.popupTextColor = ThemeColor.playerContrast01()
 
-        #if !APPCLIP
         chromecastBtn.activeTintColor = activeShelfButtonTintColor
-        #endif
     }
 
     func updatePlayPauseButton(isPlaying: Bool) {
@@ -162,11 +157,8 @@ extension NowPlayingPlayerItemViewController {
             return
         }
 
-        // Current-chapter detection keys off the raw `startTime`, so the playhead
-        // can be inside the chapter's reference window but before its resolved
-        // playback start — clamp to [0, duration] so the ring can't run backwards
-        // or overshoot.
-        let remainingTime = min(chapter.duration, max(0, chapter.duration + chapter.effectiveStartTime - playheadPosition))
+        // Clamp to [0, duration] so the ring can't run backwards or overshoot.
+        let remainingTime = min(chapter.duration, max(0, chapter.duration + chapter.startTime.seconds - playheadPosition))
         chapterTimeLeftLabel.text = TimeFormatter.shared.singleUnitFormattedShortestTime(time: remainingTime)
         let percentageCompleted = 1 - (remainingTime / chapter.duration)
         chapterProgress.startingAngle = CGFloat((percentageCompleted * 360) - 90)
@@ -215,9 +207,8 @@ extension NowPlayingPlayerItemViewController {
     }
 
     func showError(_ error: PlaybackManager.PlaybackError, dismissAfter seconds: TimeInterval?) {
-        AnalyticsPlaybackHelper.shared.playbackErrorShown(playerSource: .fullPlayer)
         // Move error container in view
-        errorLabel.attributedText = error.shortUserAttributedMessage(mainColor: ThemeColor.playerContrast02(), interactiveColor: ThemeColor.primaryInteractive01())
+        errorLabel.attributedText = error.shortUserAttributedMessage(mainColor: ThemeColor.playerContrast02())
         errorContainer.layoutIfNeeded()
         errorBottomSpacing.constant = 0
         playerBottomSpacing.constant = 16
@@ -246,20 +237,6 @@ extension NowPlayingPlayerItemViewController {
             [weak self] in
             self?.view.layoutIfNeeded()
         }
-    }
-
-    @objc func errorTapped() {
-        guard let error  = PlaybackManager.shared.activeError,
-              let url = error.userAction
-        else {
-            return
-        }
-        AnalyticsPlaybackHelper.shared.playbackErrorTapped(playerSource: .fullPlayer)
-        #if !APPCLIP
-        let safariViewController = SFSafariViewController(with: url)
-        safariViewController.modalPresentationStyle = .formSheet
-        self.present(safariViewController, animated: true, completion: nil)
-        #endif
     }
 
     func updateProvisionalChapterInfoForTime(time: TimeInterval) {

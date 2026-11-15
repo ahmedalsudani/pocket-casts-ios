@@ -22,9 +22,8 @@ final class PlayerLargeScreenLayout {
     /// The transcript as the first tab when the tabs are next to Now Playing. When they're
     /// paged, the transcript covers Now Playing instead (`transcriptsItem`).
     var transcriptTab: TranscriptViewController?
-    var transcriptPaywall: GeneratedTranscriptsPremiumOverlay?
     var showingTranscript = false
-    var transcriptAvailability: (episodeUuid: String, isAvailable: Bool, hasGeneratedTranscripts: Bool)?
+    var transcriptAvailability: (episodeUuid: String, isAvailable: Bool)?
 
     /// The tab picked for an episode, selected again when the tabs are rebuilt, for example
     /// after rotating to the paged layout and back.
@@ -294,7 +293,7 @@ extension PlayerContainerViewController {
     }
 
     /// The tab to select after rebuilding the tabs. Next to Now Playing, it's the one picked for
-    /// the episode, or else the transcript when it can be read without Plus, or else Details.
+    /// the episode, or else the transcript when one is available, or else Details.
     /// Paged with Now Playing, it's always Now Playing.
     private func largeScreenTabIndex(for episode: BaseEpisode) -> Int {
         guard let layout = largeScreenLayout, layout.isSplit else { return 0 }
@@ -336,7 +335,6 @@ extension PlayerContainerViewController {
         }
 
         if let transcriptTab = largeScreenLayout?.transcriptTab, transcriptTab.parent != nil {
-            removeLargeScreenTranscriptPaywall()
             transcriptTab.willBeRemovedFromPlayer()
             transcriptTab.willMove(toParent: nil)
             transcriptTab.view.removeFromSuperview()
@@ -358,9 +356,6 @@ extension PlayerContainerViewController {
         transcriptTab.containerDelegate = self
         transcriptTab.view.translatesAutoresizingMaskIntoConstraints = false
         transcriptTab.view.maximumContentSizeCategory = Self.largeScreenMaximumContentSizeCategory
-        transcriptTab.showGeneratedTranscriptsPremiumOverlay = { [weak self] in
-            self?.showLargeScreenTranscriptPaywall()
-        }
         layout.transcriptTab = transcriptTab
         return transcriptTab
     }
@@ -373,16 +368,15 @@ extension PlayerContainerViewController {
         if let availability = layout.transcriptAvailability, availability.episodeUuid == episode.uuid {
             return availability.isAvailable
         }
-        layout.transcriptAvailability = (episode.uuid, false, false)
+        layout.transcriptAvailability = (episode.uuid, false)
         episode.checkTranscriptAvailability()
         return false
     }
 
-    /// Whether the episode has a transcript that isn't behind the Plus paywall.
+    /// Whether the episode is known to have a transcript.
     private func canReadLargeScreenTranscript(of episode: BaseEpisode) -> Bool {
-        guard let availability = largeScreenLayout?.transcriptAvailability,
-              availability.episodeUuid == episode.uuid, availability.isAvailable else { return false }
-        return !(availability.hasGeneratedTranscripts && TranscriptViewController.generatedTranscriptsRequirePlus)
+        guard let availability = largeScreenLayout?.transcriptAvailability else { return false }
+        return availability.episodeUuid == episode.uuid && availability.isAvailable
     }
 
     @objc private func largeScreenTranscriptAvailabilityDidChange(_ notification: Notification) {
@@ -391,55 +385,14 @@ extension PlayerContainerViewController {
               let isAvailable = notification.userInfo?["isAvailable"] as? Bool,
               episodeUuid == PlaybackManager.shared.currentEpisode?.uuid else { return }
 
-        let hasGeneratedTranscripts = notification.userInfo?["hasGeneratedTranscripts"] as? Bool ?? false
-        layout.transcriptAvailability = (episodeUuid, isAvailable, hasGeneratedTranscripts)
+        layout.transcriptAvailability = (episodeUuid, isAvailable)
         updateLargeScreenTabs(force: false)
-    }
-
-    /// Covers the transcript tab, not the whole player, with the Plus paywall for generated
-    /// transcripts. Closing it moves on to the next tab rather than revealing the transcript.
-    private func showLargeScreenTranscriptPaywall() {
-        guard let layout = largeScreenLayout, layout.transcriptPaywall == nil,
-              let transcriptTab = layout.transcriptTab, transcriptTab.parent != nil,
-              let transcriptView = transcriptTab.view else { return }
-
-        let paywall = GeneratedTranscriptsPremiumOverlay(playbackManager: PlaybackManager.shared)
-        paywall.largeScreenBackground = artworkBackground
-        paywall.view.translatesAutoresizingMaskIntoConstraints = false
-        paywall.dismissTranscript = { [weak self] in
-            guard let self, let index = self.tabsView.tabs.firstIndex(of: .transcript), index + 1 < self.tabsView.tabs.count else { return }
-            self.didSwitchToTab(index: index + 1)
-        }
-        paywall.purchaseSuccessfull = { [weak self] in
-            self?.removeLargeScreenTranscriptPaywall()
-        }
-
-        transcriptTab.addChild(paywall)
-        transcriptView.addSubview(paywall.view)
-        paywall.view.anchorToAllSidesOf(view: transcriptView)
-        paywall.didMove(toParent: transcriptTab)
-        paywall.didAppear()
-        layout.transcriptPaywall = paywall
-    }
-
-    private func removeLargeScreenTranscriptPaywall() {
-        guard let layout = largeScreenLayout, let paywall = layout.transcriptPaywall else { return }
-
-        paywall.didDisappear()
-        paywall.willMove(toParent: nil)
-        paywall.view.removeFromSuperview()
-        paywall.removeFromParent()
-        layout.transcriptPaywall = nil
     }
 
     /// Stops the transcript tab (its display link keeps it alive otherwise) once the player is gone.
     func largeScreenViewDidDisappear() {
         guard isBeingDismissed, let transcriptTab = largeScreenLayout?.transcriptTab, transcriptTab.parent != nil else { return }
 
-        if tabsView.tabs[safe: tabsView.currentTab] == .transcript {
-            transcriptTab.didDisappear()
-        }
-        removeLargeScreenTranscriptPaywall()
         transcriptTab.willBeRemovedFromPlayer()
     }
 

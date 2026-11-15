@@ -40,7 +40,6 @@ class StarredViewController: PCViewController {
             starredTable.endUpdates()
             insetAdjuster.isMultiSelectEnabled = isMultiSelectEnabled
             if isMultiSelectEnabled {
-                Analytics.track(.starredMultiSelectEntered)
                 multiSelectFooter.setSelectedCount(count: selectedEpisodes.count)
                 multiSelectFooterBottomConstraint.constant = Constants.effectiveFooterViewPadding
                 if let selectedIndexPath = longPressMultiSelectIndexPath {
@@ -48,7 +47,6 @@ class StarredViewController: PCViewController {
                     longPressMultiSelectIndexPath = nil
                 }
             } else {
-                Analytics.track(.starredMultiSelectExited)
                 selectedEpisodes.removeAll()
             }
         }
@@ -79,50 +77,8 @@ class StarredViewController: PCViewController {
         (view as? ThemeableView)?.style = .primaryUi02
         setupNavBar()
         insetAdjuster.setupInsetAdjustmentsForMiniPlayer(scrollView: starredTable)
-        if SyncManager.isUserLoggedIn() {
-            refreshEpisodesFromServer(animated: false)
-        } else {
-            refreshEpisodesFromDatabase(animated: false)
-        }
+        refreshEpisodesFromDatabase(animated: false)
         addEventObservers()
-        Analytics.track(.starredShown)
-    }
-
-    func refreshEpisodesFromServer(animated: Bool) {
-        loadingIndicator.isHidden = false
-        loadingIndicator.startAnimating()
-        refreshQueue.addOperation {
-            ApiServerHandler.shared.retrieveStarred { episodes in
-                guard let episodes else {
-                    DispatchQueue.main.sync {
-                        self.loadingIndicator.stopAnimating()
-                    }
-
-                    return
-                }
-
-                let oldData = self.episodes
-                var newData = [ListEpisode]()
-                for episode in episodes {
-                    newData.append(ListEpisode(episode: episode, tintColor: AppTheme.appTintColor))
-                }
-
-                DispatchQueue.main.sync { [weak self] in
-                    guard let strongSelf = self else { return }
-                    strongSelf.loadingIndicator.stopAnimating()
-                    strongSelf.starredTable.isHidden = (newData.isEmpty)
-                    if animated {
-                        let changeSet = StagedChangeset(source: oldData, target: newData)
-                        strongSelf.starredTable.reload(using: changeSet, with: .none, setData: { data in
-                            strongSelf.episodes = data
-                        })
-                    } else {
-                        strongSelf.episodes = newData
-                        strongSelf.starredTable.reloadData()
-                    }
-                }
-            }
-        }
     }
 
     func refreshEpisodesFromDatabase(animated: Bool) {
@@ -187,13 +143,5 @@ class StarredViewController: PCViewController {
         }
 
         self.contentUnavailableConfiguration = config
-    }
-}
-
-// MARK: - Analytics
-
-extension StarredViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .starred
     }
 }

@@ -1,6 +1,5 @@
 import PocketCastsUtils
 import PocketCastsDataModel
-import PocketCastsServer
 import UIKit
 
 class ColorManager {
@@ -11,21 +10,11 @@ class ColorManager {
     private let defaultServerLightTint = "#F44336"
     private let defaultServerDarkTint = "#C62828"
 
-    // the amount of time to leave between color refresh attempts. This is quite low (30 min) because we write out defaults for shows that are missing artwork, so this should always be present
-    private let minTimeBetweenColorRefreshAttempts = 30.minutes
-
     private let currentColorVersion = 4 as Int32
-
-    private let colorDownloadQueue = OperationQueue()
-
-    private let lock = NSObject()
-    private var downloadingPodcasts = [String]()
 
     static let shared = ColorManager()
 
-    private init() {
-        colorDownloadQueue.maxConcurrentOperationCount = 5
-    }
+    private init() {}
 
     class func backgroundColor(for podcast: Podcast) -> UIColor {
         ColorManager.shared.backgroundColor(for: podcast)
@@ -38,18 +27,6 @@ class ColorManager {
         return ColorManager.shared.backgroundColor(for: podcast)
     }
 
-    class func darkThemeTintColor(forPodcastUuid uuid: String, completion: @escaping ((UIColor) -> Void)) {
-        CacheServerHandler.shared.loadPodcastColors(podcastUuid: uuid, allowCachedVersion: true, completion: { _, _, darkThemeTint in
-            guard let darkThemeTint else {
-                completion(ColorManager.shared.defaultDarkTintColor)
-
-                return
-            }
-
-            completion(UIColor(hex: darkThemeTint))
-        })
-    }
-
     class func lightThemeTint(for podcast: Podcast, defaultColor: UIColor? = nil) -> UIColor {
         ColorManager.shared.lightThemeTint(for: podcast, defaultColor: defaultColor)
     }
@@ -58,18 +35,10 @@ class ColorManager {
         ColorManager.shared.darkThemeTint(for: podcast, defaultColor: defaultColor)
     }
 
-    func updateColorsIfRequired(_ podcast: Podcast) {
-        if podcast.colorVersion < currentColorVersion {
-            scheduleColorDownload(podcast)
-        }
-    }
-
     private func backgroundColor(for podcast: Podcast) -> UIColor {
         if let colorStr = podcast.backgroundColor, podcast.colorVersion == currentColorVersion {
             return UIColor(hex: colorStr)
         }
-
-        updateColorsIfRequired(podcast)
 
         return defaultBackgroundColor
     }
@@ -83,8 +52,6 @@ class ColorManager {
             return UIColor(hex: colorStr)
         }
 
-        updateColorsIfRequired(podcast)
-
         return defaultColor ?? defaultLightTintColor
     }
 
@@ -97,89 +64,6 @@ class ColorManager {
             return UIColor(hex: colorStr)
         }
 
-        updateColorsIfRequired(podcast)
-
         return defaultColor ?? defaultDarkTintColor
-    }
-
-    private func removeDownloadingUuid(_ podcastUuid: String) {
-        objc_sync_enter(lock)
-
-        if let removeIndex = downloadingPodcasts.firstIndex(of: podcastUuid) {
-            downloadingPodcasts.remove(at: removeIndex)
-        }
-
-        objc_sync_exit(lock)
-    }
-
-    private func addDownloadingUuid(_ podcastUuid: String) -> Bool {
-        objc_sync_enter(lock)
-        defer { objc_sync_exit(lock) }
-
-        if downloadingPodcasts.contains(podcastUuid) {
-            return false
-        }
-
-        downloadingPodcasts.append(podcastUuid)
-
-        return true
-    }
-
-    private func scheduleColorDownload(_ podcast: Podcast) {
-        if !addDownloadingUuid(podcast.uuid) { return }
-
-        // make sure we don't re-download in a short period of time
-        if podcast.lastColorDownloadDate != nil, abs(podcast.lastColorDownloadDate!.timeIntervalSinceNow) < minTimeBetweenColorRefreshAttempts {
-            removeDownloadingUuid(podcast.uuid)
-
-            return // not enough time since we last tried to load colors for this podcast
-        }
-
-        let podcastUuid = podcast.uuid
-        colorDownloadQueue.addOperation { [weak self] in
-            guard let strongSelf = self else { return }
-
-            // we set this up so that we can wait for the async request to finish before returning out of thread
-            let dispatchGroup = DispatchGroup()
-            dispatchGroup.enter()
-
-            CacheServerHandler.shared.loadPodcastColors(podcastUuid: podcastUuid, allowCachedVersion: false, completion: { backgroundColor, lightThemeTint, darkThemeTint in
-                guard let backgroundColor, let lightThemeTint, let darkThemeTint else {
-                    strongSelf.handleDownloadError(podcastUuid: podcastUuid)
-                    dispatchGroup.leave()
-
-                    return
-                }
-
-                if let podcast = DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
-                    podcast.backgroundColor = backgroundColor
-                    podcast.primaryColor = lightThemeTint
-                    podcast.secondaryColor = darkThemeTint
-                    podcast.colorVersion = strongSelf.currentColorVersion
-                    podcast.lastColorDownloadDate = Date()
-                    DataManager.shared.save(podcast: podcast)
-
-                    strongSelf.colorsDidSave(podcastUuid: podcastUuid)
-                }
-                dispatchGroup.leave()
-            })
-
-            dispatchGroup.wait()
-        }
-    }
-
-    private func colorsDidSave(podcastUuid: String) {
-        removeDownloadingUuid(podcastUuid)
-
-        NotificationCenter.postOnMainThread(notification: Constants.Notifications.podcastColorsDownloaded, object: podcastUuid)
-    }
-
-    private func handleDownloadError(podcastUuid: String) {
-        if let podcast = DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
-            podcast.lastColorDownloadDate = Date()
-            DataManager.shared.save(podcast: podcast)
-        }
-
-        removeDownloadingUuid(podcastUuid)
     }
 }

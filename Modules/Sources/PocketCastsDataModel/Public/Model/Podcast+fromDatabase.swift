@@ -59,6 +59,7 @@ extension Podcast {
         podcast.fundingURL = rs.string(forColumn: "fundingURL")
         podcast.isExplicit = rs.bool(forColumn: "isExplicit")
         podcast.networkListId = rs.string(forColumn: "networkListId")
+        podcast.feedUrl = rs.string(forColumn: "feedUrl")
 
         return podcast
     }

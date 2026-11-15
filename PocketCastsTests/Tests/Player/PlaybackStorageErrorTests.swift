@@ -36,6 +36,5 @@ final class PlaybackStorageErrorTests: XCTestCase {
         XCTAssertEqual(error.userMessage, L10n.playerErrorNotEnoughStorage)
         XCTAssertEqual(error.shortUserMessage, L10n.playerErrorShortNotEnoughStorage)
         XCTAssertNotEqual(error.userMessage, L10n.playerErrorInternetConnection)
-        XCTAssertEqual(error.analyticsDetail, "not_enough_storage")
     }
 }

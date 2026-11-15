@@ -138,44 +138,6 @@ final class UpNextDataManagerTests: DataManagerTestCase {
 
     // MARK: - deleteAllUpNextEpisodesNotIn Tests
 
-    func testDeleteAllUpNextEpisodesNotInKeepsMatchingEpisodes() throws {
-        try runWithDataManager { dataManager in
-            let podcast = self.createTestPodcast(dataManager: dataManager)
-            let keep1 = self.createTestEpisode(uuid: "keep-1", podcast: podcast, dataManager: dataManager)
-            let keep2 = self.createTestEpisode(uuid: "keep-2", podcast: podcast, dataManager: dataManager)
-            let delete1 = self.createTestEpisode(uuid: "delete-1", podcast: podcast, dataManager: dataManager)
-            let delete2 = self.createTestEpisode(uuid: "delete-2", podcast: podcast, dataManager: dataManager)
-
-            self.addToUpNextBottom(episodeUuid: keep1.uuid, title: keep1.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
-            self.addToUpNextBottom(episodeUuid: keep2.uuid, title: keep2.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
-            self.addToUpNextBottom(episodeUuid: delete1.uuid, title: delete1.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
-            self.addToUpNextBottom(episodeUuid: delete2.uuid, title: delete2.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
-
-            dataManager.deleteAllUpNextEpisodesNotIn(uuids: ["keep-1", "keep-2"])
-
-            let remaining = dataManager.allUpNextPlaylistEpisodes()
-            XCTAssertEqual(remaining.count, 2, "Should keep 2 episodes")
-            let uuids = remaining.map { $0.episodeUuid }
-            XCTAssertTrue(uuids.contains("keep-1"), "Should contain keep-1")
-            XCTAssertTrue(uuids.contains("keep-2"), "Should contain keep-2")
-        }
-    }
-
-    func testDeleteAllUpNextEpisodesNotInWithEmptyArrayDeletesAll() throws {
-        try runWithDataManager { dataManager in
-            let podcast = self.createTestPodcast(dataManager: dataManager)
-            let episode1 = self.createTestEpisode(podcast: podcast, dataManager: dataManager)
-            let episode2 = self.createTestEpisode(podcast: podcast, dataManager: dataManager)
-
-            self.addToUpNextBottom(episodeUuid: episode1.uuid, title: episode1.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
-            self.addToUpNextBottom(episodeUuid: episode2.uuid, title: episode2.title ?? "", podcastUuid: podcast.uuid, dataManager: dataManager)
-
-            dataManager.deleteAllUpNextEpisodesNotIn(uuids: [])
-
-            XCTAssertEqual(dataManager.allUpNextPlaylistEpisodes().count, 0, "Should delete all when empty array")
-        }
-    }
-
     // MARK: - deleteAllUpNextEpisodesIn Tests
 
     func testDeleteAllUpNextEpisodesInDeletesMatchingEpisodes() throws {

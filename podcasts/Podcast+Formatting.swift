@@ -24,16 +24,6 @@ extension Podcast {
         return frequency.localizedCapitalized
     }
 
-    func displayableExpiryLanguage(expiryDate: Date) -> String {
-        let dateStr = DateFormatHelper.shared.longLocalizedFormat(expiryDate)
-
-        if licensing == PodcastLicensing.deleteEpisodesAfterExpiry.rawValue {
-            return expiryDate.timeIntervalSinceNow < 0 ? L10n.podcastAccessEnded(dateStr) : L10n.podcastAccessEnds(dateStr)
-        } else {
-            return expiryDate.timeIntervalSinceNow < 0 ? L10n.podcastUpdatesEnded(dateStr) : L10n.podcastUpdatesEnds(dateStr)
-        }
-    }
-
     func displayableNextEpisodeDate() -> String? {
         guard let nextEpisodeAt = estimatedNextEpisode else { return nil }
 

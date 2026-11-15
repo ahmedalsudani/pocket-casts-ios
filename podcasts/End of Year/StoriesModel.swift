@@ -1,5 +1,4 @@
 import Combine
-import PocketCastsServer
 import SwiftUI
 import EndOfYear
 
@@ -38,8 +37,6 @@ class StoriesModel: ObservableObject {
 
     let shareAlertState: StoriesShareAlertState
 
-    let activeTier: () -> SubscriptionTier
-
     private let dataSource: StoriesDataSource
     private let publisher: Timer.TimerPublisher
     let configuration: StoriesConfiguration
@@ -53,12 +50,6 @@ class StoriesModel: ObservableObject {
     }
 
     private var loadingCancellable: Cancellable?
-
-    private var currentStoryIdentifier: String = ""
-
-    private var currentStoryIsPlus = false
-
-    private var manuallyChanged = false
 
     private var currentStory: Story?
 
@@ -85,14 +76,12 @@ class StoriesModel: ObservableObject {
     init(
         dataSource: StoriesDataSource,
         configuration: StoriesConfiguration,
-        progressModel: StoriesProgressModel = .shared,
-        activeTier: @autoclosure @escaping () -> SubscriptionTier = SubscriptionHelper.activeTier
+        progressModel: StoriesProgressModel = .shared
     ) {
         self.dataSource = dataSource
         self.configuration = configuration
         self.progressModel = progressModel
         self.publisher = Timer.publish(every: 0.01, on: .main, in: .default)
-        self.activeTier = activeTier
         self.shareAlertState = StoriesShareAlertState()
         self.progressModel.progress = progress
 
@@ -115,7 +104,6 @@ class StoriesModel: ObservableObject {
             let isReady = await dataSource.refresh()
             if configuration.loadingIsTheFirstStory, progress >= 1 {
                 currentStoryIndex = 1
-                Analytics.track(.endOfYearStoryShown, story: "cover")
             }
             self.isReady = isReady
             failed = !isReady
@@ -156,20 +144,13 @@ class StoriesModel: ObservableObject {
                     self.currentStoryIndex = 0
                 }
                 else if self.configuration.closeAndDismissAfterFinished {
-                    Analytics.track(.endOfYearStoriesDismissed, properties: ["source": "auto_progress"])
                     self.stopAndDismiss()
                 }
                 else {
                     self.pause()
                 }
             } else if currentStory != self.currentStoryIndex {
-                if self.shouldSkipPlusStories() {
-                    newProgress = Double(currentStory + self.numberOfPlusStoriesAfterTheCurrentOne())
-                    self.currentStoryIndex = currentStory + self.numberOfPlusStoriesAfterTheCurrentOne()
-                } else {
-                    self.currentStoryIndex = currentStory
-                }
-                self.manuallyChanged = false
+                self.currentStoryIndex = currentStory
             }
 
             self.progress = newProgress
@@ -181,9 +162,7 @@ class StoriesModel: ObservableObject {
     func story(index: Int) -> AnyView {
         let story = dataSource.story(for: index)
 
-        // Only trigger onAppear if the story is not plus or user is paid
-        // Otherwise, the paywall appears in front of the story
-        if currentStory?.identifier != story.identifier, !story.plusOnly || isPaidUser() {
+        if currentStory?.identifier != story.identifier {
             story.onAppear()
             if story.shouldPause {
                 pause()
@@ -191,9 +170,6 @@ class StoriesModel: ObservableObject {
         }
 
         currentStory = story
-
-        currentStoryIdentifier = story.identifier
-        currentStoryIsPlus = story.plusOnly
         return AnyView(story)
     }
 
@@ -214,8 +190,6 @@ class StoriesModel: ObservableObject {
             return nil
         }
 
-        story.willShare()
-
         // If any of the assets have additional handlers then make sure we add them to the array
         return story.sharingAssets().flatMap {
             if let item = $0 as? ShareableMetadataDataSource {
@@ -234,16 +208,8 @@ class StoriesModel: ObservableObject {
         guard isReady, numberOfStories > 0 else {
             return
         }
-        let nextNonPlus: Int
-        if EndOfYear.Year.y2025 == EndOfYear.currentYear {
-            nextNonPlus = Int(progress.rounded(.down)) + numberOfPlusStoriesAfterTheCurrentOne() + 1
-        } else {
-            nextNonPlus = currentStoryIsPlus ? Int(progress.rounded(.down)) + numberOfPlusStoriesAfterTheCurrentOne() + 1: 0
-        }
 
-        manuallyChanged = true
-
-        progress = min(Double(numberOfStories), Double(max(nextNonPlus, Int(progress) + 1)))
+        progress = min(Double(numberOfStories), Double(Int(progress) + 1))
     }
 
     func previous() {
@@ -251,46 +217,7 @@ class StoriesModel: ObservableObject {
             return
         }
 
-        let previousNonPlus: Int
-        if EndOfYear.Year.y2025 == EndOfYear.currentYear {
-            previousNonPlus = currentStoryIndex - numberOfPlusStoriesBeforeTheCurrentOne() - 1
-        } else {
-            previousNonPlus = currentStoryIndex - numberOfPlusStoriesBeforeTheCurrentOne()
-        }
-
-        manuallyChanged = true
-
-        progress = max(0, Double(min(previousNonPlus, Int(progress) - 1)))
-    }
-
-    func numberOfPlusStoriesBeforeTheCurrentOne() -> Int {
-        guard !isPaidUser() else {
-            return 0
-        }
-
-        var currentStory = currentStoryIndex
-        var numberOfStoriesToSkip = 0
-        while currentStory > 0 && dataSource.story(for: currentStory - 1).plusOnly {
-            numberOfStoriesToSkip += 1
-            currentStory -= 1
-        }
-
-        return numberOfStoriesToSkip
-    }
-
-    func numberOfPlusStoriesAfterTheCurrentOne() -> Int {
-        guard !isPaidUser() else {
-            return 0
-        }
-
-        var currentStory = currentStoryIndex
-        var numberOfStoriesToSkip = 0
-        while currentStory + 1 < numberOfStories && dataSource.story(for: currentStory + 1).plusOnly {
-            numberOfStoriesToSkip += 1
-            currentStory += 1
-        }
-
-        return numberOfStoriesToSkip
+        progress = max(0, Double(min(currentStoryIndex - 1, Int(progress) - 1)))
     }
 
     func pause() {
@@ -309,7 +236,7 @@ class StoriesModel: ObservableObject {
         guard let assets = sharingAssets() else { return }
 
         pause()
-        EndOfYear.share(assets: assets, model: self, storyIdentifier: currentStoryIdentifier, onDismiss: { [weak self] in
+        EndOfYear.share(assets: assets, model: self, onDismiss: { [weak self] in
             self?.start()
         })
     }
@@ -317,17 +244,6 @@ class StoriesModel: ObservableObject {
     func stopAndDismiss() {
         pause()
         NavigationManager.shared.dismissPresentedViewController()
-    }
-
-    func shouldShowUpsell() -> Bool {
-        if case EndOfYear.Year.y2025 = EndOfYear.currentYear {
-            return false
-        }
-        return currentStoryIsPlus && activeTier() == .none
-    }
-
-    func paywallView() -> some View {
-        dataSource.paywallView()
     }
 
     func overlaidShareView() -> AnyView? {
@@ -356,10 +272,6 @@ class StoriesModel: ObservableObject {
 
     func shouldShowDismissButton() -> Bool {
         configuration.shouldShowDismissButton
-    }
-
-    func recordPlaybackShare(properties: [String: String]) {
-        Analytics.track(.playbackShared, properties: properties)
     }
 }
 
@@ -399,41 +311,8 @@ private extension StoriesModel {
                 guard let self else { return }
                 pause()
                 screenshotTaken = true
-
-                if dataSource.numberOfStories > 0, dataSource.shareableStory(for: currentStoryIndex) != nil {
-                    let year = EndOfYear.currentYear.literalValue
-                    let story = currentStoryIdentifier
-                    let properties = ["story": story, "current_year": year, "from": "screenshot"]
-                    Analytics.track(.endOfYearStoryShared, properties: properties)
-                }
             }
             .store(in: &cancellables)
-
-        if EndOfYear.currentYear != .y2025 {
-            ServerNotifications.iapPurchaseCompleted.publisher()
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.refresh()
-            }
-            .store(in: &cancellables)
-        }
-    }
-
-    func isPaidUser() -> Bool {
-        activeTier() != .none
-    }
-
-    func nextStoryIsPlus() -> Bool {
-        if currentStoryIndex + 1 < numberOfStories {
-            return dataSource.story(for: currentStoryIndex + 1).plusOnly
-        }
-
-        return false
-    }
-
-    /// Whether some Plus stories should be skipped or not
-    func shouldSkipPlusStories() -> Bool {
-        !isPaidUser() && !manuallyChanged && currentStoryIsPlus && nextStoryIsPlus()
     }
 }
 

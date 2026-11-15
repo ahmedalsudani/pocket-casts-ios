@@ -13,7 +13,6 @@ class DownloadManager: NSObject, FilePathProtocol {
 
     static let shared: DownloadManager = {
         let manager = DownloadManager(dataManager: DataManager.shared)
-        AnalyticsEpisodeHelper.shared.setup()
         return manager
     }()
 
@@ -35,10 +34,6 @@ class DownloadManager: NSObject, FilePathProtocol {
     }
 
     let downloadAttempts = ThreadSafeDictionary<Int, DownloadAttempt>()
-
-    #if os(watchOS)
-        var pendingWatchBackgroundTask: WKURLSessionRefreshBackgroundTask?
-    #endif
 
     #if !os(watchOS)
     @MainActor
@@ -103,20 +98,12 @@ class DownloadManager: NSObject, FilePathProtocol {
     }
 
     lazy var podcastsDirectory: String = {
-#if os(tvOS)
-        let directory = (NSTemporaryDirectory() as NSString).appendingPathComponent("Documents/podcasts_non_backed_up")
-#else
         let directory = (NSHomeDirectory() as NSString).appendingPathComponent("Documents/podcasts_non_backed_up")
-#endif
         return directory
     }()
 
     private lazy var streamingBufferDirectory: String = {
-#if os(tvOS)
-        let directory = (NSTemporaryDirectory() as NSString).appendingPathComponent("Documents/podcasts_buffered")
-#else
         let directory = (NSHomeDirectory() as NSString).appendingPathComponent("Documents/podcasts_buffered")
-#endif
         return directory
     }()
 
@@ -169,18 +156,6 @@ class DownloadManager: NSObject, FilePathProtocol {
         for path in paths {
             let url = URL(fileURLWithPath: podcastsDirectory + "/" + path)
             StorageManager.updateFileProtectionToDefault(for: url)
-        }
-    }
-
-    /// Deletes the contents of the download, buffer, and temp folders (keeping the folders). Used by tvOS logout.
-    func removeAllDownloadedFiles() {
-        let folders = [podcastsDirectory, streamingBufferDirectory, tempDownloadFolder]
-        for folder in folders where !folder.isEmpty {
-            guard let contents = try? FileManager.default.contentsOfDirectory(atPath: folder) else { continue }
-            for file in contents {
-                let path = (folder as NSString).appendingPathComponent(file)
-                try? FileManager.default.removeItem(atPath: path)
-            }
         }
     }
 
@@ -275,17 +250,9 @@ class DownloadManager: NSObject, FilePathProtocol {
                 }
             }
         } else if let episode = episode as? UserEpisode {
-            ApiServerHandler.shared.uploadFilePlayRequest(episode: episode, completion: { [weak self] url in
-                guard let url else {
-                    self?.dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorTryAgain, downloadTaskId: nil, episode: episode)
-                    NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
-                    return
-                }
-
-                Task { [weak self] in
-                    await self?.performAddToQueue(episode: episode, url: url.absoluteString, previousDownloadFailed: previousDownloadFailed, fireNotification: fireNotification, autoDownloadStatus: autoDownloadStatus)
-                }
-            })
+            // a file only exists on this device, so there is nowhere to download it from
+            dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorTryAgain, downloadTaskId: nil, episode: episode)
+            NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid)
         }
     }
 
@@ -342,7 +309,7 @@ class DownloadManager: NSObject, FilePathProtocol {
             return playbackItem
         }
         var newItem: AVPlayerItem = playbackItem
-        #if !os(watchOS) && !APPCLIP && !os(tvOS)
+        #if !os(watchOS)
         if let customDelegate = downloadAndStreamEpisodes[episode.uuid] {
             // We are already downloading this episode for streaming
             FileLog.shared.addMessage("DownloadManager stream and download: skipping because we are already exporting: \(episode.uuid)")
@@ -495,8 +462,6 @@ class DownloadManager: NSObject, FilePathProtocol {
         // make sure the URL is valid and has a supported scheme: only http and https are allowed
         guard let url = downloadUrl, let scheme = url.scheme, !scheme.isEmpty, scheme.caseInsensitiveCompare("http") == .orderedSame || scheme.caseInsensitiveCompare("https") == .orderedSame else {
             dataManager.saveEpisode(downloadStatus: .downloadFailed, downloadError: L10n.downloadErrorContactAuthor, downloadTaskId: nil, episode: episode)
-
-            logDownload(episode, failure: .malformedHost)
 
             if fireNotification { NotificationCenter.postOnMainThread(notification: Constants.Notifications.episodeDownloadStatusChanged, object: episode.uuid) }
 

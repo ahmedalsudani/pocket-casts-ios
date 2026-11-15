@@ -33,17 +33,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             cell.titleLabel.style = .primaryText01
             cell.actionImage?.image = UIImage(named: "cancel")
             cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-        case .upload:
-            cell.titleLabel.text = L10n.customEpisodeUpload
-            cell.titleLabel.style = .primaryText01
-            cell.actionImage?.image = UIImage(named: "plus_upload")
-            cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-            cell.setLocked(locked: !SubscriptionHelper.hasActiveSubscription())
-        case .removeFromCloud:
-            cell.titleLabel.text = L10n.customEpisodeRemoveUpload
-            cell.titleLabel.style = .primaryText01
-            cell.actionImage?.image = UIImage(named: "remove_from_cloud")
-            cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
         case .upNext:
             cell.titleLabel.text = PlaybackManager.shared.inUpNext(episode: episode) ? L10n.removeFromUpNext : L10n.addToUpNext
             cell.titleLabel.style = .primaryText01
@@ -64,12 +53,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             cell.titleLabel.style = .support05
             cell.actionImage?.image = UIImage(named: "delete")
             cell.actionImage?.tintColor = ThemeColor.support05(for: themeOverride)
-        case .cancelUpload:
-            cell.titleLabel.text = L10n.customEpisodeCancelUpload
-            cell.titleLabel.style = .primaryText01
-            cell.actionImage?.image = UIImage(named: "cancel")
-            cell.actionImage?.tintColor = ThemeColor.primaryIcon01()
-
         case .bookmarks:
             cell.titleLabel.text = L10n.bookmarks
             cell.titleLabel.style = .primaryText01
@@ -88,46 +71,23 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
             delegate?.showBookmarks(userEpisode: episode)
 
         case .download:
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "download"])
             PlaybackActionHelper.download(episodeUuid: episode.uuid)
             close()
         case .cancelDownload:
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "cancel_download"])
             PlaybackActionHelper.stopDownload(episodeUuid: episode.uuid)
-            close()
-        case .upload:
-            if SubscriptionHelper.hasActiveSubscription() {
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "upload"])
-                PlaybackActionHelper.upload(episodeUuid: episode.uuid)
-                close()
-            } else {
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "upload_upgrade_required"])
-                close()
-                delegate?.showUpgradeRequired()
-            }
-        case .cancelUpload:
-            PlaybackActionHelper.stopUpload(episodeUuid: episode.uuid)
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "cancel_upload"])
-            close()
-        case .removeFromCloud:
-            UserEpisodeManager.deleteFromCloud(episode: episode)
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "delete_from_cloud"])
             close()
         case .upNext:
             if PlaybackManager.shared.inUpNext(episode: episode) {
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "up_next_delete"])
                 PlaybackManager.shared.removeIfPlayingOrQueued(episode: episode, fireNotification: true, userInitiated: true)
                 close()
             } else {
                 let addToUpNextPicker = OptionsPicker(title: L10n.addToUpNext.localizedUppercase)
                 let playNextAction = OptionAction(label: L10n.playNext, icon: "list_playnext") {
-                    Analytics.track(.userFileDetailOptionTapped, properties: ["option": "up_next_add_top"])
                     PlaybackManager.shared.addToUpNext(episode: self.episode, ignoringQueueLimit: true, toTop: true, userInitiated: true)
                 }
                 addToUpNextPicker.addAction(action: playNextAction)
 
                 let playLastAction = OptionAction(label: L10n.playLast, icon: "list_playlast") {
-                    Analytics.track(.userFileDetailOptionTapped, properties: ["option": "up_next_add_bottom"])
                     PlaybackManager.shared.addToUpNext(episode: self.episode, ignoringQueueLimit: true, toTop: false)
                 }
                 addToUpNextPicker.addAction(action: playLastAction)
@@ -141,22 +101,17 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
                 }
             }
         case .markAsPlayed:
-            AnalyticsEpisodeHelper.shared.currentSource = analyticsSource
 
             if episode.played() {
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "mark_unplayed"])
                 EpisodeManager.markAsUnplayed(episode: episode, fireNotification: true)
             } else {
-                Analytics.track(.userFileDetailOptionTapped, properties: ["option": "mark_played"])
                 EpisodeManager.markAsPlayed(episode: episode, fireNotification: true)
             }
             close()
         case .editDetails:
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "edit"])
             close()
             delegate?.showEdit(userEpisode: episode)
         case .delete:
-            Analytics.track(.userFileDetailOptionTapped, properties: ["option": "delete"])
             close()
             delegate?.showDeleteConfirmation(userEpisode: episode)
         }
@@ -167,14 +122,8 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
 
         if episode.queued() || episode.downloading() || episode.waitingForWifi() {
             data.insert(.cancelDownload, at: 3)
-        } else if episode.uploadQueued() || episode.uploading() || episode.uploadWaitingForWifi() {
-            data.insert(.cancelUpload, at: 3)
         } else if !episode.downloaded(pathFinder: DownloadManager.shared) {
             data.insert(.download, at: 3)
-        } else if episode.uploaded() {
-            data.insert(.removeFromCloud, at: 3)
-        } else {
-            data.insert(.upload, at: 3)
         }
         return data
     }
@@ -183,9 +132,6 @@ extension UserEpisodeDetailViewController: UITableViewDelegate, UITableViewDataS
 
     @IBAction func playPauseTapped(_ sender: UIButton) {
         playPauseButton.isPlaying = !playPauseButton.isPlaying
-
-        let option = playPauseButton.isPlaying ? "play" : "pause"
-        Analytics.track(.userFilePlayPauseButtonTapped, properties: ["option": option])
 
         if PlaybackManager.shared.isCurrentEpisode(uuid: episode.uuid) {
             // dismiss the dialog if the user hit play

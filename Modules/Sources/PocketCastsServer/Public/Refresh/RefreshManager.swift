@@ -1,10 +1,6 @@
 import Foundation
 import PocketCastsDataModel
 import PocketCastsUtils
-import UIKit
-#if os(watchOS)
-    import WatchKit
-#endif
 
 public class RefreshManager {
     public static let shared = RefreshManager()
@@ -23,44 +19,21 @@ public class RefreshManager {
         private static let minTimeBetweenRefreshes = 15.seconds
     #endif
 
-    public func syncUpNext() {
-        if !SyncManager.isUserLoggedIn() { return }
-
-        // if the user has an active subscription, there might be custom episodes in their Up Next, so grab those first
-        if SubscriptionHelper.hasActiveSubscription() {
-            refreshQueue.addOperation(RetrieveCustomFilesTask())
-        }
-        refreshQueue.addOperation(UpNextSyncTask())
-    }
-
-
-    /// Updates a podcast and all the associated information.
-    ///
-    /// Note that this will force all the episodes to be updated.
-    /// - Parameter podcast: a `Podcast` object
-    public func refresh(podcast: Podcast, from episodeUuid: String) {
-        podcast.forceRefreshEpisodeFrom = episodeUuid
-        refresh(podcasts: [podcast]) {
-            if SyncManager.isUserLoggedIn() {
-                guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
-
-                DataManager.shared.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-                podcast.forceRefreshEpisodeFrom = nil
+    /// Re-reads a single podcast's feed and adds any episodes it has that we don't. Returns whether it found any.
+    @discardableResult
+    public func refresh(podcast: Podcast) async -> Bool {
+        // only followed podcasts take part in a refresh, the others are brought up to date in place
+        guard podcast.isSubscribed() else {
+            return await withCheckedContinuation { continuation in
+                ServerPodcastManager.shared.updatePodcastIfRequired(podcast: podcast, addMissingEpisodes: true) { updated in
+                    continuation.resume(returning: updated)
+                }
             }
         }
-    }
 
-    public func refresh(podcast: Podcast, from episodeUuid: String) async {
-        podcast.forceRefreshEpisodeFrom = episodeUuid
-        await withCheckedContinuation { continuation in
-            refresh(podcasts: [podcast]) {
-                if SyncManager.isUserLoggedIn() {
-                    guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: podcast.uuid) else { return }
-
-                    DataManager.shared.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-                    podcast.forceRefreshEpisodeFrom = nil
-                }
-                continuation.resume()
+        return await withCheckedContinuation { continuation in
+            refresh(podcasts: [podcast]) { result in
+                continuation.resume(returning: result == .newData)
             }
         }
     }
@@ -80,66 +53,13 @@ public class RefreshManager {
             }
         }
 
-        refresh(podcasts: DataManager.shared.allPodcasts(includeUnsubscribed: false))
-    }
-
-    #if !os(watchOS)
-    private func refresh(podcasts: [Podcast], completion: (() -> Void)? = nil) {
         UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshStartTime)
-
-        DispatchQueue.global().async { [weak self] in
-            MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in
-                guard let self else { return }
-
-                self.processPodcastRefreshResponse(refreshResponse) { _ in
-                    completion?()
-                }
-            }
-        }
+        refresh(podcasts: DataManager.shared.allPodcasts(includeUnsubscribed: false), completion: nil)
     }
-    #endif
-
-    #if os(watchOS)
-    // Watch OS 10 has a very very very weird issue that happened after using Xcode 16:
-    // if the refresh call uses a [weak self] the system kills the app.
-    // I'm not entirely sure why that happens but removing the weak part fixes the issue.
-    // We can safely remove this method once we remove support to watchOS 10.
-    private func refresh(podcasts: [Podcast], completion: (() -> Void)? = nil) {
-        UserDefaults.standard.set(Date(), forKey: ServerConstants.UserDefaults.lastRefreshStartTime)
-
-        DispatchQueue.global().async { [self] in
-            let watchOsMajorVersion = WKInterfaceDevice.current().systemVersion.split(separator: ".")[safe: 0]
-
-            if watchOsMajorVersion == "10" {
-                // Let's not use [weak self] so the app is not killed
-                MainServerHandler.shared.refresh(podcasts: podcasts) { refreshResponse in
-                    self.processPodcastRefreshResponse(refreshResponse) { _ in
-                        completion?()
-                    }
-                }
-
-                return
-            }
-
-            MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in
-                guard let self else { return }
-
-                self.processPodcastRefreshResponse(refreshResponse) { _ in
-                    completion?()
-                }
-            }
-        }
-    }
-    #endif
 
     public func refreshPodcasts(completion: @escaping (RefreshFetchResult) -> Void) {
-        DispatchQueue.global().async { [weak self] in
-            let podcasts = DataManager.shared.allPodcasts(includeUnsubscribed: false)
-            MainServerHandler.shared.refresh(podcasts: podcasts) { [weak self] refreshResponse in
-                guard let self else { return }
-
-                self.processPodcastRefreshResponse(refreshResponse, completion: completion)
-            }
+        DispatchQueue.global().async { [self] in
+            refresh(podcasts: DataManager.shared.allPodcasts(includeUnsubscribed: false), completion: completion)
         }
     }
 
@@ -147,18 +67,20 @@ public class RefreshManager {
         refreshQueue.cancelAllOperations()
     }
 
-    private func processPodcastRefreshResponse(_ refreshResponse: PodcastRefreshResponse?, completion: ((RefreshFetchResult) -> Void)?) {
-        guard let response = refreshResponse, response.success() else {
-            FileLog.shared.addMessage("Podcast refresh failed with message: \(refreshResponse?.message ?? "none"). See previous log for more details.")
-            ServerNotificationsHelper.shared.firePodcastRefreshFailed()
-            completion?(.failed)
+    /// Fetches the feeds of the given podcasts, then queues up the work of saving what was found.
+    ///
+    /// `self` is captured strongly on purpose: this is a singleton, and watchOS 10 kills the app when a
+    /// refresh started here captures it weakly.
+    private func refresh(podcasts: [Podcast], completion: ((RefreshFetchResult) -> Void)?) {
+        FileLog.shared.addMessage("Refresh - Started")
 
-            return
+        for podcast in podcasts { // ensure podcasts have up to date latest episode uuids
+            ServerPodcastManager.shared.updateLatestEpisodeInfo(podcast: podcast, setDefaults: false)
         }
 
-        if let result = response.result {
-            let refreshOperation = RefreshOperation(result: result, completionHandler: completion)
-            refreshQueue.addOperation(refreshOperation)
+        Task { [self] in
+            let response = await LocalFeedService.shared.refresh(podcasts: podcasts)
+            refreshQueue.addOperation(RefreshOperation(result: response.result ?? RefreshResult(), completionHandler: completion))
         }
     }
 }

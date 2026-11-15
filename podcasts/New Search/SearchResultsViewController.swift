@@ -16,37 +16,22 @@ class SearchResultsViewController: UIHostingController<AnyView> {
     private let displaySearch = SearchVisibilityModel()
     private let searchHistoryModel = SearchHistoryModel.shared
     private let searchResults: SearchResultsModel
-    private let searchAnalyticsHelper: SearchAnalyticsHelper
-    private let networkNavigator: NetworkNavigator
 
-    init(source: AnalyticsSource, showLocalResults: Bool = false) {
-        searchAnalyticsHelper = SearchAnalyticsHelper(source: source)
-        self.searchResults = SearchResultsModel(analyticsHelper: searchAnalyticsHelper, showLocalResults: showLocalResults)
-        self.networkNavigator = NetworkNavigator(source: source)
+    init(showLocalResults: Bool = false) {
+        self.searchResults = SearchResultsModel(showLocalResults: showLocalResults)
         super.init(rootView: AnyView(
             SearchView()
             .setupDefaultEnvironment()
-            .environmentObject(searchAnalyticsHelper)
             .environmentObject(searchResults)
             .environmentObject(searchHistoryModel)
-            .environmentObject(networkNavigator)
             .environmentObject(displaySearch))
         )
-
-        networkNavigator.presenter = self
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func searchShown() {
-        searchAnalyticsHelper.trackShown()
-    }
-
-    func searchDismissed() {
-        searchAnalyticsHelper.trackDismissed()
-    }
 }
 
 extension SearchResultsViewController: SearchResultsDelegate {
@@ -66,11 +51,7 @@ extension SearchResultsViewController: SearchResultsDelegate {
             completion()
         }
 
-        if FeatureFlag.searchPredictive.enabled, triggeredByTimer {
-            searchResults.predictiveSearch(term: searchTerm)
-        } else {
-            searchResults.search(term: searchTerm)
-        }
+        searchResults.search(term: searchTerm)
 
         if !triggeredByTimer, !searchTerm.trim().isEmpty {
             searchHistoryModel.add(searchTerm: searchTerm)

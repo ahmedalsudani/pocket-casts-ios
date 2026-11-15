@@ -1,35 +1,24 @@
-import PocketCastsServer
 import SwiftUI
-import PocketCastsUtils
-import EndOfYear
+import UIKit
 
+/// The Discover tab. There is no catalogue to browse in this build, so the tab is a search screen:
+/// a search bar over a prompt, with the results shown on top once a search starts.
 class DiscoverCollectionViewController: PCViewController {
-
-    enum CellType: Hashable {
-        case loading(String?)
-        case noNetwork
-        case noResults
-        case empty
-        case item(DiscoverCellType.ItemType)
+    private enum Item: Hashable {
+        case searchPrompt
     }
-
-    typealias Section = Int
-    typealias Item = CellType
 
     private(set) lazy var collectionView: UICollectionView = {
         UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     }()
 
-    private(set) var dataSource: UICollectionViewDiffableDataSource<Section, Item>!
-    private var loadingContent = false
-    private(set) var discoverLayout: DiscoverLayout?
-    fileprivate var selectedCategory: DiscoverCategory?
-    private var loadingTasks: [String: Task<Void, Never>] = [:]
+    private var dataSource: UICollectionViewDiffableDataSource<Int, Item>!
 
     private(set) lazy var searchController: PCSearchBarController = {
         PCSearchBarController()
     }()
-    lazy var searchResultsController = SearchResultsViewController(source: .discover, showLocalResults: false)
+
+    lazy var searchResultsController = SearchResultsViewController(showLocalResults: false)
 
     var resultsControllerDelegate: SearchResultsDelegate {
         searchResultsController
@@ -51,20 +40,16 @@ class DiscoverCollectionViewController: PCViewController {
         handleThemeChanged()
         setupCollectionView()
         setupSearchBar()
-
         configureDataSource()
-        reloadData()
 
-        setupMiniPlayerObservers()
-        setupLoginObserver()
+        addCustomObserver(Constants.Notifications.miniPlayerDidDisappear, selector: #selector(miniPlayerStatusDidChange))
+        addCustomObserver(Constants.Notifications.miniPlayerDidAppear, selector: #selector(miniPlayerStatusDidChange))
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         searchController.beginAppearanceTransition(true, animated: animated)
         searchController.endAppearanceTransition()
-        AnalyticsHelper.navigatedToDiscover()
-        Analytics.track(.discoverShown)
 
         miniPlayerStatusDidChange()
     }
@@ -75,144 +60,27 @@ class DiscoverCollectionViewController: PCViewController {
         searchController.endAppearanceTransition()
     }
 
-    func reloadData(completion: (() -> Void)? = nil) {
-        showPageLoading()
-
-        DiscoverServerHandler.shared.discoverPage { [weak self] discoverLayout, _ in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.populateFrom(discoverLayout: discoverLayout)
-                completion?()
-            }
-        }
-    }
-
     override func handleThemeChanged() {
         collectionView.backgroundColor = ThemeColor.primaryUi02()
         collectionView.reloadData()
     }
 
-    private func checkSourceAuthentication(for item: DiscoverItem) async -> Bool {
-        return await DiscoverServerHandler.shared.checkSourceAuthentication(for: item)
-    }
-
-    func populateFrom(discoverLayout: DiscoverLayout?, selectedCategory: DiscoverCategory? = nil, shouldInclude: ((DiscoverItem) -> Bool)? = nil) {
-        self.selectedCategory = selectedCategory
-        loadingContent = false
-
-        guard let discoverLayout, let items = discoverLayout.layout, let _ = discoverLayout.regions else {
-            handleLoadFailed()
-            return
-        }
-
-        guard !items.isEmpty else {
-            handleEmptyResults()
-            return
-        }
-
-        let itemFilter = shouldInclude ?? { item in
-            item.categoryID == nil && item.shouldShowAuthenticated()
-        }
-
-        self.discoverLayout = discoverLayout
-
-        let currentRegion = Settings.discoverRegion(discoverLayout: discoverLayout)
-
-        if FeatureFlag.recommendations.enabled {
-            var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
-            snapshot.appendSections([0])
-
-            loadingTasks.values.forEach { $0.cancel() }
-            loadingTasks = [:]
-
-            for item in items {
-                let selectedCategory = item.cellType() != .categoriesSelector ? selectedCategory : nil
-
-                if itemFilter(item) && item.regions.contains(currentRegion) {
-                    if item.authenticated == true, let uuid = item.uuid {
-                        snapshot.appendItems([.loading(uuid)])
-                        loadingTasks[uuid] = Task { [weak self] in
-                            guard let self, !Task.isCancelled else { return }
-                            let isAuthenticated = await self.checkSourceAuthentication(for: item)
-                            guard !Task.isCancelled else { return }
-                            self.updateItemInSnapshot(item: item, isAuthenticated: isAuthenticated, region: currentRegion, selectedCategory: selectedCategory)
-                            self.loadingTasks.removeValue(forKey: uuid)
-                        }
-                    } else {
-                        let model = DiscoverCellModel(item: item, region: currentRegion, selectedCategory: selectedCategory)
-                        if let cellType = item.cellType() {
-                            snapshot.appendItems([.item(DiscoverCellType.ItemType(cellType: cellType, model: model))])
-                        }
-                    }
-                }
-            }
-
-            dataSource.apply(snapshot)
-        } else {
-            let snapshot = discoverLayout.layout?.makeDataSourceSnapshot(region: currentRegion, selectedCategory: selectedCategory, itemFilter: itemFilter)
-            if let snapshot {
-                dataSource.apply(snapshot)
-            }
-        }
-    }
-
-    private func updateItemInSnapshot(item: DiscoverItem, isAuthenticated: Bool, region: String, selectedCategory: DiscoverCategory?) {
-        var snapshot = dataSource.snapshot()
-
-        // Find the loading placeholder for this specific item using its UUID
-        let items = snapshot.itemIdentifiers(inSection: 0)
-        if let loadingItem = items.first(where: {
-            if case .loading(let uuid) = $0, uuid == item.uuid { return true }
-            return false
-        }) {
-            // Replace the loading placeholder with either the authenticated item or empty
-            if isAuthenticated {
-                let model = DiscoverCellModel(item: item, region: region, selectedCategory: selectedCategory)
-                if let cellType = item.cellType() {
-                    let newItem = CellType.item(DiscoverCellType.ItemType(cellType: cellType, model: model))
-                    snapshot.insertItems([newItem], beforeItem: loadingItem)
-                }
-            } else {
-                snapshot.insertItems([.empty], beforeItem: loadingItem)
-            }
-            snapshot.deleteItems([loadingItem])
-
-            dataSource.apply(snapshot)
-        }
-    }
-
-    private func showPageLoading() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
-        snapshot.appendSections([0])
-        snapshot.appendItems([CellType.loading(nil)])
-        dataSource.apply(snapshot)
-    }
-
-    private func handleLoadFailed() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
-        snapshot.appendSections([0])
-        snapshot.appendItems([CellType.noNetwork])
-        dataSource.apply(snapshot)
-    }
-
-    private func handleEmptyResults() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Item>()
-        snapshot.appendSections([0])
-        snapshot.appendItems([CellType.noResults])
-        dataSource.apply(snapshot)
-    }
-
     override var shouldAutomaticallyForwardAppearanceMethods: Bool {
-        return false
+        false
+    }
+
+    @objc private func miniPlayerStatusDidChange() {
+        let miniPlayerOffset = Constants.effectiveMiniPlayerOffset
+        collectionView.contentInset = UIEdgeInsets(top: PCSearchBarController.defaultHeight, left: 0, bottom: miniPlayerOffset, right: 0)
+        collectionView.verticalScrollIndicatorInsets = UIEdgeInsets(top: 0, left: 0, bottom: miniPlayerOffset, right: 0)
     }
 }
 
 // MARK: - Collection View
-extension DiscoverCollectionViewController {
-    private func setupCollectionView() {
-        let layout = createCompositionalLayout()
-        collectionView.collectionViewLayout = layout
-        collectionView.selfSizingInvalidation = .enabledIncludingConstraints
+
+private extension DiscoverCollectionViewController {
+    func setupCollectionView() {
+        collectionView.collectionViewLayout = createLayout()
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(collectionView)
         NSLayoutConstraint.activate([
@@ -223,137 +91,120 @@ extension DiscoverCollectionViewController {
         ])
     }
 
-    private func configureDataSource() {
-
-        let footerRegistrationCountrySummary = UICollectionView.SupplementaryRegistration<UICollectionViewListCell>(elementKind: UICollectionView.elementKindSectionFooter) { [weak self] supplementaryView, _, _ in
-            guard let self else { return }
-
-            let countrySummary = CountrySummaryViewController()
-            countrySummary.discoverLayout = self.discoverLayout
-            countrySummary.registerDiscoverDelegate(self)
-
-            supplementaryView.contentConfiguration = UIViewControllerContentConfiguration(parentViewController: self, viewController: countrySummary)
-        }
-
-        let footerRegistrationEmpty = UICollectionView.SupplementaryRegistration<UICollectionViewListCell>(elementKind: UICollectionView.elementKindSectionFooter) { supplementaryView, _, _ in
-            supplementaryView.contentConfiguration = UIHostingConfiguration {
-                EmptyView()
-            }
-        }
-
-        let registrations: [DiscoverCellType: UICollectionView.CellRegistration] = DiscoverCellType.allCases.reduce(into: [:]) { partialResult, cellType in
-            partialResult[cellType] = cellType.createCellRegistration(parentViewController: self, delegate: self)
-        }
-
-        // The cells span the safe area, which the SwiftUI content of these insets itself.
-        let loadingRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { cell, _, _ in
-            cell.contentConfiguration = ContentUnavailableConfiguration.loading()
-            cell.insetsLayoutMarginsFromSafeArea = false
-        }
-
-        let noNetworkRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { [weak self] cell, _, _ in
-            cell.contentConfiguration = ContentUnavailableConfiguration.noNetwork { [weak self] in
-                self?.reloadData()
-            }
-            cell.insetsLayoutMarginsFromSafeArea = false
-        }
-
-        let noResultsRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { cell, _, _ in
-            cell.contentConfiguration = ContentUnavailableConfiguration.noResults()
-            cell.insetsLayoutMarginsFromSafeArea = false
-        }
-
-        let emptyRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { cell, _, _ in
-            cell.contentConfiguration = ContentUnavailableConfiguration.empty()
-        }
-
-        dataSource = UICollectionViewDiffableDataSource<Section, Item>(collectionView: collectionView) { collectionView, indexPath, item in
-            switch item {
-            case .loading:
-                return collectionView.dequeueConfiguredReusableCell(using: loadingRegistration, for: indexPath, item: item)
-            case .noNetwork:
-                return collectionView.dequeueConfiguredReusableCell(using: noNetworkRegistration, for: indexPath, item: item)
-            case .noResults:
-                return collectionView.dequeueConfiguredReusableCell(using: noResultsRegistration, for: indexPath, item: item)
-            case .empty:
-                return collectionView.dequeueConfiguredReusableCell(using: emptyRegistration, for: indexPath, item: item)
-            case .item(let item):
-                let cellRegistration = registrations[item.cellType]!
-                return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: item)
-            }
-        }
-
-        dataSource.supplementaryViewProvider = { [weak self] collectionView, elementKind, indexPath in
-            guard let self else { return nil }
-
-            if elementKind == UICollectionView.elementKindSectionFooter {
-                if self.selectedCategory == nil && self.discoverLayout != nil {
-                    return collectionView.dequeueConfiguredReusableSupplementary(using: footerRegistrationCountrySummary, for: indexPath)
-                } else {
-                    return collectionView.dequeueConfiguredReusableSupplementary(using: footerRegistrationEmpty, for: indexPath)
-                }
-            }
-            return nil
-        }
-    }
-
-    private func createCompositionalLayout() -> UICollectionViewCompositionalLayout {
-        return UICollectionViewCompositionalLayout { [weak self] (_: Int,
-                                                      _: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
-            let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                  heightDimension: self?.discoverLayout == nil ? .fractionalHeight(0.8) : .estimated(100))
-
-            let item = NSCollectionLayoutItem(layoutSize: itemSize)
-            let groupSize = NSCollectionLayoutSize(widthDimension: itemSize.widthDimension,
-                                                   heightDimension: itemSize.heightDimension)
-            let group: NSCollectionLayoutGroup
-            group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-
-            let section = NSCollectionLayoutSection(group: group)
-            section.contentInsetsReference = .none
-
-            let footerSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                    heightDimension: .estimated(44))
-
-            let sectionFooter = NSCollectionLayoutBoundarySupplementaryItem(
-                layoutSize: footerSize,
-                elementKind: UICollectionView.elementKindSectionFooter,
-                alignment: .bottom
+    func configureDataSource() {
+        let searchPromptRegistration = UICollectionView.CellRegistration<UICollectionViewCell, Item> { cell, _, _ in
+            cell.contentConfiguration = ContentUnavailableConfiguration.emptyState(
+                title: L10n.searchPodcasts,
+                message: L10n.searchLabel,
+                icon: { Image("discover_noresult") }
             )
+        }
 
-            section.boundarySupplementaryItems = [sectionFooter]
+        dataSource = UICollectionViewDiffableDataSource<Int, Item>(collectionView: collectionView) { collectionView, indexPath, item in
+            collectionView.dequeueConfiguredReusableCell(using: searchPromptRegistration, for: indexPath, item: item)
+        }
 
-            return section
+        var snapshot = NSDiffableDataSourceSnapshot<Int, Item>()
+        snapshot.appendSections([0])
+        snapshot.appendItems([.searchPrompt])
+        dataSource.apply(snapshot, animatingDifferences: false)
+    }
+
+    func createLayout() -> UICollectionViewCompositionalLayout {
+        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .fractionalHeight(0.8))
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: size, subitems: [NSCollectionLayoutItem(layoutSize: size)])
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsetsReference = .none
+
+        return UICollectionViewCompositionalLayout(section: section)
+    }
+}
+
+// MARK: - Search
+
+private extension DiscoverCollectionViewController {
+    func setupSearchBar() {
+        collectionView.delegate = self // For the UIScrollViewDelegate callbacks
+
+        addCustomObserver(Constants.Notifications.tappedOnSelectedTab, selector: #selector(checkForScrollTap(_:)))
+
+        searchController.install(in: self, attachedTo: collectionView)
+        searchController.searchDebounce = Settings.podcastSearchDebounceTime()
+        searchController.searchDelegate = self
+    }
+
+    @objc func checkForScrollTap(_ notification: Notification) {
+        guard let index = notification.object as? Int, index == tabBarItem.tag else { return }
+
+        let defaultOffset = -PCSearchBarController.defaultHeight - view.safeAreaInsets.top
+        if collectionView.contentOffset.y.rounded(.down) > defaultOffset.rounded(.down) {
+            collectionView.setContentOffset(CGPoint(x: 0, y: defaultOffset), animated: true)
+        } else if searchController.cancelButtonShowing {
+            // a second tap on the tab dismisses a search that's already active
+            searchController.cancelTapped(self)
+        } else {
+            searchController.searchTextField.becomeFirstResponder()
         }
     }
 }
 
-extension DiscoverCollectionViewController: AnalyticsSourceProvider {
-    var analyticsSource: AnalyticsSource {
-        .discover
+extension DiscoverCollectionViewController: UICollectionViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard searchResultsController.view?.superview == nil else { return } // don't send scroll events while the search results are up
+
+        searchController.parentScrollViewDidScroll(scrollView)
     }
 }
 
-// MARK: - Mini Player
-extension DiscoverCollectionViewController {
-    fileprivate func setupMiniPlayerObservers() {
-        addCustomObserver(Constants.Notifications.miniPlayerDidDisappear, selector: #selector(miniPlayerStatusDidChange))
-        addCustomObserver(Constants.Notifications.miniPlayerDidAppear, selector: #selector(miniPlayerStatusDidChange))
-    }
-
-    @objc func miniPlayerStatusDidChange() {
-        let miniPlayerOffset = Constants.effectiveMiniPlayerOffset
-        collectionView.contentInset = UIEdgeInsets(top: PCSearchBarController.defaultHeight, left: 0, bottom: miniPlayerOffset, right: 0)
-        collectionView.verticalScrollIndicatorInsets = UIEdgeInsets(top: 0, left: 0, bottom: miniPlayerOffset, right: 0)
-    }
-}
-
-// MARK: - Authentication Handling
-extension DiscoverCollectionViewController {
-    fileprivate func setupLoginObserver() {
-        // Add observer for login/logout notification
-        NotificationCenter.default.addObserver(forName: .userLoginDidChange, object: nil, queue: .main) { [weak self] _ in
-            self?.reloadData()
+extension DiscoverCollectionViewController: PCSearchBarDelegate {
+    func searchDidBegin() {
+        guard let searchView = searchResultsController.view, searchView.superview == nil else {
+            return
         }
+
+        searchView.alpha = 0
+        addChild(searchResultsController)
+        // Manually drive appearance because `shouldAutomaticallyForwardAppearanceMethods` is `false`;
+        // without this the hosting controller's SwiftUI view doesn't pick up the parent's bottom safe area,
+        // so search results scroll under the mini player.
+        searchResultsController.beginAppearanceTransition(true, animated: false)
+        view.addSubview(searchView)
+        searchResultsController.didMove(toParent: self)
+
+        searchView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            searchView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            searchView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            searchView.topAnchor.constraint(equalTo: searchController.view.bottomAnchor)
+        ])
+
+        UIView.animate(withDuration: Constants.Animation.defaultAnimationTime) {
+            searchView.alpha = 1
+        }
+        searchResultsController.endAppearanceTransition()
+    }
+
+    func searchDidEnd() {
+        guard let searchView = searchResultsController.view else { return }
+
+        searchResultsController.beginAppearanceTransition(false, animated: false)
+        UIView.animate(withDuration: Constants.Animation.defaultAnimationTime, animations: {
+            searchView.alpha = 0
+        }) { _ in
+            searchView.removeFromSuperview()
+            self.searchResultsController.endAppearanceTransition()
+            self.resultsControllerDelegate.clearSearch()
+        }
+    }
+
+    func searchWasCleared() {
+        resultsControllerDelegate.clearSearch()
+    }
+
+    func searchTermChanged(_ searchTerm: String) {}
+
+    func performSearch(searchTerm: String, triggeredByTimer: Bool, completion: @escaping (() -> Void)) {
+        resultsControllerDelegate.performSearch(searchTerm: searchTerm, triggeredByTimer: triggeredByTimer, completion: completion)
     }
 }

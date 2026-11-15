@@ -10,11 +10,8 @@ struct InterfaceView: View {
 
     @StateObject var upNextViewModel: UpNextViewModel
     @StateObject var downloadsViewModel: DownloadListViewModel
-    private let source: Source
 
-    init(source: Source) {
-        self.source = source
-        rowList = source == .phone ? Self.phoneRows : Self.watchRows
+    init() {
         _upNextViewModel = StateObject(wrappedValue: UpNextViewModel())
         _downloadsViewModel = StateObject(wrappedValue: DownloadListViewModel())
     }
@@ -23,29 +20,22 @@ struct InterfaceView: View {
         var id: String {
             return self.rawValue
         }
-        case nowPlaying, upNext, podcasts, filters, downloads, files
+        case nowPlaying, upNext, filters, downloads, files
 
         var interfaceType: WatchInterfaceType {
             switch self {
             case .nowPlaying: .nowPlaying
             case .upNext: .upnext
-            case .podcasts: .podcasts
             case .filters: .filterList
             case .downloads: .downloads
             case .files: .files
             }
         }
     }
-    private static var watchRows: [Row] = [.nowPlaying, .upNext, .podcasts, .filters, .downloads, .files]
-    private static var phoneRows: [Row] = [.nowPlaying, .upNext, .filters, .downloads, .files]
-    private let rowList: [Row]
+    private let rowList: [Row] = [.nowPlaying, .upNext, .filters, .downloads, .files]
 
     var title: String {
-        if source == .phone {
-            return L10n.phone.prefixSourceUnicode
-        } else {
-            return L10n.watch.prefixSourceUnicode
-        }
+        L10n.phone.prefixSourceUnicode
     }
 
     var body: some View {
@@ -55,8 +45,6 @@ struct InterfaceView: View {
                     switch row {
                     case .downloads:
                         MenuRow(label: L10n.downloads, icon: "filter_downloaded", count: $downloadsViewModel.downloadedCount)
-                    case .podcasts:
-                        MenuRow(label: L10n.podcastsPlural, icon: "podcasts")
                     case .files:
                         MenuRow(label: L10n.files, icon: "file")
                     case .upNext:
@@ -100,8 +88,6 @@ struct InterfaceView: View {
         switch type {
         case .downloads:
             DownloadListView()
-        case .podcasts:
-            PodcastsListView()
         case .files:
             FilesListView()
         case .upnext:
@@ -117,5 +103,5 @@ struct InterfaceView: View {
 }
 
 #Preview {
-    InterfaceView(source: .phone)
+    InterfaceView()
 }

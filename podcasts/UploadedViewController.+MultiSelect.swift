@@ -32,10 +32,6 @@ extension UploadedViewController: MultiSelectActionDelegate {
         })
     }
 
-    var multiSelectViewSource: AnalyticsSource {
-        analyticsSource
-    }
-
     // MARK: - Selected Episode
 
     func selectedEpisodesContains(uuid: String) -> Bool {
@@ -50,8 +46,6 @@ extension UploadedViewController: MultiSelectActionDelegate {
 
     @IBAction func selectAllTapped() {
         let shouldSelectAll = MultiSelectHelper.shouldSelectAll(onCount: selectedEpisodes.count, totalCount: uploadedEpisodes.count)
-
-        Analytics.track(.uploadedFilesSelectAllButtonTapped, properties: ["select_all": shouldSelectAll])
 
         if shouldSelectAll {
             uploadsTable.selectAll()

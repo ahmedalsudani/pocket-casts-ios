@@ -140,65 +140,7 @@ final class DataManagerTests: DataManagerTestCase {
 
     // MARK: - downloadedEpisodeCount (combines counts from both managers)
 
-    func testDownloadedEpisodeCountCombinesEpisodeAndUserEpisodeCounts() throws {
-        try runWithDataManager { dataManager in
-            let podcast = createTestPodcast(dataManager: dataManager)
-
-            // Create downloaded regular episodes
-            createTestEpisode(uuid: "ep-1", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
-            createTestEpisode(uuid: "ep-2", podcast: podcast, episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
-
-            // Create downloaded user episodes
-            _ = createTestUserEpisode(uuid: "user-ep-1", episodeStatus: DownloadStatus.downloaded.rawValue, dataManager: dataManager)
-
-            // Create non-downloaded episodes (shouldn't be counted)
-            createTestEpisode(uuid: "ep-3", podcast: podcast, episodeStatus: DownloadStatus.notDownloaded.rawValue, dataManager: dataManager)
-            _ = createTestUserEpisode(uuid: "user-ep-2", episodeStatus: DownloadStatus.notDownloaded.rawValue, dataManager: dataManager)
-
-            let count = dataManager.downloadedEpisodeCount()
-            XCTAssertEqual(count, 3, "should return combined count of 3 (2 regular + 1 user)")
-        }
-    }
-
     // MARK: - findDownloadedEpisodes (combines and sorts from both managers)
-
-    func testFindDownloadedEpisodesReturnsEmptyWhenNone() throws {
-        try runWithDataManager { dataManager in
-            let episodes = dataManager.findDownloadedEpisodes()
-            XCTAssertTrue(episodes.isEmpty, "should return empty when no downloaded episodes")
-        }
-    }
-
-    func testFindDownloadedEpisodesCombinesBothTypes() throws {
-        try runWithDataManager { dataManager in
-            let podcast = createTestPodcast(dataManager: dataManager)
-
-            // Create downloaded regular episode with a specific download date
-            let episode = Episode()
-            episode.uuid = "downloaded-ep"
-            episode.podcastUuid = podcast.uuid
-            episode.podcast_id = podcast.id
-            episode.addedDate = Date()
-            episode.episodeStatus = DownloadStatus.downloaded.rawValue
-            episode.lastDownloadAttemptDate = Date(timeIntervalSince1970: 1000)
-            dataManager.save(episode: episode)
-
-            // Create downloaded user episode with a more recent download date
-            let userEpisode = UserEpisode()
-            userEpisode.uuid = "downloaded-user-ep"
-            userEpisode.addedDate = Date()
-            userEpisode.episodeStatus = DownloadStatus.downloaded.rawValue
-            userEpisode.lastDownloadAttemptDate = Date(timeIntervalSince1970: 2000)
-            dataManager.save(episode: userEpisode)
-
-            let episodes = dataManager.findDownloadedEpisodes()
-            XCTAssertEqual(episodes.count, 2, "should return 2 downloaded episodes")
-
-            // Should be sorted by lastDownloadAttemptDate descending (newest first)
-            XCTAssertEqual(episodes[0].uuid, userEpisode.uuid, "user episode with newer download date should be first")
-            XCTAssertEqual(episodes[1].uuid, episode.uuid, "regular episode with older download date should be second")
-        }
-    }
 
     // MARK: - findEpisodesWhereNotNull (combines results from both managers)
 
@@ -317,22 +259,6 @@ final class DataManagerTests: DataManagerTestCase {
     }
 
     // MARK: - findEpisodeCount
-
-    func testFindEpisodeCountReturnsPodcastEpisodeCount() throws {
-        try runWithDataManager { dataManager in
-            let podcast = createTestPodcast(dataManager: dataManager)
-            createTestEpisode(uuid: "ep-1", podcast: podcast, dataManager: dataManager)
-            createTestEpisode(uuid: "ep-2", podcast: podcast, dataManager: dataManager)
-            createTestEpisode(uuid: "ep-3", podcast: podcast, dataManager: dataManager)
-
-            // Create another podcast with episodes that shouldn't be counted
-            let otherPodcast = createTestPodcast(uuid: "other-podcast", dataManager: dataManager)
-            createTestEpisode(uuid: "other-ep", podcast: otherPodcast, dataManager: dataManager)
-
-            let count = dataManager.findEpisodeCount(podcastId: podcast.id)
-            XCTAssertEqual(count, 3, "should return 3 episodes for the podcast")
-        }
-    }
 
     // MARK: - playlistEpisodeCount (Up Next count)
 

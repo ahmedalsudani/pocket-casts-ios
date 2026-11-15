@@ -10,32 +10,9 @@ public extension String {
         }
     }
 
-    func localized(with args: CVarArg...) -> String? {
-        switch lowercased() {
-        case "popular in [regionname]":
-            return L10n.discoverPopularIn(args[0])
-        default:
-            return self
-        }
-    }
-
-    /// This contains a list of strings that can come from the server. This method provides a helper to quickly lookup the localized versions.
+    /// The localized name of a podcast category, as podcast feeds report it in English.
     var localized: String {
         switch lowercased() {
-        case "featured":
-            return L10n.discoverFeatured
-
-        // Discover Card Titles
-        case "browse by category":
-            return L10n.discoverBrowseByCategory
-        case "popular":
-            return L10n.discoverPopular
-        case "trending":
-            return L10n.discoverTrending
-        case "made for tv":
-            return L10n.tvHomeVideoSectionTitle
-
-        // Categories
         case "arts":
             return L10n.discoverBrowseByCategoryArt
         case "business":
@@ -96,84 +73,6 @@ public extension String {
             return L10n.discoverBrowseByCategorySpirituality
         case "culture":
             return L10n.discoverBrowseByCategorySocietyAndCulture
-
-        // Regions
-        case "australia":
-            return L10n.discoverRegionAustralia
-        case "austria":
-            return L10n.discoverRegionAustria
-        case "belgium":
-            return L10n.discoverRegionBelgium
-        case "brazil":
-            return L10n.discoverRegionBrazil
-        case "canada":
-            return L10n.discoverRegionCanada
-        case "china":
-            return L10n.discoverRegionChina
-        case "czechia":
-            return L10n.discoverRegionCzechia
-        case "denmark":
-            return L10n.discoverRegionDenmark
-        case "finland":
-            return L10n.discoverRegionFinland
-        case "france":
-            return L10n.discoverRegionFrance
-        case "germany":
-            return L10n.discoverRegionGermany
-        case "hong kong":
-            return L10n.discoverRegionHongKong
-        case "india":
-            return L10n.discoverRegionIndia
-        case "ireland":
-            return L10n.discoverRegionIreland
-        case "israel":
-            return L10n.discoverRegionIsrael
-        case "italy":
-            return L10n.discoverRegionItaly
-        case "japan":
-            return L10n.discoverRegionJapan
-        case "mexico":
-            return L10n.discoverRegionMexico
-        case "netherlands":
-            return L10n.discoverRegionNetherlands
-        case "new zealand":
-            return L10n.discoverRegionNewZealand
-        case "norway":
-            return L10n.discoverRegionNorway
-        case "philippines":
-            return L10n.discoverRegionPhilippines
-        case "poland":
-            return L10n.discoverRegionPoland
-        case "portugal":
-            return L10n.discoverRegionPortugal
-        case "Russia":
-            return L10n.discoverRegionRussia
-        case "saudi arabia":
-            return L10n.discoverRegionSaudiArabia
-        case "singapore":
-            return L10n.discoverRegionSingapore
-        case "south africa":
-            return L10n.discoverRegionSouthAfrica
-        case "south korea":
-            return L10n.discoverRegionSouthKorea
-        case "spain":
-            return L10n.discoverRegionSpain
-        case "sweden":
-            return L10n.discoverRegionSweden
-        case "switzerland":
-            return L10n.discoverRegionSwitzerland
-        case "taiwan":
-            return L10n.discoverRegionTaiwan
-        case "turkey":
-            return L10n.discoverRegionTurkey
-        case "ukraine":
-            return L10n.discoverRegionUkraine
-        case "united kingdom":
-            return L10n.discoverRegionUnitedKingdom
-        case "united states":
-            return L10n.discoverRegionUnitedStates
-        case "worldwide":
-            return L10n.discoverRegionWorldwide
 
         // Catch all
         default:

@@ -308,32 +308,6 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
 
     // MARK: - Syncing
 
-    func testBookmarksToSyncReturnsOnlyItemsThatNeedSyncing() throws {
-        try runWithDataManager { dataManager in
-            let count = 10
-
-            for i in 0..<count {
-                addBookmark(time: TimeInterval(i), dataManager: dataManager)
-            }
-
-            addBookmark(time: TimeInterval(999), syncStatus: .synced, dataManager: dataManager)
-
-            let unsyncedBookmarks = dataManager.bookmarks.bookmarksToSync()
-            XCTAssertEqual(unsyncedBookmarks.count, count, "only unsynced should be returned")
-        }
-    }
-
-    func testUpdatingTitleMarksAsNotSynced() async throws {
-        try await runWithDataManager { dataManager in
-            addBookmark(time: TimeInterval(123), syncStatus: .synced, dataManager: dataManager)
-
-            let bookmark = addBookmark(time: TimeInterval(999), syncStatus: .synced, dataManager: dataManager)
-            await dataManager.bookmarks.update(bookmark: bookmark, title: "New Title")
-
-            XCTAssertEqual(dataManager.bookmarks.bookmarksToSync().count, 1, "update should mark bookmark as needing sync")
-        }
-    }
-
     func testUpdatingTitleUpdatesTheModifiedDate() async throws {
         try await runWithDataManager { dataManager in
             let created = Date(timeIntervalSince1970: 1234)
@@ -343,26 +317,6 @@ final class BookmarkDataManagerTests: DataManagerTestCase {
             let updatedBookmark = dataManager.bookmarks.bookmark(for: bookmark.uuid)
 
             XCTAssertNotEqual(updatedBookmark?.titleModified, created, "modified date should update")
-        }
-    }
-
-    func testUpdatingWithSyncStatusSetsCorrectly() async throws {
-        try await runWithDataManager { dataManager in
-            addBookmark(time: TimeInterval(123), syncStatus: .synced, dataManager: dataManager)
-            let bookmark = addBookmark(time: TimeInterval(999), dataManager: dataManager)
-            await dataManager.bookmarks.update(bookmark: bookmark, title: "New Title", syncStatus: .synced)
-
-            XCTAssertEqual(dataManager.bookmarks.bookmarksToSync().count, 0, "syncStatus should be updated")
-        }
-    }
-
-    func testDeletingUpdatesSyncStatus() async throws {
-        try await runWithDataManager { dataManager in
-            addBookmark(time: TimeInterval(123), syncStatus: .synced, dataManager: dataManager)
-            let bookmark = addBookmark(time: TimeInterval(999), syncStatus: .synced, dataManager: dataManager)
-            _ = await dataManager.bookmarks.remove(bookmarks: [bookmark])
-
-            XCTAssertEqual(dataManager.bookmarks.bookmarksToSync().count, 1, "delete should mark for sync")
         }
     }
 

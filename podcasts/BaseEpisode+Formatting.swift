@@ -89,10 +89,6 @@ extension BaseEpisode {
         return L10n.unknownDuration
     }
 
-    func shortPublishedDate() -> String {
-        shortDateFor(date: publishedDate)
-    }
-
     func shortLastDownloadAttemptDate() -> String {
         shortDateFor(date: lastDownloadAttemptDate)
     }

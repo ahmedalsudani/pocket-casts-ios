@@ -21,7 +21,7 @@ final class EpisodeDetailArtworkTests: DBTestCase {
         }
         ImageManager.shared.save(artwork, for: episode.uuid)
 
-        let controller = EpisodeDetailViewController(episode: episode, podcast: podcast, source: .podcastScreen)
+        let controller = EpisodeDetailViewController(episode: episode, podcast: podcast)
         controller.loadViewIfNeeded()
         controller.updateDisplayedData()
 

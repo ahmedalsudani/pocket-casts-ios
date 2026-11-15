@@ -43,14 +43,10 @@ class PlaylistPreviewViewModel: ObservableObject {
         )
     }
 
-    func saveFilter(analyticsGroup: String? = nil) {
+    func saveFilter() {
         newPlaylist.syncStatus = SyncStatus.notSynced.rawValue
         DataManager.shared.save(playlist: newPlaylist)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.playlistChanged, object: newPlaylist)
-
-        if !newPlaylist.isNew, let group = analyticsGroup {
-            Analytics.track(.filterUpdated, properties: ["group": group, "source": "filters"])
-        }
     }
 
     func smartRuleIsApplied(for rule: SmartPlaylistRule) -> Bool {

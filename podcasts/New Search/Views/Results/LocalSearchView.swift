@@ -25,7 +25,6 @@ struct LocalSearchView: View {
         navigationContent
             .background(backgroundColor.ignoresSafeArea())
             .onAppear {
-                Analytics.track(.filterAddEpisodesShown)
                 viewModel.onAppear(searchResultsModel: searchResults)
                 previousNavigationPath = navigationPath
             }
@@ -50,7 +49,6 @@ struct LocalSearchView: View {
     private func handleSelection(for result: PodcastFolderSearchResult) {
         switch result.kind {
         case .folder:
-            Analytics.track(.filterAddEpisodesFolderTapped)
             viewModel.selectFolder(result)
             let route = LocalSearchRoute.folder(result.uuid)
             if navigationPath.last != route {
@@ -59,7 +57,6 @@ struct LocalSearchView: View {
                 }
             }
         case .podcast:
-            Analytics.track(.filterAddEpisodesPodcastTapped)
             if navigationPath.last?.isPodcast == true {
                 withAnimation(navigationAnimation) {
                     _ = navigationPath.removeLast()
@@ -249,7 +246,6 @@ private final class LocalSearchFieldTheme: SearchField.SearchTheme {
 struct LocalSearchView_Previews: PreviewProvider {
     static var previews: some View {
         LocalSearchView(playlist: EpisodeFilter())
-            .environmentObject(SearchAnalyticsHelper(source: .unknown))
             .environmentObject(SearchResultsModel())
             .environmentObject(SearchHistoryModel(userDefaults: UserDefaults(suiteName: "LocalSearchViewPreview") ?? .standard))
             .previewWithAllThemes()

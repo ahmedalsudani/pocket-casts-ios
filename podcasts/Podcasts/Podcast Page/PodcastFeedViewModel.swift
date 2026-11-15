@@ -46,32 +46,16 @@ class PodcastFeedViewModel {
             await MainActor.run {
                 self.loadingState = .loading
 
-                Analytics.track(.podcastScreenRefreshEpisodeList, properties: ["action": source.analyticsValue, "podcast_uuid": uuid])
-
                 if source == .refreshControl {
                     NotificationCenter.default.post(name: PodcastFeedReloadNotification.loading, object: nil)
                 } else {
                     Toast.show(L10n.podcastFeedReloadLoading, dismissAfter: .never)
                 }
             }
-            let success: Bool
-            do {
-                success = try await MainServerHandler.shared.updatePodcast(uuid: uuid, lastEpisodeUuid: podcast.latestEpisodeUuid)
-            } catch {
-                success = false
-                FileLog.shared.console("Failed update podcast \(uuid) - \(error.localizedDescription)")
-            }
-
-            if success {
-                FileLog.shared.console("Refresh manager update podcast \(uuid)")
-                await RefreshManager.shared.refresh(podcast: podcast, from: uuid)
-            }
+            let success = await RefreshManager.shared.refresh(podcast: podcast)
 
             await MainActor.run {
                 if self.loadingState != .cancelled {
-
-                    let event: AnalyticsEvent = success ? .podcastScreenRefreshNewEpisodeFound : .podcastScreenRefreshNoEpisodesFound
-                    Analytics.track(event, properties: ["action": source.analyticsValue, "podcast_uuid": uuid])
 
                     if source == .refreshControl {
                         let notification = success ? PodcastFeedReloadNotification.episodesFound : PodcastFeedReloadNotification.noEpisodesFound

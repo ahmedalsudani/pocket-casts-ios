@@ -31,9 +31,7 @@ extension PlaylistDetailViewController: UITableViewDataSource {
                     in: tableView,
                     statusBarStyle: preferredStatusBarStyle
                 ) { [weak self] allAboveAreSelected in
-                    self?.track(allAboveAreSelected ? .filterDeselectAllAbove : .filterSelectAllAbove)
                 } allBelowAction: { [weak self] allBelowAreSelected in
-                    self?.track(allBelowAreSelected ? .filterDeselectAllBelow : .filterSelectAllBelow)
                 }
             } else {
                 longPressMultiSelectIndexPath = indexPath
@@ -54,7 +52,6 @@ extension PlaylistDetailViewController: UITableViewDataSource {
         let onToggleChange: (Bool) -> Void = { [weak self] selected in
             guard let self else { return }
 
-            self.track(selected ? .filterShowArchivedTapped : .filterHideArchivedTapped)
             self.viewModel.updateShowArchivedEpisodes(show: selected)
             self.viewModel.reloadEpisodeList(animated: true)
         }
@@ -107,7 +104,6 @@ extension PlaylistDetailViewController: UITableViewDataSource {
                     message: archivedPlaceholder.message,
                     actions: [
                         .init(title: L10n.podcastShowArchived.sentenceCased, action: { [weak self] in
-                            self?.track(.filterShowArchivedCtaEmptyTapped)
                             onToggleChange(true)
                         })
                     ]
@@ -229,8 +225,6 @@ extension PlaylistDetailViewController: UITableViewDelegate {
                 let episodeUuid = selectedEpisode.uuid
                 let view = ModalMessageViewController.episodeUnavailableAlert { [weak self] in
                     guard let self else { return }
-                    self.track(.filterRemoveFromPlaylistTapped)
-                    self.track(episode: selectedEpisode, added: false, to: self.viewModel.playlist, source: "unavailable_episode")
                     self.viewModel.remove(episode: episodeUuid, at: indexPath.row)
                 }
                 BottomSheetSwiftUIWrapper.present(
@@ -242,7 +236,7 @@ extension PlaylistDetailViewController: UITableViewDelegate {
                 return
             }
 
-            let episodeController = EpisodeDetailViewController(episode: selectedEpisode, podcast: parentPodcast, source: .filters, playlist: .filter(uuid: viewModel.playlist.uuid))
+            let episodeController = EpisodeDetailViewController(episode: selectedEpisode, podcast: parentPodcast, playlist: .filter(uuid: viewModel.playlist.uuid))
             episodeController.modalPresentationStyle = .formSheet
             present(episodeController, animated: true, completion: nil)
         }

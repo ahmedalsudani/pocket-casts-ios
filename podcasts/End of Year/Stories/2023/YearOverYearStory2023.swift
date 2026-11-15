@@ -8,11 +8,7 @@ struct YearOverYearStory2023: ShareableStory {
 
     let identifier: String = "year_over_year"
 
-    let plusOnly = true
-
     var data: YearOverYearListeningTime
-
-    let subscriptionTier: SubscriptionTier = SubscriptionHelper.subscriptionTier
 
     @ObservedObject private var animationViewModel = PlayPauseAnimationViewModel(duration: 0.8, animation: Animation.easeInOut(duration:))
 
@@ -72,7 +68,6 @@ struct YearOverYearStory2023: ShareableStory {
         GeometryReader { geometry in
             PodcastCoverContainer(geometry: geometry) {
                 StoryLabelContainer(geometry: geometry) {
-                    SubscriptionBadge(tier: subscriptionTier, displayMode: .gradient, foregroundColor: .black)
                     StoryLabel(title, for: .title, geometry: geometry)
                     StoryLabel(subtitle, for: .subtitle, color: Color(hex: "8F97A4"), geometry: geometry)
                 }
@@ -194,14 +189,6 @@ struct YearOverYearStory2023: ShareableStory {
     private enum BarStyle {
         case grey
         case rainbow
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
-    }
-
-    func willShare() {
-        Analytics.track(.endOfYearStoryShare, story: identifier)
     }
 
     func onPause() {

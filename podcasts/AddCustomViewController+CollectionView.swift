@@ -49,29 +49,13 @@ extension AddCustomViewController: UICollectionViewDelegate, UICollectionViewDat
             cell.imageView.image = artwork
             cell.imageView.contentMode = .scaleToFill
             cell.imageView.isHidden = false
-        } else if indexPath == greyIndexPath {
-            cell.imageView.isHidden = true
         } else {
-            cell.imageView.image = UIImage(named: "locked")
-            cell.imageView.contentMode = .center
-            cell.imageView.isHidden = SubscriptionHelper.hasActiveSubscription()
+            cell.imageView.isHidden = true
         }
         return cell
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         selectedColorIndex = indexPath.item
-    }
-
-    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        if SubscriptionHelper.hasActiveSubscription() {
-            return true
-        }
-
-        if artwork != nil, indexPath.item < 2 {
-            return true
-        }
-        showSubscriptionRequired()
-        return false
     }
 }

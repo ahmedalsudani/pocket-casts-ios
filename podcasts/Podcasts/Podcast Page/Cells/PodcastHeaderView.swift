@@ -58,12 +58,6 @@ struct PodcastHeaderView: View {
                 .clipped()
             Spacer().frame(height: topMarginForTitle)
             podcastTitle
-            Spacer().frame(height: titleBottomMargin - bottomMarginAdjustmentForTitle)
-            StarRatingView(viewModel: viewModel.podcastRatingViewModel,
-                           style: .short,
-                           onRate: {
-                viewModel.podcastRatingViewModel.update(podcast: viewModel.podcast, ignoringCache: true)
-            })
             Spacer().frame(height: titleBottomMargin)
             podcastActions
             Spacer().frame(height: itemMargin)
@@ -81,7 +75,7 @@ struct PodcastHeaderView: View {
     }
 
     func makeText() -> Text {
-        var output = Text(viewModel.displayCategoryAndAuthor(networkTint: networkTint))
+        var output = Text(viewModel.displayCategoryAndAuthor)
         if FeatureFlag.showExplicitBadges.enabled, viewModel.podcast.isExplicit {
             output = output + ExplicitBadgeHelper.inlineTitle(" ·", isExplicit: true, theme: theme.activeTheme)
         }
@@ -95,34 +89,18 @@ struct PodcastHeaderView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundStyle(theme.primaryText01)
-            .tint(theme.primaryText01)
-            .environment(\.openURL, OpenURLAction { url in
-                viewModel.headerLinkTapped(url)
-                return .handled
-            })
         }
     }
 
-    /// The podcast's own colour, which is what marks the author as leading to its network.
-    private var networkTint: Color {
+    /// The podcast's own colour, which marks the website as a link
+    private var linkTint: Color {
         Color(viewModel.podcast.iconTintColor(for: theme.activeTheme))
-    }
-
-    /// The details row's author is drawn in `networkTint` when it leads to the podcast's network,
-    /// the same place the header's author does, and left as plain text when it doesn't.
-    private var authorTint: Color? {
-        viewModel.networkListId == nil ? nil : networkTint
     }
 
     var topMarginForTitle: CGFloat {
         let font = UIFont.preferredFont(forTextStyle: .title2)
         let adjustment =  font.lineHeight - font.capHeight + font.descender
         return (viewModel.isExpanded ? 18 : 26) - adjustment
-    }
-
-    var bottomMarginAdjustmentForTitle: CGFloat {
-        let font = UIFont.preferredFont(forTextStyle: .title2)
-        return -font.descender
     }
 
     @ScaledMetric(relativeTo: .body) private var titleBottomMargin = 16
@@ -273,10 +251,10 @@ struct PodcastHeaderView: View {
     private var podcastDetails: some View {
         VStack(alignment: .leading) {
             if let displayAuthor = viewModel.displayAuthor {
-                infoLabel(displayAuthor, imageName: "podcast-author", linkTint: authorTint, action: authorTint == nil ? nil : { viewModel.networkTapped() })
+                infoLabel(displayAuthor, imageName: "podcast-author")
             }
             if let displayWebsite = viewModel.displayWebsite {
-                infoLabel(displayWebsite, imageName: "podcast-link", linkTint: networkTint) {
+                infoLabel(displayWebsite, imageName: "podcast-link", linkTint: linkTint) {
                     viewModel.websiteLinkTapped()
                 }
             }
@@ -331,8 +309,7 @@ struct PodcastHeaderView_Previews: PreviewProvider {
             podcast.author = "Test Author"
             podcast.estimatedNextEpisode = Date.now
             podcast.podcastHTMLDescription = "<p>Test description</p>"
-            podcast.fundingURL = "https://www.pocketcasts.com"
-            podcast.networkListId = "cdb75bc0-9f5a-4217-b1ca-f573821a7913"
+            podcast.fundingURL = "https://example.com"
             return podcast
         }
 

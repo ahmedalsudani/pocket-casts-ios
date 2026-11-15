@@ -9,9 +9,6 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
     private let statsHeaderCellId = "StatsHeaderCell"
     private let heatmapCellId = "HeatmapCell"
 
-    private enum LoadingStatus { case loading, loaded, failed }
-    private var loadingState = LoadingStatus.loading
-
     private enum StatsSection {
         case header
         case heatmap
@@ -23,19 +20,14 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
 
     private func reloadSections() {
         var newSections: [StatsSection] = [.header]
-        if loadingState == .loaded {
-            if FeatureFlag.statsHeatmap.enabled {
-                newSections.append(.heatmap)
-            }
-            newSections.append(contentsOf: [.timeSavedBreakdown, .timeSavedTotal])
+        if FeatureFlag.statsHeatmap.enabled {
+            newSections.append(.heatmap)
         }
+        newSections.append(contentsOf: [.timeSavedBreakdown, .timeSavedTotal])
         sections = newSections
         statsTable?.reloadData()
     }
 
-    private var localOnly = !SyncManager.isUserLoggedIn()
-
-    let playbackTimeHelper = PlaybackTimeHelper()
     private let heatmapViewModel = ListeningHeatmapViewModel()
 
     @IBOutlet var statsTable: UITableView! {
@@ -51,7 +43,6 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
         super.viewDidLoad()
 
         title = L10n.settingsStats
-        Analytics.track(.statsShown)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -60,12 +51,7 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
         if FeatureFlag.statsHeatmap.enabled {
             heatmapViewModel.load()
         }
-        loadStats()
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        Analytics.track(.statsDismissed)
+        reloadSections()
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -113,29 +99,17 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
         switch sections[indexPath.section] {
         case .header:
             let castCell = tableView.dequeueReusableCell(withIdentifier: statsHeaderCellId, for: indexPath) as! StatsTopCell
-            if loadingState == LoadingStatus.failed {
-                castCell.loadingIndicator.stopAnimating()
-                castCell.descriptionLabel.text = L10n.statsError
-                castCell.timeLabel.text = "🤔"
-                castCell.accessibilityLabel = L10n.statsError
-            } else if loadingState == LoadingStatus.loading {
-                castCell.listenLabel.text = L10n.statsListenHistoryLoading
-                castCell.timeLabel.text = nil
-                castCell.descriptionLabel.text = nil
-                castCell.loadingIndicator.startAnimating()
+            castCell.loadingIndicator.stopAnimating()
+            castCell.descriptionLabel.text = FunnyTimeConverter.timeSecsToFunnyText(totalTimeStat())
+            castCell.timeLabel.text = formatStat(totalTimeStat())
+            if StatsManager.shared.statsStartedAt() > 0 {
+                let startDate = Date(timeIntervalSince1970: TimeInterval(StatsManager.shared.statsStartedAt()))
+                let dateStr = DateFormatter.localizedString(from: startDate, dateStyle: .long, timeStyle: .none)
+                castCell.listenLabel.text = L10n.statsListenHistoryFormat(dateStr)
             } else {
-                castCell.loadingIndicator.stopAnimating()
-                castCell.descriptionLabel.text = FunnyTimeConverter.timeSecsToFunnyText(totalTimeStat())
-                castCell.timeLabel.text = formatStat(totalTimeStat())
-                if StatsManager.shared.statsStartedAt() > 0 {
-                    let startDate = Date(timeIntervalSince1970: TimeInterval(StatsManager.shared.statsStartedAt()))
-                    let dateStr = DateFormatter.localizedString(from: startDate, dateStyle: .long, timeStyle: .none)
-                    castCell.listenLabel.text = L10n.statsListenHistoryFormat(dateStr)
-                } else {
-                    castCell.listenLabel.text = L10n.statsListenHistoryNoDate
-                }
-                castCell.accessibilityLabel = L10n.statsAccessibilityListenHistoryFormat((castCell.timeLabel.text ?? "").trimmingCharacters(in: CharacterSet(charactersIn: ".")), castCell.descriptionLabel.text ?? "")
+                castCell.listenLabel.text = L10n.statsListenHistoryNoDate
             }
+            castCell.accessibilityLabel = L10n.statsAccessibilityListenHistoryFormat((castCell.timeLabel.text ?? "").trimmingCharacters(in: CharacterSet(charactersIn: ".")), castCell.descriptionLabel.text ?? "")
             return castCell
         case .heatmap:
             let cell = tableView.dequeueReusableCell(withIdentifier: heatmapCellId, for: indexPath)
@@ -197,33 +171,6 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
         AppTheme.defaultStatusBarStyle()
     }
 
-    private func loadStats() {
-        if localOnly {
-            loadingState = LoadingStatus.loaded
-            reloadSections()
-
-            return
-        }
-
-        loadingState = LoadingStatus.loading
-        reloadSections()
-
-        StatsManager.shared.loadRemoteStats { [weak self] success in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.loadingState = success ? .loaded : .failed
-                self.reloadSections()
-                self.requestReviewIfPossible()
-            }
-
-            RefreshManager.shared.refreshPodcasts { _ in
-                DispatchQueue.main.async { [weak self] in
-                    self?.reloadSections()
-                }
-            }
-        }
-    }
-
     private func skippedStat() -> Double {
         StatsManager.shared.totalSkippedTimeInclusive()
     }
@@ -249,8 +196,6 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
     }
 
     @objc private func showHeatmapInfo() {
-        Analytics.track(.heatmapInfoOpened)
-
         let view = ModalMessageView(
             title: L10n.statsListeningActivityInfoTitle,
             message: L10n.statsListeningActivityInfoMessage,
@@ -262,17 +207,5 @@ class StatsViewController: UIViewController, UITableViewDelegate, UITableViewDat
             showingGrabber: true,
             in: self
         )
-    }
-
-    private func requestReviewIfPossible() {
-        // If the user has listened to more than 2.5 hours the past 7 days
-        // And has been using the app for more than a week
-        // we kindly request them to review the app
-        if playbackTimeHelper.playedUpToSumInLastSevenDays() > 2.5.hours,
-           StatsManager.shared.statsStartedAt() > 0,
-           let lastWeek = Date().sevenDaysAgo(),
-           Date(timeIntervalSince1970: TimeInterval(StatsManager.shared.statsStartedAt())) < lastWeek {
-            requestReview(delay: 1)
-        }
     }
 }

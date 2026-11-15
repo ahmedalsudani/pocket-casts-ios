@@ -44,7 +44,6 @@ struct EditFolderView: View {
                     ThemedDivider()
                     Button {
                         showingDeleteConfirmation = true
-                        Analytics.track(.folderEditDeleteButtonTapped)
                     } label: {
                         Group {
                             Image("delete")
@@ -60,7 +59,6 @@ struct EditFolderView: View {
                             message: Text(L10n.folderDeletePromptMsg),
                             primaryButton: .destructive(Text(L10n.delete)) {
                                 model.deleteFolder()
-                                Analytics.track(.folderDeleted)
                                 dismissAction(true)
                             },
                             secondaryButton: .cancel()
@@ -82,13 +80,9 @@ struct EditFolderView: View {
                     .accessibilityLabel(L10n.close)
                 }
             }
-            .onAppear {
-                Analytics.track(.folderEditShown)
-            }
             .onDisappear {
                 NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderChanged, object: model.folderUuid)
                 NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderEdited, object: model.folderUuid)
-                Analytics.track(.folderEditDismissed, properties: ["did_change_name": model.didChangeName, "did_change_color": model.didChangeColor])
             }
             .applyDefaultThemeOptions()
             .navigationTitle(L10n.folderEdit)

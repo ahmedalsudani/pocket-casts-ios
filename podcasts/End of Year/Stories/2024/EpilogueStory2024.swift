@@ -48,16 +48,11 @@ struct EpilogueStory2024: StoryView {
             StoryFooter2024(title: L10n.eoy2024EpilogueTitle, description: L10n.eoy2024EpilogueDescription)
             Button(L10n.eoyStoryReplay) {
                 StoriesController.shared.replay()
-                Analytics.track(.endOfYearStoryReplayButtonTapped, properties: ["current_year": "2024"])
             }
             .buttonStyle(BasicButtonStyle(textColor: .black, backgroundColor: Color.clear, borderColor: .black))
             .allowsHitTesting(true)
             .padding(.horizontal, 24)
             .padding(.vertical, 6)
         }
-    }
-
-    func onAppear() {
-        Analytics.track(.endOfYearStoryShown, story: identifier)
     }
 }

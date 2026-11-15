@@ -29,23 +29,10 @@ class BouncyButton: UIButton {
         }
     }
 
-    var offAccessibilityLabel: String? {
-        didSet {
-            updateAccessibilityLabel()
-        }
-    }
-
-    var onAccessibilityLabel: String? {
-        didSet {
-            updateAccessibilityLabel()
-        }
-    }
-
     var shouldAnimate = false
 
     var currentlyOn = false {
         didSet {
-            updateAccessibilityLabel()
             if !currentlyOn {
                 setImage(offImage, for: UIControl.State())
                 return
@@ -65,23 +52,5 @@ class BouncyButton: UIButton {
                 setImage(onImage, for: UIControl.State())
             }
         }
-    }
-
-    private func updateAccessibilityLabel() {
-        if currentlyOn, let onLabel = onAccessibilityLabel {
-            accessibilityLabel = onLabel
-        } else if !currentlyOn, let offLabel = offAccessibilityLabel {
-            accessibilityLabel = offLabel
-        }
-    }
-
-    func setFollowAccessibilityLabels(podcastTitle: String?) {
-        guard let podcastTitle, !podcastTitle.isEmpty else {
-            offAccessibilityLabel = L10n.follow
-            onAccessibilityLabel = L10n.unfollow
-            return
-        }
-        offAccessibilityLabel = L10n.accessibilityFollowPodcast(podcastTitle)
-        onAccessibilityLabel = L10n.accessibilityUnfollowPodcast(podcastTitle)
     }
 }

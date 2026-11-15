@@ -56,7 +56,7 @@ final class NewPodcastMetadataRequestTests: XCTestCase {
             [
                 "uuid": "\(podcastUuid!)-\(number)",
                 "title": "Episode \(number)",
-                "url": "https://pocketcasts.invalid/\(podcastUuid!)/\(number).mp3",
+                "url": "https://example.invalid/\(podcastUuid!)/\(number).mp3",
                 "file_type": "audio/mp3",
                 "published": "2026-01-0\(number)T10:00:00Z"
             ]

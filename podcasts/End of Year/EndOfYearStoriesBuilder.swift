@@ -9,42 +9,15 @@ class EndOfYearStoriesBuilder {
 
     private var model: StoryModel
 
-    private var hasActiveSubscription: () -> Bool
-
-    private let sync: ((Int) -> Bool)?
-
-    init(dataManager: DataManager = DataManager.shared, model: StoryModel, sync: ((Int) -> Bool)? = YearListeningHistory.sync, hasActiveSubscription: @escaping () -> Bool = SubscriptionHelper.hasActiveSubscription) {
+    init(dataManager: DataManager = DataManager.shared, model: StoryModel) {
         self.dataManager = dataManager
         self.model = model
-        self.sync = sync
-        self.hasActiveSubscription = hasActiveSubscription
     }
 
-    /// Call this method to build the list of stories and the data provider
+    /// Call this method to build the list of stories and the data provider.
+    /// The stories are made from the listening history held on this device.
     func build() async {
-        await withCheckedContinuation { continuation in
-
-            let modelType = type(of: model)
-
-            // Check if the user has the full listening history for this year
-            if SyncManager.isUserLoggedIn(),
-               !Settings.hasSyncedEpisodesForPlayback(year: modelType.year) ||
-                (Settings.hasSyncedEpisodesForPlayback(year: modelType.year) && Settings.hasSyncedEpisodesForPlaybackAsPlusUser(year: modelType.year) != hasActiveSubscription()) || model.shouldLoadData(in: dataManager) {
-                let syncedWithSuccess = sync?(modelType.year)
-
-                if syncedWithSuccess == true {
-                    Settings.setHasSyncedEpisodesForPlayback(true, year: modelType.year)
-                    Settings.setHasSyncedEpisodesForPlaybackAsPlusUser(hasActiveSubscription(), year: modelType.year)
-                } else {
-                    continuation.resume()
-                    return
-                }
-            }
-
-            model.populate(with: dataManager)
-
-            continuation.resume()
-        }
+        model.populate(with: dataManager)
     }
 }
 
@@ -55,9 +28,7 @@ protocol StoryModel {
     func populate(with dataManager: DataManager)
     func story(for storyNumber: Int) -> any StoryView
     func isInteractiveView(for storyNumber: Int) -> Bool
-    func shouldLoadData(in dataManager: DataManager) -> Bool
     func isReady() -> Bool
-    func paywallView() -> AnyView
     /// Overlaid on top of the story
     func overlaidShareView() -> AnyView?
     /// Shown at the bottom of the story as an additional safe area

@@ -98,26 +98,6 @@ class EpisodeDataManager {
         return episodes
     }
 
-    func findPlayedEpisodesCount(podcastId: Int64, dbQueue: GRDBQueue) async -> Int {
-        return await withCheckedContinuation { continuation in
-            var count = 0
-            let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE podcast_id = ? AND playedUpTo > (duration / 2)"
-            dbQueue.read { db in
-                do {
-                    let resultSet = try db.executeQuery(query, values: [podcastId])
-
-                    if resultSet.next() {
-                        count = Int(resultSet.int(forColumn: "Count"))
-                    }
-                    continuation.resume(returning: count)
-                } catch {
-                    FileLog.shared.addMessage("EpisodeDataManager.findPlayedEpisodesCount error: \(error)")
-                    continuation.resume(returning: 0)
-                }
-            }
-        }
-    }
-
     func downloadedEpisodeExists(uuid: String, dbQueue: GRDBQueue) -> Bool {
         var found = false
         dbQueue.read { db in
@@ -176,25 +156,23 @@ class EpisodeDataManager {
         return findEpisodesWhere(customWhere: query, arguments: [escapedSearch, podcastUUID], dbQueue: dbQueue)
     }
 
+    func findEpisodes(matching term: String, limit: Int, dbQueue: GRDBQueue) -> [Episode] {
+        let escapedSearch = term.escapeLike(escapeChar: "\\")
+        let query = """
+        (UPPER(title) LIKE '%' || UPPER(?) || '%'  ESCAPE '\\' AND
+        podcastUuid IN (SELECT uuid FROM \(DataManager.podcastTableName) WHERE subscribed = 1) AND wasDeleted = 0)
+        ORDER BY publishedDate DESC, addedDate DESC LIMIT \(limit)
+        """
+
+        return findEpisodesWhere(customWhere: query, arguments: [escapedSearch], dbQueue: dbQueue)
+    }
+
     func findPlaylistEpisodesWhere(query: String, arguments: [Any]?, dbQueue: GRDBQueue) -> [Episode] {
         loadMultiple(query: query, values: arguments, dbQueue: dbQueue)
     }
 
-    func unsyncedEpisodes(limit: Int, dbQueue: GRDBQueue) -> [Episode] {
-        loadMultiple(query: Self.unsyncedEpisodesQuery(limit: limit), values: nil, dbQueue: dbQueue)
-    }
-
-    static func unsyncedEpisodesQuery(limit: Int) -> String {
-        let unsyncedIds = "SELECT id FROM \(DataManager.episodeTableName) WHERE playingStatusModified > 0 OR playedUpToModified > 0 OR durationModified > 0 OR keepEpisodeModified > 0 OR archivedModified > 0"
-        return "SELECT * FROM \(DataManager.episodeTableName) WHERE id IN (\(unsyncedIds)) ORDER BY publishedDate DESC, addedDate DESC LIMIT \(limit)"
-    }
-
     func allEpisodes(forPodcastId id: Int64, dbQueue: GRDBQueue) -> [Episode] {
         loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0", values: [id], dbQueue: dbQueue)
-    }
-
-    func episodesWithListenHistory(limit: Int, dbQueue: GRDBQueue) -> [Episode] {
-        loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE lastPlaybackInteractionDate IS NOT NULL AND lastPlaybackInteractionDate > 0 ORDER BY lastPlaybackInteractionDate DESC LIMIT \(limit)", values: nil, dbQueue: dbQueue)
     }
 
     /// Returns daily listening totals as `[dateString: totalSeconds]` for the past N days.
@@ -234,41 +212,6 @@ class EpisodeDataManager {
 
     func findLatestEpisodes(podcast: Podcast, limit: Int, dbQueue: GRDBQueue) -> [Episode] {
         loadMultiple(query: "SELECT * from \(DataManager.episodeTableName) WHERE podcast_id = ? AND wasDeleted = 0 ORDER BY publishedDate DESC, addedDate DESC LIMIT ?", values: [podcast.id, limit], dbQueue: dbQueue)
-    }
-
-    func findNewReleaseEpisodes(limit: Int, dbQueue: GRDBQueue) -> [Episode] {
-        let twoWeeksInSeconds: TimeInterval = 14 * 24 * 60 * 60
-        let twoWeeksAgo = Date(timeIntervalSinceNow: -twoWeeksInSeconds).timeIntervalSince1970
-        let query = """
-        SELECT episode.* FROM \(DataManager.episodeTableName) episode
-        JOIN \(DataManager.podcastTableName) podcast ON episode.podcast_id = podcast.id
-        WHERE podcast.subscribed = 1
-        AND episode.playingStatus = \(PlayingStatus.notPlayed.rawValue)
-        AND episode.wasDeleted = 0
-        AND episode.archived = 0
-        AND episode.publishedDate > ?
-        ORDER BY episode.publishedDate DESC, episode.addedDate DESC
-        LIMIT ?
-        """
-        return loadMultiple(query: query, values: [twoWeeksAgo, limit], dbQueue: dbQueue)
-    }
-
-    func findNewVideoReleaseEpisodes(limit: Int, dbQueue: GRDBQueue) -> [Episode] {
-        let twoWeeksInSeconds: TimeInterval = 14 * 24 * 60 * 60
-        let twoWeeksAgo = Date(timeIntervalSinceNow: -twoWeeksInSeconds).timeIntervalSince1970
-        let query = """
-        SELECT episode.* FROM \(DataManager.episodeTableName) episode
-        JOIN \(DataManager.podcastTableName) podcast ON episode.podcast_id = podcast.id
-        WHERE podcast.subscribed = 1
-        AND episode.playingStatus = \(PlayingStatus.notPlayed.rawValue)
-        AND episode.wasDeleted = 0
-        AND episode.archived = 0
-        AND episode.publishedDate > ?
-        AND (episode.fileType = ? OR (episode.hlsUrl IS NOT NULL))
-        ORDER BY episode.publishedDate DESC, episode.addedDate DESC
-        LIMIT ?
-        """
-        return loadMultiple(query: query, values: [twoWeeksAgo, "video/mp4", limit], dbQueue: dbQueue)
     }
 
     func allUpNextEpisodes(dbQueue: GRDBQueue) -> [Episode] {
@@ -343,85 +286,7 @@ class EpisodeDataManager {
         return episodes
     }
 
-    func downloadedEpisodeCount(dbQueue: GRDBQueue) -> Int {
-        var count = 0
-        let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE episodeStatus = \(DownloadStatus.downloaded.rawValue)"
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery(query, values: nil)
-
-                if resultSet.next() {
-                    count = Int(resultSet.int(forColumn: "Count"))
-                }
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.downloadedEpisodeCount error: \(error)")
-            }
-        }
-
-        return count
-    }
-
-    func failedDownloadEpisodeCount(dbQueue: GRDBQueue) -> Int {
-        var count = 0
-        let query = "SELECT COUNT(*) as Count from \(DataManager.episodeTableName) WHERE episodeStatus = \(DownloadStatus.downloadFailed.rawValue)"
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery(query, values: nil)
-
-                if resultSet.next() {
-                    count = Int(resultSet.int(forColumn: "Count"))
-                }
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.downloadedEpisodeCount error: \(error)")
-            }
-        }
-
-        return count
-    }
-
-    func failedDownloadFirstDate(dbQueue: GRDBQueue, sortOrder: SortOrder) -> Date? {
-        let orderDirection = sortOrder == .forward ? "DESC" : "ASC"
-        var date: Date?
-        let query = "SELECT * from \(DataManager.episodeTableName) WHERE episodeStatus = \(DownloadStatus.downloadFailed.rawValue) AND lastDownloadAttemptDate IS NOT NULL ORDER BY lastDownloadAttemptDate \(orderDirection) LIMIT 1"
-        dbQueue.read { db in
-            do {
-                let resultSet = try db.executeQuery(query, values: nil)
-
-                if resultSet.next() {
-                    date = resultSet.date(forColumn: "lastDownloadAttemptDate")
-                }
-            } catch {
-                logError(error: error)
-            }
-        }
-
-        return date
-    }
-
-    func logError(error: Error, callingFile: String = #file, callingFunction: String = #function) {
-        FileLog.shared.addMessage("\((callingFile.components(separatedBy: "/").last ?? "").components(separatedBy: ".").first ?? "").\(callingFunction) error: \(error)")
-    }
-
     // MARK: - Updates
-
-    func saveIfNotModified(starred: Bool, episodeUuid: String, dbQueue: GRDBQueue) -> Bool {
-        if !starred {
-            saveEpisode(starredModified: 0, episodeUuid: episodeUuid, dbQueue: dbQueue)
-        }
-        return saveFieldIfNotModified(fieldName: "keepEpisode", modifiedFieldName: "keepEpisodeModified", value: starred, episodeUuid: episodeUuid, dbQueue: dbQueue)
-    }
-
-    func saveIfNotModified(archived: Bool, episodeUuid: String, dbQueue: GRDBQueue) -> Bool {
-        saveFieldIfNotModified(fieldName: "archived", modifiedFieldName: "archivedModified", value: archived, episodeUuid: episodeUuid, dbQueue: dbQueue)
-    }
-
-    func saveIfNotModified(playingStatus: PlayingStatus, episodeUuid: String, dbQueue: GRDBQueue) -> Bool {
-        saveFieldIfNotModified(fieldName: "playingStatus", modifiedFieldName: "playingStatusModified", value: playingStatus.rawValue, episodeUuid: episodeUuid, dbQueue: dbQueue)
-    }
-
-    func saveIfNotModified(chapters: String, remoteModified: Int64, episodeUuid: String, dbQueue: GRDBQueue) -> Bool {
-        saveFieldIfNotModified(fieldName: "deselectedChapters", modifiedFieldName: "deselectedChaptersModified", value: chapters, remoteModified: remoteModified, episodeUuid: episodeUuid, dbQueue: dbQueue)
-    }
 
     func save(episode: Episode, dbQueue: GRDBQueue) {
         do {
@@ -571,57 +436,6 @@ class EpisodeDataManager {
         save(fieldName: "sizeInBytes", value: fileSize, episodeId: episode.id, dbQueue: dbQueue)
     }
 
-    func saveBulkEpisodeSyncInfo(episodes: [EpisodeBasicData], dbQueue: GRDBQueue) {
-        if episodes.isEmpty { return }
-
-        dbQueue.write { db in
-            do {
-                for episode in episodes {
-                    guard let uuid = episode.uuid else { continue }
-
-                    var fields = [String]()
-                    var values = [Any]()
-                    if let duration = episode.duration, duration > 0 {
-                        fields.append("duration")
-                        values.append(duration)
-                    }
-
-                    if let playingStatus = episode.playingStatus {
-                        let actualStatus = PlayingStatus(rawValue: Int32(playingStatus))?.rawValue ?? PlayingStatus.notPlayed.rawValue
-                        fields.append("playingStatus")
-                        values.append(actualStatus)
-                    }
-
-                    if let playedUpTo = episode.playedUpTo, playedUpTo > 0 {
-                        fields.append("playedUpTo")
-                        values.append(playedUpTo)
-                    }
-                    if let isArchived = episode.isArchived {
-                        fields.append("archived")
-                        values.append(isArchived)
-
-                        fields.append("lastArchiveInteractionDate")
-                        values.append(Date())
-                    }
-                    if let starred = episode.starred {
-                        fields.append("keepEpisode")
-                        values.append(starred)
-                    }
-                    if let deselectedChapters = episode.deselectedChapters {
-                        fields.append("deselectedChapters")
-                        values.append(deselectedChapters)
-                    }
-                    values.append(uuid)
-
-                    let setStatement = "SET \(fields.joined(separator: " = ?, ")) = ?"
-                    try db.executeUpdate("UPDATE \(DataManager.episodeTableName) \(setStatement) WHERE uuid = ?", values: values)
-                }
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.saveBulkEpisodeSyncInfo error: \(error)")
-            }
-        }
-    }
-
     func saveFrameCount(episodeId: Int64, frameCount: Int64, dbQueue: GRDBQueue) {
         save(fieldName: "cachedFrameCount", value: frameCount, episodeId: episodeId, dbQueue: dbQueue)
     }
@@ -677,30 +491,6 @@ class EpisodeDataManager {
 
     func clearEpisodePlaybackInteractionDate(episodeUuid: String, dbQueue: GRDBQueue) {
         save(fieldName: "lastPlaybackInteractionDate", value: NSNull(), episodeUuid: episodeUuid, dbQueue: dbQueue)
-    }
-
-    func setEpisodePlaybackInteractionDate(interactionDate: Date, episodeUuid: String, dbQueue: GRDBQueue) {
-        save(fieldName: "lastPlaybackInteractionDate", value: interactionDate, episodeUuid: episodeUuid, dbQueue: dbQueue)
-    }
-
-    func markAllEpisodePlaybackHistorySynced(dbQueue: GRDBQueue) {
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET lastPlaybackInteractionSyncStatus = ? WHERE lastPlaybackInteractionSyncStatus IS NOT ?", values: [SyncStatus.synced.rawValue, SyncStatus.synced.rawValue])
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.markAllEpisodePlaybackHistorySynced error: \(error)")
-            }
-        }
-    }
-
-    func clearEpisodePlaybackInteractionDatesBefore(date: Date, dbQueue: GRDBQueue) {
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET lastPlaybackInteractionDate = NULL WHERE lastPlaybackInteractionDate <= ?", values: [date])
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.clearEpisodePlaybackInteractionDatesBefore error: \(error)")
-            }
-        }
     }
 
     func clearAllEpisodePlaybackInteractions(dbQueue: GRDBQueue) {
@@ -849,14 +639,6 @@ class EpisodeDataManager {
         save(fieldName: "starredModified", value: starredModified, episodeUuid: episodeUuid, dbQueue: dbQueue)
     }
 
-    func clearKeepEpisodeModified(episode: Episode, dbQueue: GRDBQueue) {
-        let fields = ["keepEpisodeModified"]
-        var values = [episode.keepEpisodeModified] as [Any]
-        values.append(episode.id)
-
-        save(fields: fields, values: values, dbQueue: dbQueue)
-    }
-
     func clearDownloadTaskId(episode: Episode, dbQueue: GRDBQueue) {
         save(fieldName: "downloadTaskId", value: NSNull(), episodeId: episode.id, dbQueue: dbQueue)
     }
@@ -877,35 +659,6 @@ class EpisodeDataManager {
                 try db.executeUpdate("DELETE FROM \(DataManager.episodeTableName) WHERE podcast_id = ?", values: [podcastId])
             } catch {
                 FileLog.shared.addMessage("EpisodeDataManager.deleteAllEpisodesInPodcast error: \(error)")
-            }
-        }
-    }
-
-    func markAllSynced(episodes: [Episode], dbQueue: GRDBQueue) {
-        if episodes.isEmpty {
-            return
-        }
-
-        dbQueue.write { db in
-            do {
-                let ids = episodes.map({"\($0.id)"})
-                try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE id IN (\(ids.joined(separator: ",")))", values: nil)
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.markAllSynced error: \(error)")
-            }
-        }
-    }
-
-    func markAllSynced(episodeIDs ids: [String], dbQueue: GRDBQueue) {
-        if ids.isEmpty {
-            return
-        }
-
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET playingStatusModified = 0, playedUpToModified = 0, durationModified = 0, keepEpisodeModified = 0, archivedModified = 0 WHERE uuid IN (\(ids.map { "'\($0)'"}.joined(separator: ",")))", values: nil)
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.markAllSynced error: \(error)")
             }
         }
     }
@@ -1086,38 +839,6 @@ class EpisodeDataManager {
         }
     }
 
-    private func saveFieldIfNotModified(fieldName: String, modifiedFieldName: String, value: Any, episodeUuid: String, dbQueue: GRDBQueue) -> Bool {
-        var saved = false
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate(Self.saveFieldIfNotModifiedQuery(fieldName: fieldName, modifiedFieldName: modifiedFieldName), values: [value, episodeUuid])
-                saved = (db.changes > 0)
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.saveFieldIfNotModified error: \(error)")
-            }
-        }
-
-        return saved
-    }
-
-    static func saveFieldIfNotModifiedQuery(fieldName: String, modifiedFieldName: String) -> String {
-        "UPDATE \(DataManager.episodeTableName) SET \(fieldName) = ? WHERE uuid = ? AND +\(modifiedFieldName) = 0"
-    }
-
-    private func saveFieldIfNotModified(fieldName: String, modifiedFieldName: String, value: Any, remoteModified: Int64, episodeUuid: String, dbQueue: GRDBQueue) -> Bool {
-        var saved = false
-        dbQueue.write { db in
-            do {
-                try db.executeUpdate("UPDATE \(DataManager.episodeTableName) SET \(fieldName) = ? WHERE uuid = ? AND \(modifiedFieldName) < ?", values: [value, episodeUuid, remoteModified])
-                saved = (db.changes > 0)
-            } catch {
-                FileLog.shared.addMessage("EpisodeDataManager.saveFieldIfNotModified error: \(error)")
-            }
-        }
-
-        return saved
-    }
-
     private func updateAll(fields: [String], values: [Any], whereClause: String?, dbQueue: GRDBQueue) {
         dbQueue.write { db in
             do {
@@ -1138,14 +859,6 @@ class EpisodeDataManager {
         Episode.from(resultSet: rs)
     }
 }
-
-#if os(watchOS)
-// Only here to support watchOS 8
-public enum SortOrder {
-    case forward
-    case reverse
-}
-#endif
 
 
 // MARK: - 👻 Ghost Episodes 👻

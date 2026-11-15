@@ -248,22 +248,7 @@ class PlaylistPreviewViewController: PCViewController {
             Settings.shouldShowDragAndDropTip = true
         }
 
-        Analytics.track(.filterCreated, properties: [
-            "all_podcasts": viewModel.newPlaylist.filterAllPodcasts,
-            "media_type": AudioVideoFilter(rawValue: viewModel.newPlaylist.filterAudioVideoType) ?? .all,
-            "downloaded": viewModel.newPlaylist.filterDownloaded,
-            "not_downloaded": viewModel.newPlaylist.filterNotDownloaded,
-            "episode_status_played": viewModel.newPlaylist.filterFinished,
-            "episode_status_unplayed": viewModel.newPlaylist.filterUnplayed,
-            "episode_status_in_progress": viewModel.newPlaylist.filterPartiallyPlayed,
-            "release_date": ReleaseDateFilterOption(rawValue: viewModel.newPlaylist.filterHours) ?? .anytime,
-            "starred": viewModel.newPlaylist.filterStarred,
-            "duration": viewModel.newPlaylist.filterDuration,
-            "duration_longer_than": viewModel.newPlaylist.longerThan,
-            "duration_shorter_than": viewModel.newPlaylist.shorterThan,
-            "color": viewModel.newPlaylist.playlistColor().hexString(),
-            "icon_name": viewModel.newPlaylist.iconImageName() ?? "unknown"
-        ])
+        NotificationsCoordinator.shared.handle(.filterCreated)
 
         delegate?.presentingPlaylistDetail = true
 
@@ -275,7 +260,6 @@ class PlaylistPreviewViewController: PCViewController {
         switch rule {
         case .podcast:
             let filterSettingsVC = PodcastFilterOverlayController(nibName: "PodcastChooserViewController", bundle: nil)
-            filterSettingsVC.analyticsSource = .filters
             filterSettingsVC.filterToEdit = viewModel.newPlaylist
             viewController = filterSettingsVC
         case .duration:

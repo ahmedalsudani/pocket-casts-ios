@@ -5,7 +5,6 @@ import PocketCastsUtils
 
 struct SearchResultCell: View {
     @EnvironmentObject var theme: Theme
-    @EnvironmentObject var searchAnalyticsHelper: SearchAnalyticsHelper
     @EnvironmentObject var searchHistory: SearchHistoryModel
 
     @StateObject var model: SearchResultCellModel
@@ -67,11 +66,9 @@ struct SearchResultCell: View {
         if let episode = model.episode {
             NavigationManager.shared.navigateTo(NavigationManager.episodePageKey, data: [NavigationManager.episodeUuidKey: episode.uuid, NavigationManager.podcastKey: episode.podcastUuid])
             searchHistory.add(episode: episode)
-            searchAnalyticsHelper.trackResultTapped(episode)
         } else if let result = model.podcastFolder {
             result.navigateTo()
             searchHistory.add(podcast: result)
-            searchAnalyticsHelper.trackResultTapped(result)
         }
     }
 }
@@ -225,7 +222,7 @@ private extension SearchResultCell {
                     .accessibilityHidden(true)
                 }
             } else if showPodcastSubscribeButton, let result = model.podcastFolder, result.kind == .podcast {
-                SubscribeButtonView(podcastUuid: result.uuid, source: searchAnalyticsHelper.source)
+                SubscribeButtonView(podcastUuid: result.uuid)
             }
         }
         .accessibilityElement(children: .combine)

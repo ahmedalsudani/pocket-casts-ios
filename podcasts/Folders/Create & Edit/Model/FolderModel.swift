@@ -89,7 +89,7 @@ class FolderModel: ObservableObject {
     func deleteFolder() {
         guard let folderUuid else { return }
 
-        DataManager.shared.delete(folderUuid: folderUuid, markAsDeleted: SyncManager.isUserLoggedIn())
+        DataManager.shared.delete(folderUuid: folderUuid, markAsDeleted: false)
         NotificationCenter.postOnMainThread(notification: Constants.Notifications.folderDeleted, object: folderUuid)
     }
 

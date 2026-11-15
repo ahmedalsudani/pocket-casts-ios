@@ -59,10 +59,6 @@ enum PodcastThumbnailSize: CaseIterable {
     case list, grid, page, detail
 }
 
-enum PodcastLicensing: Int32 {
-    case keepEpisodesAfterExpiry = 0, deleteEpisodesAfterExpiry = 1
-}
-
 extension PodcastEpisodeSortOrder {
     var description: String {
         switch self {
@@ -81,12 +77,6 @@ extension PodcastEpisodeSortOrder {
         case .serial:
             return L10n.podcastsEpisodeSortSerial
         }
-    }
-}
-
-extension LibrarySort.Old: AnalyticsDescribable {
-    var analyticsDescription: String {
-        return LibrarySort(old: self).analyticsDescription
     }
 }
 
@@ -389,7 +379,7 @@ extension PlayerAction {
     }
 }
 
-enum MultiSelectAction: Int32, CaseIterable, AnalyticsDescribable {
+enum MultiSelectAction: Int32, CaseIterable {
     case playLast = 1, playNext, download, archive, markAsPlayed, star, moveToTop, moveToBottom, removeFromUpNext, unstar, unarchive, removeDownload, markAsUnplayed, delete, share, removeListeningHistory, addToPlaylist
 
     func title(isUpNextContext: Bool = false) -> String {
@@ -469,45 +459,6 @@ enum MultiSelectAction: Int32, CaseIterable, AnalyticsDescribable {
             return "episode-delete"
         case .addToPlaylist:
             return "plus-circle"
-        }
-    }
-
-    var analyticsDescription: String {
-        switch self {
-        case .playLast:
-            return "play_last"
-        case .playNext:
-            return "play_next"
-        case .download:
-            return "download"
-        case .archive:
-            return "archive"
-        case .markAsPlayed:
-            return "mark_as_played"
-        case .star:
-            return "star"
-        case .moveToTop:
-            return "up_next_move_up"
-        case .moveToBottom:
-            return "up_next_move_bottom"
-        case .removeFromUpNext:
-            return "up_next_remove"
-        case .unstar:
-            return "unstar"
-        case .unarchive:
-            return "unarchive"
-        case .markAsUnplayed:
-            return "mark_unplayed"
-        case .removeDownload:
-            return "remove_download"
-        case .delete:
-            return "delete"
-        case .share:
-            return "share"
-        case .removeListeningHistory:
-            return "listening_history_remove_episode"
-        case .addToPlaylist:
-            return "add_to_playlist"
         }
     }
 

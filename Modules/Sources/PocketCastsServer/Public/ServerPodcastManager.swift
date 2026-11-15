@@ -12,192 +12,108 @@ public class ServerPodcastManager: NSObject {
         return queue
     }()
 
-    lazy var importerQueue: OperationQueue = {
-        let queue = OperationQueue()
-        queue.maxConcurrentOperationCount = 1
-
-        return queue
-    }()
-
-    private let urlConnection = URLConnection(handler: URLSession.shared)
-
     // MARK: - Podcast add functions
 
-    /// This tries to add the podcast with UUID up to 7 times if the call fails first time.
-    /// The retry mechanism is to be used in cases when the podcast was just added to server and the first call might fail because the server didn't have time to update.
-    /// The call will be done a maximum of seven times, waiting for 2s, then 2s, 5s, 5s, 5s, 5s, 10s
-    /// and then give up.
-    /// - Parameters:
-    ///   - podcastUuid: the uuid of the podcast to caache
-    ///   - subscribe: if we should subscribe to the podcast after adding
-    ///   - tries: the number of tries already done
-    ///   - completion: the code to execute on completion
-    public func addFromUuidWithRetries(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, tries: Int = 0, completion: ((Bool) -> Void)?) {
-        var pollbackCounter = tries
-        addFromUuid(podcastUuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads) { [weak self] success in
-            guard let self else {
-                return
-            }
-
-            if success {
-                completion?(success)
-                return
-            }
-
-            pollbackCounter += 1
-            if pollbackCounter < 8 {
-                Thread.sleep(forTimeInterval: pollbackCounter.pollWaitingTime)
-                addFromUuidWithRetries(podcastUuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, tries: pollbackCounter, completion: completion)
-                return
-            }
+    /// Adds a podcast we already know the feed for: one in the database, or one seen in this session's search results.
+    /// There is no directory to resolve any other UUID, so those fail.
+    public func addFromUuid(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool) -> Void)?) {
+        guard let feedURL = feedURL(forPodcastUuid: podcastUuid) else {
+            FileLog.shared.addMessage("ServerPodcastManager: no feed known for podcast \(podcastUuid), can't add it")
             completion?(false)
+            return
+        }
+
+        addFromFeedURL(feedURL, subscribe: subscribe, autoDownloads: autoDownloads) { added, _ in
+            completion?(added)
         }
     }
 
-    public func addFromUuid(podcastUuid: String, subscribe: Bool, autoDownloads: Int = 0, fromSync: Bool = false, completion: ((Bool) -> Void)?) {
-        CacheServerHandler.shared.loadPodcastInfo(podcastUuid: podcastUuid) { [weak self] podcastInfo, lastModified in
-            if let podcastInfo {
-                self?.addFromJson(podcastUuid: podcastUuid, lastModified: lastModified, podcastInfo: podcastInfo, subscribe: subscribe, autoDownloads: autoDownloads, fromSync: fromSync, completion: completion)
-            } else {
-                completion?(false)
+    /// Adds a podcast from its feed. The UUID is derived from the feed URL, so the same feed always resolves
+    /// to the same podcast row. The completion receives that UUID when the podcast was added.
+    public func addFromFeedURL(_ feedURL: URL, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool, String?) -> Void)?) {
+        Task { [weak self] in
+            guard let self else { return }
+            await self.addFromFeedURLAsync(feedURL, subscribe: subscribe, autoDownloads: autoDownloads, completion: completion)
+        }
+    }
+
+    private func addFromFeedURLAsync(_ feedURL: URL, subscribe: Bool, autoDownloads: Int, completion: ((Bool, String?) -> Void)?) async {
+        let feedURLString = feedURL.absoluteString
+        let podcastUuid = DiscoveredPodcasts.uuid(forFeedUrl: feedURLString)
+
+        // A podcast we already hold doesn't need its feed fetched again just to follow it
+        if let existing = DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
+            subscribeQueue.addOperation { [weak self] in
+                guard let self else { return }
+                let added = self.addExisting(podcast: existing, subscribe: subscribe, autoDownloads: autoDownloads)
+                completion?(added, added ? podcastUuid : nil)
             }
+            return
         }
-    }
 
-    public func addFromiTunesId(_ itunesId: Int, subscribe: Bool, autoDownloads: Int = 0, completion: ((Bool, String?) -> Void)?) {
-        MainServerHandler.shared.findPodcastByiTunesId(itunesId) { [weak self] podcastUuid in
-            guard let uuid = podcastUuid else {
+        do {
+            let result = try await LocalFeedService.shared.fetch(feedURL: feedURL)
+            switch result {
+            case .notModified:
                 completion?(false, nil)
-                return
+            case .success(let feed, let lastModified, _):
+                let info = feed.toPodcastInfoJson(uuid: podcastUuid, feedURLString: feedURLString)
+                addFromJson(podcastUuid: podcastUuid, lastModified: lastModified, podcastInfo: info, subscribe: subscribe, autoDownloads: autoDownloads) { added in
+                    completion?(added, added ? podcastUuid : nil)
+                }
             }
-
-            self?.addFromUuid(podcastUuid: uuid, subscribe: subscribe, autoDownloads: autoDownloads, completion: { added in
-                completion?(added, uuid)
-            })
+        } catch {
+            FileLog.shared.addMessage("ServerPodcastManager: feed fetch failed for \(feedURLString): \(error.localizedDescription)")
+            completion?(false, nil)
         }
     }
 
-    public func addFromJson(podcastUuid: String, lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, fromSync: Bool = false, completion: ((Bool) -> Void)?) {
+    func addFromJson(podcastUuid: String, lastModified: String?, podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int, completion: ((Bool) -> Void)?) {
         let episodes = Self.episodes(fromPodcastInfo: podcastInfo)
         subscribeQueue.addOperation { [weak self] in
             guard let strongSelf = self else { return }
 
             let added = strongSelf.addPodcast(podcastInfo: podcastInfo, episodes: episodes, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
-            if subscribe, added, !fromSync { ServerConfig.shared.syncDelegate?.subscribedToPodcast() } // addFromUuid and addFromiTunesId end up here, so just need this one analytic
             completion?(added)
         }
     }
 
-    public func addPodcastFromUpNextItem(_ upNextItem: UpNextItem, completion: ((Bool) -> Void)?) {
-        if let existingPodcast = DataManager.shared.findPodcast(uuid: upNextItem.podcastUuid, includeUnsubscribed: true) {
-            // we have the podcast, but not the episode, so it's ok to just save it in
-            addToDatabase(upNextItem: upNextItem, to: existingPodcast)
-            completion?(true)
-
-            return
-        }
-
-        // otherwise we don't have the podcast, try and get it
-        addFromUuid(podcastUuid: upNextItem.podcastUuid, subscribe: false, autoDownloads: 0) { [weak self] added in
-            if !added {
-                completion?(false)
-                return
-            }
-
-            guard let existingPodcast = DataManager.shared.findPodcast(uuid: upNextItem.podcastUuid, includeUnsubscribed: true) else {
-                completion?(false)
-                return
-            }
-
-            // at this point we have the podcast, now we need the sync info for it if we're signed in
-            if SyncManager.isUserLoggedIn() {
-                guard let episodes = ApiServerHandler.shared.retrieveEpisodeTaskSynchronouusly(podcastUuid: upNextItem.podcastUuid) else { return }
-
-                DataManager.shared.saveBulkEpisodeSyncInfo(episodes: DataConverter.convert(syncInfoEpisodes: episodes))
-            }
-
-            self?.addToDatabase(upNextItem: upNextItem, to: existingPodcast)
-            completion?(true)
-        }
-    }
-
-    public func addMissingPodcast(episodeUuid: String, podcastUuid: String) {
-        let url = ServerConstants.Urls.cache() + "mobile/podcast/findbyepisode/\(podcastUuid)/\(episodeUuid)"
-
-        if let info = loadFrom(url: url), addPodcast(podcastInfo: info, subscribe: false, lastModified: nil) {
-            // all good
-        }
-    }
-
-    public func addMissingEpisode(episodeUuid: String, podcastUuid: String) -> Episode? {
-        let url = ServerConstants.Urls.cache() + "mobile/podcast/findbyepisode/\(podcastUuid)/\(episodeUuid)"
-
-        if let info = loadFrom(url: url) {
-            return addEpisode(podcastInfo: info)
-        }
-
-        return nil
-    }
-
-    /// - warning: Performs synchronous networking and blocks the calling thread until the request finishes.
-    /// Never call it from the main thread. The completion is never called on failure. Prefer the async
-    /// ``addMissingPodcastAndEpisode(episodeUuid:podcastUuid:shouldUpdateEpisode:)`` in new code.
-    public func addMissingPodcastAndEpisode(episodeUuid: String, podcastUuid: String, shouldUpdateEpisode: Bool = false, completion: ((Episode?) -> ())? = nil) {
-        let url = ServerConstants.Urls.cache() + "mobile/podcast/findbyepisode/\(podcastUuid)/\(episodeUuid)"
-
-        if let info = loadFrom(url: url) {
-            // Ensure podcast is added, otherwise episode won't be
-            if !PodcastExistsHelper.shared.exists(uuid: podcastUuid) {
-                _ = addPodcast(podcastInfo: info, subscribe: false, lastModified: nil)
-            }
-
-            let episode = addEpisode(podcastInfo: info, shouldUpdate: shouldUpdateEpisode)
-            completion?(episode)
-        }
-    }
-
+    /// Finds an episode we don't hold yet by re-reading its podcast's feed. Only podcasts whose feed we know can be
+    /// searched, and the episode has to still be in that feed.
     @discardableResult
     public func addMissingPodcastAndEpisode(episodeUuid: String, podcastUuid: String, shouldUpdateEpisode: Bool = false) async throws -> Episode? {
-        let url = ServerConstants.Urls.cache() + "mobile/podcast/findbyepisode/\(podcastUuid)/\(episodeUuid)"
+        if !shouldUpdateEpisode, let episode = DataManager.shared.findEpisode(uuid: episodeUuid) {
+            return episode
+        }
+
+        guard let feedURL = feedURL(forPodcastUuid: podcastUuid) else {
+            return DataManager.shared.findEpisode(uuid: episodeUuid)
+        }
 
         do {
-            guard let info = try await loadFrom(url: url) else {
-                return nil
+            guard case .success(let feed, let lastModified, _) = try await LocalFeedService.shared.fetch(feedURL: feedURL) else {
+                return DataManager.shared.findEpisode(uuid: episodeUuid)
             }
+
+            let info = feed.toPodcastInfoJson(uuid: podcastUuid, feedURLString: feedURL.absoluteString)
 
             // Ensure podcast is added, otherwise episode won't be
-            if !PodcastExistsHelper.shared.exists(uuid: podcastUuid) {
-                _ = addPodcast(podcastInfo: info, subscribe: false, lastModified: nil)
+            if DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) == nil {
+                _ = addPodcast(podcastInfo: info, episodes: Self.episodes(fromPodcastInfo: info), subscribe: false, lastModified: lastModified)
             }
 
-            return addEpisode(podcastInfo: info, shouldUpdate: shouldUpdateEpisode)
+            return addEpisode(uuid: episodeUuid, podcastInfo: info, shouldUpdate: shouldUpdateEpisode)
         } catch {
             FileLog.shared.addMessage("ServerPodcastManager: failed to load missing episode \(episodeUuid): \(error)")
             throw error
         }
     }
 
-    private func addToDatabase(upNextItem: UpNextItem, to podcast: Podcast) {
-        // if we have this episode already, then we don't need to do anything here
-        guard DataManager.shared.findEpisode(uuid: upNextItem.episodeUuid) == nil else { return }
+    private func feedURL(forPodcastUuid podcastUuid: String) -> URL? {
+        let stored = DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true)?.feedUrl
+        guard let feedUrl = stored ?? DiscoveredPodcasts.shared.feedUrl(forUuid: podcastUuid) else { return nil }
 
-        let episode = Episode()
-        episode.addedDate = Date()
-        episode.podcastUuid = podcast.uuid
-        episode.playingStatus = PlayingStatus.notPlayed.rawValue
-        episode.episodeStatus = DownloadStatus.notDownloaded.rawValue
-        episode.uuid = upNextItem.episodeUuid
-        episode.title = upNextItem.title
-        episode.downloadUrl = upNextItem.url
-        episode.publishedDate = upNextItem.published
-        episode.podcast_id = podcast.id
-        episode.hlsUrl = upNextItem.hlsUrl
-
-        DataManager.shared.save(episode: episode)
-    }
-
-    private func addPodcast(podcastInfo: [String: Any], subscribe: Bool, autoDownloads: Int = 0, lastModified: String?) -> Bool {
-        addPodcast(podcastInfo: podcastInfo, episodes: Self.episodes(fromPodcastInfo: podcastInfo), subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
+        return URL(string: feedUrl)
     }
 
     /// Parses the podcast's episodes without a `podcast_id`, which `addPodcast` sets once the podcast is saved.
@@ -209,25 +125,28 @@ public class ServerPodcastManager: NSObject {
         return episodesJson.map { Episode.from(episodeJson: $0, podcastId: 0, podcastUuid: podcastUuid) }
     }
 
+    private func addExisting(podcast existingPodcast: Podcast, subscribe: Bool, autoDownloads: Int) -> Bool {
+        if existingPodcast.isSubscribed(), subscribe { return true }
+
+        if !existingPodcast.isSubscribed(), subscribe {
+            // we have this podcast, just in a non-subscribed state, so subscribe to it
+            existingPodcast.subscribed = 1
+            existingPodcast.autoDownloadSetting = (autoDownloads > 0 ? AutoDownloadSetting.latest : AutoDownloadSetting.off).rawValue
+        }
+        DataManager.shared.save(podcast: existingPodcast)
+        updateLatestEpisodeInfo(podcast: existingPodcast, setDefaults: true, autoDownloadLimit: autoDownloads)
+
+        ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: existingPodcast.uuid)
+
+        return true
+    }
+
     private func addPodcast(podcastInfo: [String: Any], episodes: [Episode]?, subscribe: Bool, autoDownloads: Int = 0, lastModified: String?) -> Bool {
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any], let podcastUuid = podcastJson["uuid"] as? String else { return false }
 
         // check if we already have this podcast, and if we do treat it differently
         if let existingPodcast = DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true) {
-            if existingPodcast.isSubscribed(), subscribe { return true }
-
-            if !existingPodcast.isSubscribed(), subscribe {
-                // we have this podcast, just in a non-subscribed state, so subscribe to it
-                existingPodcast.subscribed = 1
-                existingPodcast.syncStatus = SyncStatus.notSynced.rawValue
-                existingPodcast.autoDownloadSetting = (autoDownloads > 0 ? AutoDownloadSetting.latest : AutoDownloadSetting.off).rawValue
-            }
-            DataManager.shared.save(podcast: existingPodcast)
-            updateLatestEpisodeInfo(podcast: existingPodcast, setDefaults: true, autoDownloadLimit: autoDownloads)
-
-            ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: existingPodcast.uuid)
-
-            return true
+            return addExisting(podcast: existingPodcast, subscribe: subscribe, autoDownloads: autoDownloads)
         }
 
         let podcast = Podcast.from(podcastJson: podcastJson, podcastInfo: podcastInfo, uuid: podcastUuid, subscribe: subscribe, autoDownloads: autoDownloads, lastModified: lastModified)
@@ -235,7 +154,7 @@ public class ServerPodcastManager: NSObject {
         podcast.sortOrder = highestSortOrderForHomeGrid() + 1
 
         // we don't accept podcasts with no episodes
-        guard let episodes else { return false }
+        guard let episodes, !episodes.isEmpty else { return false }
 
         // save the podcast so that it gets and ID
         DataManager.shared.save(podcast: podcast)
@@ -247,24 +166,27 @@ public class ServerPodcastManager: NSObject {
 
         updateLatestEpisodeInfo(podcast: podcast, setDefaults: subscribe, autoDownloadLimit: autoDownloads)
 
-        if subscribe { ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: podcast.uuid) }
+        if subscribe {
+            ServerConfig.shared.syncDelegate?.podcastAdded(podcastUuid: podcast.uuid)
+        }
 
         return true
     }
 
-    private func addEpisode(podcastInfo: [String: Any], shouldUpdate: Bool = false) -> Episode? {
+    private func addEpisode(uuid: String, podcastInfo: [String: Any], shouldUpdate: Bool) -> Episode? {
         guard let podcastJson = podcastInfo["podcast"] as? [String: Any],
               let podcastUuid = podcastJson["uuid"] as? String,
               let episodesJson = podcastJson["episodes"] as? [[String: Any]],
               let podcast = DataManager.shared.findPodcast(uuid: podcastUuid, includeUnsubscribed: true),
-              let firstEpisode = episodesJson.first,
-              let uuid = firstEpisode["uuid"] as? String else { return nil }
+              let episodeJson = episodesJson.first(where: { $0["uuid"] as? String == uuid }) else {
+            return DataManager.shared.findEpisode(uuid: uuid)
+        }
 
         if let episode = DataManager.shared.findEpisode(uuid: uuid) {
             if shouldUpdate {
-                let updatedEpisode = Episode.from(episodeJson: firstEpisode, podcastId: podcast.id, podcastUuid: podcast.uuid)
+                let updatedEpisode = Episode.from(episodeJson: episodeJson, podcastId: podcast.id, podcastUuid: podcast.uuid)
 
-                // Refresh server-driven fields while preserving user state (playback, downloads, etc.)
+                // Refresh feed-driven fields while preserving user state (playback, downloads, etc.)
                 episode.title = updatedEpisode.title
                 episode.downloadUrl = updatedEpisode.downloadUrl
                 episode.fileType = updatedEpisode.fileType
@@ -274,12 +196,6 @@ public class ServerPodcastManager: NSObject {
                 episode.episodeNumber = updatedEpisode.episodeNumber
                 episode.seasonNumber = updatedEpisode.seasonNumber
                 episode.episodeType = updatedEpisode.episodeType
-                episode.hasGeneratedTranscript = updatedEpisode.hasGeneratedTranscript
-                // Only overwrite when the response actually carries an HLS url — the server can omit
-                // alternate enclosures on an update, and we don't want to clear one a feed refresh set.
-                if let hlsUrl = updatedEpisode.hlsUrl, !hlsUrl.isEmpty {
-                    episode.hlsUrl = hlsUrl
-                }
 
                 if episode.addedDate == nil {
                     episode.addedDate = updatedEpisode.addedDate
@@ -294,98 +210,11 @@ public class ServerPodcastManager: NSObject {
             return episode
         }
 
-        let episode = Episode.from(episodeJson: firstEpisode, podcastId: podcast.id, podcastUuid: podcast.uuid)
+        let episode = Episode.from(episodeJson: episodeJson, podcastId: podcast.id, podcastUuid: podcast.uuid)
 
         DataManager.shared.save(episode: episode)
 
         return episode
-    }
-
-    public func loadRecommendations(for podcastUUID: String, in region: String?) async throws -> PodcastCollection? {
-        let components = URLComponents(string: ServerConstants.Urls.api())
-
-        guard var components else {
-            assertionFailure("[ServerPodcastManager] Recommendations API URL failed")
-            throw URLError(.badURL)
-        }
-
-        components.path += "recommendations/podcast/\(podcastUUID)"
-
-        if let region {
-            components.queryItems = [
-                URLQueryItem(name: "country", value: region)
-            ]
-        }
-
-        guard let url = components.url else {
-            assertionFailure("[ServerPodcastManager] Recommendations API construction failed")
-            throw URLError(.badURL)
-        }
-
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-        request.setValue("application/json; charset=UTF8", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-        request.addLocalizationHeaders()
-        let (data, response) = try await urlConnection.send(request: request)
-
-        if (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.notModified {
-            return nil
-        }
-
-        guard let data else {
-            return nil
-        }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        return try decoder.decode(PodcastCollection.self, from: data)
-    }
-
-    /// Sends the request and returns the parsed JSON, or nil when the server responds with 304 Not Modified
-    private func loadFrom(url: String) async throws -> [String: Any]? {
-        var request = URLRequest(url: ServerHelper.asUrl(url), cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-        request.setValue("application/json; charset=UTF8", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-        request.addLocalizationHeaders()
-
-        let (data, response) = try await urlConnection.send(request: request)
-
-        if (response as? HTTPURLResponse)?.statusCode == ServerConstants.HttpConstants.notModified {
-            return nil
-        }
-
-        guard let data else {
-            return nil
-        }
-
-        return try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-    }
-
-    private func loadFrom(url: String) -> [String: Any]? {
-        let url = ServerHelper.asUrl(url)
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
-        request.httpMethod = "GET"
-        request.addValue("application/json", forHTTPHeaderField: ServerConstants.HttpHeaders.accept)
-        request.setValue("application/json; charset=UTF8", forHTTPHeaderField: ServerConstants.HttpHeaders.contentType)
-        request.addLocalizationHeaders()
-        do {
-            let (responseData, response) = try urlConnection.sendSynchronousRequest(with: request)
-            guard let data = responseData else { return nil }
-
-            if let response = response as? HTTPURLResponse, response.statusCode == ServerConstants.HttpConstants.notModified {
-                return nil
-            }
-            if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                return jsonResponse
-            }
-        } catch {
-            print("Failed to get from server \(error.localizedDescription)")
-        }
-
-        return nil
     }
 
     public func highestSortOrderForHomeGrid() -> Int32 {

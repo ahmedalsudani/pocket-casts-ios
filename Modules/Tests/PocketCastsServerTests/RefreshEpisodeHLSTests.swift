@@ -2,8 +2,8 @@ import XCTest
 @testable import PocketCastsServer
 import PocketCastsDataModel
 
-/// Tests decoding refresh-server's `alternate_enclosures` (added in refresh-server#596) into
-/// `RefreshEpisode.hlsUrl`, which feeds `Episode.populate(fromEpisode:)` on the incremental refresh path.
+/// Tests decoding an episode's `alternate_enclosures` into `RefreshEpisode.hlsUrl`,
+/// which feeds `Episode.populate(fromEpisode:)` on the incremental refresh path.
 final class RefreshEpisodeHLSTests: XCTestCase {
 
     private func decode(_ json: String) throws -> RefreshEpisode {

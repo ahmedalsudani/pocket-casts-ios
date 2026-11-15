@@ -1,4 +1,3 @@
-import PocketCastsServer
 import SwiftUI
 
 struct ThemeSelectorView: View {
@@ -35,7 +34,7 @@ struct ThemeSelectorView: View {
                         Button(action: {
                             onThemeSelected(currentTheme)
                         }) {
-                            ThemePreviewView(themeType: currentTheme, isSelected: selectedTheme == currentTheme, isLocked: currentTheme.isPlusOnly && !SubscriptionHelper.hasActiveSubscription())
+                            ThemePreviewView(themeType: currentTheme, isSelected: selectedTheme == currentTheme)
                         }
                     }
                 }
@@ -51,7 +50,6 @@ struct ThemePreviewView: View {
 
     @State var themeType: Theme.ThemeType
     @State var isSelected: Bool
-    @State var isLocked: Bool
 
     var body: some View {
         VStack {
@@ -64,8 +62,6 @@ struct ThemePreviewView: View {
                     )
                 if isSelected {
                     Image("tickBlueCircle")
-                } else if isLocked {
-                    Image("plusGoldCircle")
                 }
             }
             .accessibility(hidden: true)
@@ -74,9 +70,7 @@ struct ThemePreviewView: View {
                 .fontWeight(.medium)
                 .textStyle(PrimaryText())
         }
-        .opacity(isLocked ? 0.5 : 1)
         .accessibilityLabel(themeType.description)
-        .accessibilityHint(isLocked ? L10n.accessibilityPlusOnly : "")
     }
 }
 

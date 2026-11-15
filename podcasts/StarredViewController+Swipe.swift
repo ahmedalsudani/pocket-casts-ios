@@ -34,10 +34,6 @@ extension StarredViewController: SwipeTableViewCellDelegate, SwipeHandler {
 
     // MARK: - Swipe Handler
 
-    var swipeSource: String {
-        "starred"
-    }
-
     var swipeSourceType: SwipeSourceType {
         .starred
     }

@@ -3,18 +3,12 @@ import Combine
 import PocketCastsServer
 import PocketCastsDataModel
 
-/// Represents a view that will display information about the users profile such as email, subscription status, and stats
+/// Represents a view that will display the listening stats
 class ProfileDataViewModel: ObservableObject {
 
     // Allow UIKit to update to view size changes
     private(set) var contentSize: CGSize? = nil
     var viewContentSizeChanged: (() -> Void)? = nil
-
-    /// The user profile information such as logged in, email, etc
-    var profile: UserInfo.Profile = .init()
-
-    /// The users subscription information, will be nil if there is no active subscription
-    var subscription: UserInfo.Subscription?
 
     /// Listening Stats
     var stats: UserInfo.Stats = .init()
@@ -34,8 +28,6 @@ class ProfileDataViewModel: ObservableObject {
 
     /// Refresh the store data
     func update() {
-        profile = .init()
-        subscription = .init(loggedIn: profile.isLoggedIn)
         stats = .init()
 
         objectWillChange.send()

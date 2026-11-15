@@ -12,8 +12,4 @@ public extension Int {
     var megabytes: Int {
         kilobytes * 1000
     }
-
-    var gigabytes: Int {
-        megabytes * 1000
-    }
 }

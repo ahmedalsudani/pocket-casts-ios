@@ -38,63 +38,6 @@ class EndOfYearDataManager {
         return isEligible
     }
 
-    /// Check if the user has the full listening history or not.
-    ///
-    /// This is not 100% accurate. In order to determine if the user
-    /// has the full history we check for their latest episode listened.
-    /// If this episode was interacted in 2021 or before, we assume they
-    /// have the full history.
-    /// If this is not true, we check for the total number of items of
-    /// this year. If the number is less than or equal 100, we assume they
-    /// have the full history.
-    func isFullListeningHistory(in year: Int, dbQueue: GRDBQueue) -> Bool {
-        var isFullListeningHistory = false
-
-        dbQueue.read { db in
-            do {
-                let query = """
-                            SELECT * from \(DataManager.episodeTableName)
-                            WHERE
-                            lastPlaybackInteractionDate IS NOT NULL AND lastPlaybackInteractionDate < strftime('%s', '\(startDate(year))')
-                            LIMIT 1
-                            """
-                let resultSet = try db.executeQuery(query, values: nil)
-
-                if resultSet.next() {
-                    isFullListeningHistory = true
-                }
-            } catch {
-                FileLog.shared.addMessage("EndOfYearDataManager.isFullListeningHistory error: \(error)")
-            }
-        }
-
-        return isFullListeningHistory
-    }
-
-    /// Returns the number of episodes we have for this year
-    func numberOfEpisodes(year: Int, dbQueue: GRDBQueue) -> Int {
-        var numberOfEpisodes: Int = 0
-
-        dbQueue.read { db in
-            do {
-                let query = """
-                            SELECT COUNT(DISTINCT \(DataManager.episodeTableName).uuid) as numberOfEpisodes from \(DataManager.episodeTableName)
-                            WHERE
-                            \(listenedEpisodes(year: year))
-                            """
-                let resultSet = try db.executeQuery(query, values: nil)
-
-                if resultSet.next() {
-                    numberOfEpisodes = Int(resultSet.int(forColumn: "numberOfEpisodes"))
-                }
-            } catch {
-                FileLog.shared.addMessage("EndOfYearDataManager.numberOfEpisodes error: \(error)")
-            }
-        }
-
-        return numberOfEpisodes
-    }
-
     private func listenedEpisodes(year: Int) -> String {
        "lastPlaybackInteractionDate IS NOT NULL AND lastPlaybackInteractionDate BETWEEN strftime('%s', '\(year)-01-01') and strftime('%s', '\(year + 1)-01-01')"
     }
@@ -259,31 +202,6 @@ class EndOfYearDataManager {
         return episode
     }
 
-    /// Given a list of UUIDs, return which UUIDs are present on the database
-    func episodesThatExist(year: Int, dbQueue: GRDBQueue, uuids: [String]) -> [String] {
-        var episodes: [String] = []
-
-        dbQueue.read { db in
-            do {
-                let query = """
-                            SELECT DISTINCT uuid FROM \(DataManager.episodeTableName) WHERE \(DataManager.episodeTableName).uuid IN \(DBUtils.valuesQuestionMarks(amount: uuids.count)) and
-                                \(listenedEpisodes(year: year))
-                            """
-                let resultSet = try db.executeQuery(query, values: uuids)
-
-                while resultSet.next() {
-                    if let uuid = resultSet.string(forColumn: "uuid") {
-                        episodes.append(uuid)
-                    }
-                }
-            } catch {
-                FileLog.shared.addMessage("EndOfYearDataManager.episodesThatExist error: \(error)")
-            }
-        }
-
-        return episodes
-    }
-
     private func numberOfItemsInListeningHistory(in year: Int, db: PCDatabase) -> Int {
         var numberOfItemsInListeningHistory = 0
 
@@ -358,16 +276,6 @@ class EndOfYearDataManager {
         return EpisodesStartedAndCompleted(started: started, completed: completed)
     }
 
-    func summarizedRatings(in year: Int) -> [UInt32: Int]? {
-        let calendar = Calendar.current
-        let ratings = DataManager.shared.ratings.ratings?.filter { rating in
-            calendar.component(.year, from: rating.modifiedAt) == year
-        }
-        let groupedRatings = ratings?.reduce(into: [:]) { counts, rating in
-            counts[rating.podcastRating, default: 0] += 1
-        }
-        return groupedRatings
-    }
 }
 
 public struct ListenedCategory {

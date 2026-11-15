@@ -64,21 +64,4 @@ class ThemeTests: XCTestCase {
 
         XCTAssertTrue(Settings.shouldFollowSystemTheme)
     }
-
-    func testSigningOutKeepsFollowingTheSystemTheme() {
-        Settings.shouldFollowSystemTheme = true
-        UserDefaults.standard.set(2, forKey: Constants.UserDefaults.themeKey)
-
-        SignOutHelper.signout()
-
-        XCTAssertTrue(Settings.shouldFollowSystemTheme)
-    }
-
-    func testSigningOutKeepsNotFollowingTheSystemTheme() {
-        Settings.shouldFollowSystemTheme = false
-
-        SignOutHelper.signout()
-
-        XCTAssertFalse(Settings.shouldFollowSystemTheme)
-    }
 }
